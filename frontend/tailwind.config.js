@@ -14,7 +14,7 @@ export default {
         },
         panel: {
           DEFAULT: '#FFFFFF',
-          dark: '#D9D9DB',
+          soft: '#F8F9FA',
         },
         accent: {
           blue: '#4EA7FF',
@@ -28,11 +28,13 @@ export default {
         },
       },
       borderRadius: {
+        xl: '22px',
         lg: '18px',
       },
       boxShadow: {
+        soft: '0 4px 24px rgba(0,0,0,0.06)',
         'elev-1': '0 2px 4px rgba(0,0,0,0.06), 0 8px 20px rgba(0,0,0,0.04)',
-        'inset-1': 'inset 0 2px 4px rgba(0,0,0,0.06)',
+        inset: 'inset 0 2px 4px rgba(0,0,0,0.06)',
       },
     },
   },

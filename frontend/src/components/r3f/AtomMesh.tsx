@@ -136,11 +136,14 @@ export default function AtomMesh({ id, position, element }: AtomMeshProps) {
       onPointerUp={handlePointerUp}
       cursor={isDragging ? 'grabbing' : 'pointer'}
     >
-      <sphereGeometry args={[radius, 32, 32]} />
-      <meshStandardMaterial 
-        color={color} 
-        metalness={0.9} 
-        roughness={0.35}
+      <sphereGeometry args={[radius, 64, 64]} />
+      <meshPhysicalMaterial
+        color={color}
+        roughness={0.15}
+        metalness={0.6}
+        clearcoat={1}
+        clearcoatRoughness={0.1}
+        thickness={0.8}
         transparent={isDragging}
         opacity={opacity}
       />

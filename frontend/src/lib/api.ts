@@ -53,3 +53,61 @@ export async function predictFast(smiles: string): Promise<PredictResponse> {
   return response.data
 }
 
+/**
+ * Molecule Library API
+ */
+export interface MoleculeItem {
+  id: number
+  name: string
+  smiles?: string
+  properties?: string
+  thumbnail_b64?: string
+  created_at: string
+}
+
+export interface MoleculeDetail extends MoleculeItem {
+  json_graph?: string
+  coords?: string
+}
+
+export interface SaveMoleculePayload {
+  name: string
+  smiles?: string
+  json_graph?: string
+  coords?: string
+  properties?: string
+  thumbnail_b64?: string | null
+}
+
+/**
+ * Save molecule to library
+ */
+export async function saveMolecule(payload: SaveMoleculePayload): Promise<{ id: number; name: string; created_at: string }> {
+  const response = await apiClient.post('/molecules/save', payload)
+  return response.data
+}
+
+/**
+ * List all molecules
+ */
+export async function listMolecules(limit: number = 50): Promise<MoleculeItem[]> {
+  const response = await apiClient.get<MoleculeItem[]>(`/molecules/list?limit=${limit}`)
+  return response.data
+}
+
+/**
+ * Get molecule by ID
+ */
+export async function getMolecule(id: number): Promise<MoleculeDetail> {
+  const response = await apiClient.get<MoleculeDetail>(`/molecules/${id}`)
+  return response.data
+}
+
+/**
+ * Delete molecule
+ */
+export async function deleteMolecule(id: number): Promise<{ status: string; id: number }> {
+  const response = await apiClient.delete(`/molecules/${id}`)
+  return response.data
+}
+

@@ -35,6 +35,7 @@ export function getAtomUnderCursor(
 
 /**
  * Convert screen coordinates to world coordinates on a plane
+ * Clamps coordinates to reasonable bounds [-5, 5]
  */
 export function screenToWorld(
   event: MouseEvent | React.PointerEvent,
@@ -55,7 +56,18 @@ export function screenToWorld(
 
   // Intersect with plane
   const intersection = new Vector3()
-  raycaster.ray.intersectPlane(plane, intersection)
+  const hasIntersection = raycaster.ray.intersectPlane(plane, intersection)
+
+  if (!hasIntersection) {
+    // Fallback: use a fixed distance from camera
+    const distance = 5
+    raycaster.ray.at(distance, intersection)
+  }
+
+  // Clamp coordinates to reasonable bounds
+  intersection.x = Math.max(-5, Math.min(5, intersection.x))
+  intersection.y = Math.max(-5, Math.min(5, intersection.y))
+  intersection.z = Math.max(-5, Math.min(5, intersection.z))
 
   return intersection
 }

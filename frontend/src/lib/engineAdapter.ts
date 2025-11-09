@@ -208,6 +208,36 @@ export function addBond(a1: string, a2: string, order: number = 1): void {
 
 
 /**
+ * Convert MoleculeGraph to JSON for saving
+ */
+export function moleculeToJSON(molecule: MoleculeGraph | null): string {
+  if (!molecule) return JSON.stringify({ atoms: [], bonds: [] })
+  return JSON.stringify(MoleculeSerializer.toJSON(molecule))
+}
+
+/**
+ * Create MoleculeGraph from JSON
+ */
+export function moleculeFromJSON(jsonStr: string): MoleculeGraph | null {
+  try {
+    const data = JSON.parse(jsonStr)
+    return MoleculeSerializer.fromJSON(data)
+  } catch (error) {
+    console.error('Failed to parse molecule JSON:', error)
+    return null
+  }
+}
+
+/**
+ * Get thumbnail from canvas (base64)
+ */
+export function getCanvasThumbnail(): string | null {
+  const canvas = document.querySelector('canvas')
+  if (!canvas) return null
+  return canvas.toDataURL('image/png')
+}
+
+/**
  * Create a MoleculeGraph from renderable format
  * TODO: This function needs proper bond-to-atom mapping
  * Currently assumes bond.id contains atom IDs, which is incorrect

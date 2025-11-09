@@ -1,9 +1,12 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import MoleculeViewer from '../components/MoleculeViewer'
 import ToolPanel from '../components/ToolPanel'
 import AtomPalette from '../components/AtomPalette'
 import { useMoleculeStore } from '../store/moleculeStore'
+import { saveMolecule } from '../lib/api'
+import { moleculeToJSON, getCanvasThumbnail } from '../lib/engineAdapter'
+import { MoleculeSerializer } from '@biosynth/engine'
 
 export default function Dashboard(){
   const generateMolecule = useMoleculeStore((state) => state.generateMolecule)
@@ -11,6 +14,7 @@ export default function Dashboard(){
   const currentMolecule = useMoleculeStore((state) => state.currentMolecule)
   const backendPredictions = useMoleculeStore((state) => state.backendPredictions)
   const loadingState = useMoleculeStore((state) => state.loadingState)
+  const [saving, setSaving] = useState(false)
 
   // Auto-fetch predictions when molecule changes
   useEffect(() => {
@@ -21,6 +25,39 @@ export default function Dashboard(){
 
   const handleGenerate = async () => {
     await generateMolecule('Generate a new molecule')
+  }
+
+  const handleSave = async () => {
+    if (!currentMolecule) {
+      alert('No molecule to save')
+      return
+    }
+
+    const name = prompt('Enter molecule name:')
+    if (!name) return
+
+    setSaving(true)
+    try {
+      const jsonGraph = moleculeToJSON(currentMolecule)
+      const smiles = MoleculeSerializer.toSMILES(currentMolecule)
+      const thumbnail = getCanvasThumbnail()
+      const properties = backendPredictions ? JSON.stringify(backendPredictions) : null
+
+      await saveMolecule({
+        name,
+        smiles: smiles || undefined,
+        json_graph: jsonGraph,
+        properties: properties || undefined,
+        thumbnail_b64: thumbnail,
+      })
+
+      alert(`Molecule "${name}" saved successfully!`)
+    } catch (error) {
+      console.error('Failed to save molecule:', error)
+      alert('Failed to save molecule')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -40,7 +77,7 @@ export default function Dashboard(){
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="col-span-2 p-6 bg-panel rounded-lg shadow-elev-1"
+          className="col-span-2 p-8 bg-panel rounded-xl shadow-soft"
         >
           <h2 className="text-3xl font-bold">
             Design the Future of <span className="text-accent-blue">Molecular Science</span>
@@ -49,6 +86,18 @@ export default function Dashboard(){
             Generate, analyze, and optimize molecular structures with cutting-edge AI.
           </p>
           <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-text-primary">Molecule Lab</h3>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSave}
+                disabled={!currentMolecule || saving}
+                className="px-4 py-2 bg-accent-green text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Saving...' : '💾 Save Molecule'}
+              </motion.button>
+            </div>
             <MoleculeViewer/>
           </div>
           {backendPredictions && (
@@ -71,7 +120,7 @@ export default function Dashboard(){
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="p-6 bg-panel rounded-lg shadow-elev-1 space-y-4"
+          className="p-8 bg-panel rounded-xl shadow-soft space-y-4"
         >
           <motion.button
             whileHover={{ scale: 1.05 }}

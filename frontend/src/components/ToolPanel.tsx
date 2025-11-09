@@ -144,6 +144,3 @@ export default function ToolPanel() {
   )
 }
 
-// Import useHistoryStore
-import { useHistoryStore } from '../store/historyStore'
-

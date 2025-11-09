@@ -5,9 +5,10 @@ import AtomMesh from './r3f/AtomMesh'
 import BondMesh from './r3f/BondMesh'
 import { CanvasClickHandler } from './r3f/CanvasClickHandler'
 import { useMoleculeStore } from '../store/moleculeStore'
-import { moleculeToRenderable, removeAtom, removeBond } from '../lib/engineAdapter'
+import { moleculeToRenderable, removeAtom, removeBond, updateAtomPosition } from '../lib/engineAdapter'
 import { selectionManager } from './r3f/SelectionManager'
 import { useBondTool } from './r3f/BondTool'
+import { screenToWorld } from '../lib/raycasting'
 
 // Interaction layer component
 function InteractionLayer() {
@@ -40,7 +41,7 @@ function InteractionLayer() {
       const canvas = gl.domElement
       if (!canvas) return
 
-      // Convert screen to world coordinates
+      // Convert screen to world coordinates using plane at atom's Y position
       const worldPos = screenToWorld(
         {
           ...e,
@@ -52,8 +53,15 @@ function InteractionLayer() {
         atom.position[1] // Use atom's Y position as plane
       )
 
+      // Clamp position to reasonable bounds
+      const clampedPos: [number, number, number] = [
+        Math.max(-5, Math.min(5, worldPos.x)),
+        Math.max(-5, Math.min(5, worldPos.y)),
+        Math.max(-5, Math.min(5, worldPos.z)),
+      ]
+
       // Update atom position
-      updateAtomPosition(dragAtomId, [worldPos.x, worldPos.y, worldPos.z])
+      updateAtomPosition(dragAtomId, clampedPos)
     }
 
     window.addEventListener('pointermove', handlePointerMove)
@@ -140,9 +148,10 @@ export default function MoleculeViewer() {
         className="rounded-lg overflow-hidden bg-aluminum-light"
       >
         <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 12], fov: 45 }}>
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[5, 10, 7]} intensity={0.6} />
-          <Suspense fallback={null}>
+          <ambientLight intensity={0.3} />
+          <directionalLight position={[5, 10, 7]} intensity={1.2} castShadow />
+          <spotLight position={[-5, -10, -7]} intensity={0.6} />
+        <Suspense fallback={null}>
             {atoms.map((atom) => (
               <AtomMesh
                 key={atom.id}
@@ -162,9 +171,15 @@ export default function MoleculeViewer() {
             ))}
             <InteractionLayer />
             <CanvasClickHandler />
-          </Suspense>
-          <OrbitControls enablePan={tool === 'select'} enableZoom={true} enableRotate={true} />
-        </Canvas>
+        </Suspense>
+          <OrbitControls
+            enablePan={tool === 'select'} 
+            enableZoom={true} 
+            enableRotate={true}
+            enableDamping
+            dampingFactor={0.08}
+          />
+      </Canvas>
       </div>
       
       {/* Property badges */}

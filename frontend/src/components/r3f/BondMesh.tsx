@@ -55,11 +55,11 @@ export default function BondMesh({ id, from, to, order }: BondMeshProps) {
       onClick={handleClick}
       cursor={tool === 'delete' ? 'not-allowed' : 'pointer'}
     >
-      <cylinderGeometry args={[radius, radius, length, 16]} />
-      <meshStandardMaterial 
-        color={0x8f9aa3} 
-        metalness={0.8} 
-        roughness={0.4}
+      <cylinderGeometry args={[radius, radius, length, 32]} />
+      <meshPhysicalMaterial
+        color={0xaeb4bb}
+        roughness={0.25}
+        metalness={0.7}
       />
       {(isHovered || isSelected) && (
         <Outlines thickness={0.05} color={outlineColor} />

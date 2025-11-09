@@ -20,7 +20,7 @@
     "three": "0.159.0",
     "@react-three/fiber": "8.15.9",
     "@react-three/drei": "^9.122.0",
-    "@biosynth/engine": "workspace:*"
+    "@biosynth/engine": "file:../packages/engine"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
