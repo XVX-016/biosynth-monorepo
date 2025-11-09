@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "meta": {
+    "project": "BioSynth AI Monorepo",
+    "owner": "YOU",
+    "description": "Full-stack molecular design system with React + R3F frontend, TypeScript engine, and FastAPI + PyTorch backend."
+  },
+
+  "global": {
+    "goals": [
+      "Maintain consistent architecture across frontend, engine, and backend",
+      "Use TypeScript strictly with strong typing",
+      "Ensure that molecule engine logic and backend ML logic stay modular and separate",
+      "Respect the aluminium design system and UI tokens",
+      "Preserve folder structure and naming conventions"
+    ],
+    "prohibited_actions": [
+      "Do not rewrite entire files unless requested",
+      "Do not modify generated or vendor folders",
+      "Do not break API compatibility between frontend and backend",
+      "Never remove tests"
+    ]
+  },
+
+  "frontend": {
+    "path": "frontend",
+    "instructions": [
+      "Use React + TypeScript + Tailwind + Framer Motion",
+      "Use @react-three/fiber for all 3D rendering",
+      "UI components must follow the aluminium palette from tailwind.config.js",
+      "Prefer component composition over duplication",
+      "Always use Zustand for global state",
+      "Keep 3D logic separated from UI logic"
+    ],
+    "excluded_paths": [
+      "frontend/dist",
+      "frontend/node_modules"
+    ]
+  },
+
+  "engine": {
+    "path": "packages/engine",
+    "instructions": [
+      "Always maintain pure TypeScript with no React or Node-specific code",
+      "All functions must be deterministic and unit-testable",
+      "Never include rendering code here",
+      "Keep MoleculeGraph, ForceField, LayoutEngine modular"
+    ]
+  },
+
+  "backend": {
+    "path": "backend",
+    "instructions": [
+      "Use FastAPI for API endpoints",
+      "Use PyTorch 2.2 for ML models",
+      "Maintain separate modules for featurization, prediction, and generation",
+      "RDKit operations must be in isolated utility modules",
+      "Keep ONNX runtime logic separate from PyTorch logic"
+    ],
+    "excluded_paths": [
+      "backend/weights",
+      "backend/.venv"
+    ]
+  },
+
+  "testing": {
+    "instructions": [
+      "Use Vitest for frontend + engine tests",
+      "Use Pytest for backend",
+      "All newly generated code must include matching tests"
+    ]
+  },
+
+  "operations": {
+    "refactor": {
+      "allowed": true,
+      "notes": [
+        "Cursor must preserve function signatures unless explicitly told otherwise",
+        "Only refactor relevant modules, not the whole repo"
+      ]
+    }
+  }
+}
+
