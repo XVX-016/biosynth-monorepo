@@ -3,4 +3,5 @@ export * from "./types";
 export * from "./MoleculeGraph";
 export * from "./LayoutEngine";
 export * from "./UndoStack";
+export * from "./MoleculeSerializer";
 

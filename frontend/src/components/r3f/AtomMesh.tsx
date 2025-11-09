@@ -1,7 +1,12 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import * as THREE from 'three'
+import { useFrame } from '@react-three/fiber'
+import { Outlines } from '@react-three/drei'
+import { selectionManager } from './SelectionManager'
+import { useMoleculeStore } from '../../store/moleculeStore'
 
 interface AtomMeshProps {
+  id: string
   position: [number, number, number]
   element: 'C' | 'H' | 'O' | 'N' | 'F' | 'S' | 'P' | 'Cl' | 'Br' | 'I'
 }
@@ -32,18 +37,98 @@ const ELEMENT_COLORS: Record<string, number> = {
   I: 0x7c3aed,
 }
 
-export default function AtomMesh({ position, element }: AtomMeshProps) {
+export default function AtomMesh({ id, position, element }: AtomMeshProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const selectedAtomId = useMoleculeStore((state) => state.selectedAtomId)
+  
   const radius = ELEMENT_RADII[element] || 1.0
   const color = ELEMENT_COLORS[element] || 0x9da3ae
-  
+  const isSelected = selectedAtomId === id
+  const scale = isSelected ? 1.15 : 1.0
+  const opacity = isDragging ? 0.7 : 1.0
+
+  // Handle pointer over (hover)
+  const handlePointerOver = (e: React.PointerEvent) => {
+    e.stopPropagation()
+    setIsHovered(true)
+    selectionManager.onHover(id)
+  }
+
+  // Handle pointer out (unhover)
+  const handlePointerOut = (e: React.PointerEvent) => {
+    e.stopPropagation()
+    setIsHovered(false)
+    if (!isDragging) {
+      selectionManager.onHover(null)
+    }
+  }
+
+  // Handle click (select)
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    selectionManager.onSelect(id)
+  }
+
+  // Handle pointer down (start drag)
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation()
+    setIsDragging(true)
+    selectionManager.startDrag(id)
+    // Prevent orbit controls
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  // Handle pointer move (position updates handled by InteractionLayer)
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return
+    e.stopPropagation()
+    // Position updates are handled by InteractionLayer component
+    // which has access to camera and can properly convert coordinates
+  }
+
+  // Handle pointer up (end drag)
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (isDragging) {
+      e.stopPropagation()
+      setIsDragging(false)
+      selectionManager.endDrag()
+      ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
+    }
+  }
+
+  // Update position from store
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.position.set(...position)
+    }
+  })
+
   return (
-    <mesh position={position}>
+    <mesh
+      ref={meshRef}
+      position={position}
+      scale={scale}
+      onClick={handleClick}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      cursor={isDragging ? 'grabbing' : 'pointer'}
+    >
       <sphereGeometry args={[radius, 32, 32]} />
       <meshStandardMaterial 
         color={color} 
         metalness={0.9} 
-        roughness={0.35} 
+        roughness={0.35}
+        transparent={isDragging}
+        opacity={opacity}
       />
+      {(isHovered || isSelected) && (
+        <Outlines thickness={0.1} color={0x4EA7FF} />
+      )}
     </mesh>
   )
 }
