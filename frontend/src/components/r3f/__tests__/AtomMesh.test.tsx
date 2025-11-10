@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render } from '@testing-library/react';
 vi.mock('react-router-dom', () => {
   const React = require('react');
   return {
@@ -28,9 +28,9 @@ vi.mock('../../store/moleculeStore', () => {
 import AtomMesh from '../AtomMesh';
 
 describe('AtomMesh', () => {
-  it.skip('renders without throwing', () => {
-    const html = renderToString(<AtomMesh id="a1" position={[0,0,0]} element="C" />);
-    expect(typeof html).toBe('string');
+  it('renders without throwing', () => {
+    const { container } = render(<AtomMesh id="a1" position={[0,0,0]} element="C" />);
+    expect(container).toBeTruthy();
   });
 });
 
