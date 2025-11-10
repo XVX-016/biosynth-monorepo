@@ -36,4 +36,35 @@ afterEach(() => {
   } catch {}
 });
 
+// ========== Mock Zustand store for AtomMesh ==========
+vi.mock('../store/moleculeStore', () => ({
+  useMoleculeStore: vi.fn((selector?: any) => {
+    const base = {
+      selectedAtomId: null,
+      tool: 'select',
+      atoms: [],
+      bonds: [],
+      addAtom: vi.fn(),
+      removeAtom: vi.fn(),
+      reset: vi.fn(),
+    };
+    return selector ? selector(base) : base;
+  }),
+}));
+
+// ========== Mock useSyncExternalStore to prevent SSR/client renderer errors ==========
+vi.mock('react', async () => {
+  const actual = await vi.importActual<any>('react');
+  return {
+    ...actual,
+    useSyncExternalStore: (subscribe: any, getSnapshot: any) => {
+      try {
+        return getSnapshot();
+      } catch {
+        return {};
+      }
+    },
+  };
+});
+
 
