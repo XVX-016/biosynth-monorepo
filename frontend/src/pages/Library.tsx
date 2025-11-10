@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { listMolecules, getMolecule, deleteMolecule, MoleculeItem } from '../lib/api'
 import MoleculeCard from '../components/MoleculeCard'
 import { useMoleculeStore } from '../store/moleculeStore'
 import { moleculeFromJSON } from '../lib/engineAdapter'
+import { paginate } from '../lib/pagination'
 
 export default function Library() {
   const [items, setItems] = useState<MoleculeItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [q, setQ] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 12
   const setMolecule = useMoleculeStore((state) => state.setMolecule)
 
   useEffect(() => {
@@ -55,6 +59,18 @@ export default function Library() {
     }
   }
 
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase()
+    if (!query) return items
+    return items.filter(i => i.name.toLowerCase().includes(query) || (i.smiles || '').toLowerCase().includes(query))
+  }, [items, q])
+
+  const { data: paged, totalPages } = useMemo(() => paginate(filtered, page, pageSize), [filtered, page])
+  useEffect(() => {
+    // clamp page when filter changes
+    if (page > totalPages) setPage(1)
+  }, [totalPages])
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -62,29 +78,37 @@ export default function Library() {
       transition={{ duration: 0.3 }}
       className="p-8 space-y-6"
     >
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Molecule Library</h1>
+      <header className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-3xl font-bold text-text-primary truncate">Molecule Library</h1>
           <p className="text-text-secondary mt-1">Your saved molecular structures</p>
         </div>
-        <button
-          onClick={loadMolecules}
-          className="px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:opacity-90"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <input
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setPage(1); }}
+            placeholder="Search by name or SMILES..."
+            className="w-64 rounded-lg border border-aluminum-DEFAULT bg-aluminum-light px-3 py-2 outline-none focus:ring-2 focus:ring-accent-blue"
+          />
+          <button
+            onClick={loadMolecules}
+            className="px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:opacity-90"
+          >
+            Refresh
+          </button>
+        </div>
       </header>
 
       {loading ? (
         <div className="text-center py-12 text-text-secondary">Loading molecules...</div>
-      ) : items.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-text-secondary mb-4">No molecules saved yet</div>
-          <p className="text-text-tertiary">Create and save molecules in the Lab to see them here</p>
+          <div className="text-text-secondary mb-2">No results</div>
+          <p className="text-text-tertiary text-sm">Try clearing the search or saving molecules in the Lab</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {items.map((item) => (
+          {paged.map((item) => (
             <MoleculeCard
               key={item.id}
               item={item}
@@ -92,6 +116,29 @@ export default function Library() {
               onDelete={() => remove(item.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 rounded border border-aluminum-DEFAULT bg-panel disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <div className="text-sm text-text-secondary">
+            Page <span className="font-semibold text-text-primary">{page}</span> of {totalPages}
+          </div>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded border border-aluminum-DEFAULT bg-panel disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       )}
     </motion.div>

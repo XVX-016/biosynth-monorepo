@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { listMolecules } from '../lib/api';
+import { useProfileStore } from '../store/profileStore';
 
 export default function Profile() {
+	const name = useProfileStore((s) => s.name);
+	const setName = useProfileStore((s) => s.setName);
+	const load = useProfileStore((s) => s.loadFromStorage);
 	const [count, setCount] = useState(0);
 	useEffect(() => {
+		load();
 		let cancelled = false;
 		(async () => {
 			try {
-				const res = await listMolecules({ limit: 100 });
-				if (!cancelled) setCount(res.items?.length ?? 0);
+				const res = await listMolecules(100);
+				if (!cancelled) setCount(res?.length ?? 0);
 			} catch {
 				// ignore for now
 			}
@@ -17,6 +22,7 @@ export default function Profile() {
 			cancelled = true;
 		};
 	}, []);
+	const recentCount = useMemo(() => Math.min(count, 5), [count]);
 
 	return (
 		<div className="grid grid-cols-12 gap-4">
@@ -34,6 +40,8 @@ export default function Profile() {
 						<input
 							type="text"
 							placeholder="Your name"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
 							className="w-full rounded-lg border border-aluminum-DEFAULT bg-aluminum-light px-3 py-2 outline-none focus:ring-2 focus:ring-accent-blue"
 						/>
 					</div>
@@ -49,7 +57,7 @@ export default function Profile() {
 						</div>
 						<div className="rounded-xl border border-aluminum-DEFAULT bg-aluminum-light p-4">
 							<div className="text-sm text-text-secondary">Recent activity</div>
-							<div className="text-2xl font-bold">{Math.min(count, 5)}</div>
+							<div className="text-2xl font-bold">{recentCount}</div>
 						</div>
 					</div>
 				</div>
