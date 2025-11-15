@@ -65,7 +65,7 @@ export default function ToolPanel() {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="fixed left-4 top-1/2 -translate-y-1/2 z-50 bg-panel rounded-lg shadow-elev-1 p-3 space-y-2"
+      className="fixed left-4 top-1/2 -translate-y-1/2 z-50 frosted-glass rounded-lg shadow-glass border border-chrome/20 p-3 space-y-2 backdrop-blur-md"
     >
       {/* Tool buttons */}
       {tools.map((t) => (
@@ -76,8 +76,8 @@ export default function ToolPanel() {
           onClick={() => setTool(t.id)}
           className={`w-12 h-12 rounded-lg font-medium transition-all ${
             tool === t.id
-              ? 'bg-accent-blue text-white'
-              : 'bg-aluminum-DEFAULT text-text-primary hover:bg-aluminum-dark'
+              ? 'bg-plasma-neon text-ionBlack shadow-neon-sm'
+              : 'bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20'
           }`}
           title={`${t.label} (${t.hotkey})`}
         >
@@ -92,17 +92,17 @@ export default function ToolPanel() {
           animate={{ opacity: 1, height: 'auto' }}
           className="mt-2 space-y-1"
         >
-          <div className="text-xs text-text-secondary text-center mb-1">Bond Order</div>
+          <div className="text-xs text-chrome text-center mb-1">Bond Order</div>
           {[1, 2, 3].map((order) => (
             <motion.button
               key={order}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setBondOrder(order)}
-              className={`w-full px-2 py-1 text-xs rounded ${
+              className={`w-full px-2 py-1 text-xs rounded transition-all ${
                 currentBondOrder === order
-                  ? 'bg-accent-blue text-white'
-                  : 'bg-aluminum-DEFAULT text-text-primary'
+                  ? 'bg-plasma-neon text-ionBlack shadow-neon-sm'
+                  : 'bg-frostedGlass text-chrome hover:text-ivory border border-chrome/20'
               }`}
             >
               {order === 1 ? 'Single' : order === 2 ? 'Double' : 'Triple'}
@@ -112,16 +112,16 @@ export default function ToolPanel() {
       )}
 
       {/* Undo/Redo buttons */}
-      <div className="pt-2 border-t border-aluminum-dark space-y-1">
+      <div className="pt-2 border-t border-chrome/20 space-y-1">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={undo}
           disabled={!canUndo}
-          className={`w-12 h-10 rounded-lg text-sm ${
+          className={`w-12 h-10 rounded-lg text-sm transition-all ${
             canUndo
-              ? 'bg-aluminum-DEFAULT text-text-primary hover:bg-aluminum-dark'
-              : 'bg-aluminum-light text-text-tertiary cursor-not-allowed'
+              ? 'bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20'
+              : 'bg-frostedGlass/50 text-chrome/50 cursor-not-allowed border border-chrome/10'
           }`}
           title="Undo (Ctrl+Z)"
         >
@@ -132,10 +132,10 @@ export default function ToolPanel() {
           whileTap={{ scale: 0.95 }}
           onClick={redo}
           disabled={!canRedo}
-          className={`w-12 h-10 rounded-lg text-sm ${
+          className={`w-12 h-10 rounded-lg text-sm transition-all ${
             canRedo
-              ? 'bg-aluminum-DEFAULT text-text-primary hover:bg-aluminum-dark'
-              : 'bg-aluminum-light text-text-tertiary cursor-not-allowed'
+              ? 'bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20'
+              : 'bg-frostedGlass/50 text-chrome/50 cursor-not-allowed border border-chrome/10'
           }`}
           title="Redo (Ctrl+Y)"
         >
@@ -144,12 +144,14 @@ export default function ToolPanel() {
       </div>
 
       {/* Auto-bond toggle */}
-      <div className="pt-2 border-t border-aluminum-dark space-y-1">
-        <div className="text-xs text-text-secondary text-center">Auto-Bond</div>
+      <div className="pt-2 border-t border-chrome/20 space-y-1">
+        <div className="text-xs text-chrome text-center">Auto-Bond</div>
         <button
           onClick={() => setAutoBond(!autoBond)}
-          className={`w-24 mx-auto h-8 rounded-lg text-sm ${
-            autoBond ? 'bg-accent-blue text-white' : 'bg-aluminum-DEFAULT text-text-primary'
+          className={`w-24 mx-auto h-8 rounded-lg text-sm transition-all ${
+            autoBond 
+              ? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
+              : 'bg-frostedGlass text-chrome border border-chrome/20'
           }`}
           aria-pressed={autoBond}
           aria-label="Toggle auto-bond mode"

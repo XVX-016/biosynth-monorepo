@@ -28,10 +28,10 @@ export default function BondMesh({ id, from, to, order }: BondMeshProps) {
   
   const isSelected = selectedBondId === id
   const radius = order === 1 ? 0.14 : order === 2 ? 0.18 : 0.22
-  let outlineColor = 0x4EA7FF
+  let outlineColor = 0x8BF3FF // neonCyan for select/hover
   
   if (tool === 'delete' && (isHovered || isSelected)) {
-    outlineColor = 0xFF6B6B // Red for delete
+    outlineColor = 0xC6BDFE // violetEdge for delete
   }
   
   const handleClick = (e: React.MouseEvent) => {
@@ -57,11 +57,12 @@ export default function BondMesh({ id, from, to, order }: BondMeshProps) {
     >
       <cylinderGeometry args={[radius, radius, length, 48]} />
       <meshPhysicalMaterial
-        color={0xaeb4bb}
-        roughness={0.2}
-        metalness={0.6}
-        clearcoat={0.8}
-        clearcoatRoughness={0.15}
+        color={0xC0C5D2} // chrome color
+        roughness={0.1}
+        metalness={0.8}
+        clearcoat={1}
+        clearcoatRoughness={0.05}
+        envMapIntensity={1.5}
       />
       {(isHovered || isSelected) && (
         <Outlines thickness={0.05} color={outlineColor} />

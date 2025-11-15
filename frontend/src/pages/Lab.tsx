@@ -41,12 +41,12 @@ export default function Lab() {
 	return (
 		<div className="grid grid-cols-12 gap-4">
 			<div className="col-span-12 lg:col-span-3">
-				<div className="bg-panel rounded-xl shadow-soft border border-aluminum-DEFAULT p-4">
+				<div className="frosted-glass rounded-xl shadow-glass border border-chrome/20 p-4">
 					<ToolPanel />
 				</div>
 			</div>
 			<div className="col-span-12 lg:col-span-6">
-				<div className="relative bg-panel rounded-xl shadow-soft border border-aluminum-DEFAULT p-2 h-[70vh] lg:h-[78vh]">
+				<div className="relative frosted-glass rounded-xl shadow-glass border border-chrome/20 p-2 h-[70vh] lg:h-[78vh] bg-spaceGrey">
 					<MoleculeViewer />
 					<div className="absolute bottom-3 right-3">
 						<Button onClick={handleSave} disabled={!molecule || saving}>
@@ -56,7 +56,7 @@ export default function Lab() {
 				</div>
 			</div>
 			<div className="col-span-12 lg:col-span-3">
-				<div className="bg-panel rounded-xl shadow-soft border border-aluminum-DEFAULT p-4">
+				<div className="frosted-glass rounded-xl shadow-glass border border-chrome/20 p-4">
 					<PropertiesPanel />
 				</div>
 			</div>

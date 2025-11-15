@@ -12,13 +12,13 @@ export default function Card({ header, footer, children, className }: CardProps)
 	return (
 		<section
 			className={clsx(
-				'bg-panel rounded-xl shadow-soft border border-aluminum-DEFAULT',
+				'frosted-glass rounded-xl shadow-glass border border-chrome/20',
 				className
 			)}
 		>
-			{header && <div className="px-5 py-4 border-b border-aluminum-DEFAULT">{header}</div>}
-			<div className="px-5 py-4">{children}</div>
-			{footer && <div className="px-5 py-4 border-t border-aluminum-DEFAULT">{footer}</div>}
+			{header && <div className="px-5 py-4 border-b border-chrome/20">{header}</div>}
+			<div className="px-5 py-4 text-ivory">{children}</div>
+			{footer && <div className="px-5 py-4 border-t border-chrome/20">{footer}</div>}
 		</section>
 	);
 }

@@ -111,3 +111,97 @@ export async function deleteMolecule(id: number): Promise<{ status: string; id: 
   return response.data
 }
 
+/**
+ * Admin Items API
+ */
+export interface Item {
+  id: number
+  name: string
+  smiles?: string
+  description?: string
+  tags?: string[]
+  status: 'in-stock' | 'sold-out' | 'archived'
+  stock?: number
+  structure_file_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateItemPayload {
+  name: string
+  smiles?: string
+  description?: string
+  tags?: string[]
+  status?: 'in-stock' | 'sold-out' | 'archived'
+  stock?: number
+  structure_file?: File | null
+}
+
+export interface UpdateItemPayload extends Partial<CreateItemPayload> {}
+
+/**
+ * List all items
+ */
+export async function listItems(): Promise<Item[]> {
+  const response = await apiClient.get<Item[]>('/api/v1/admin/items')
+  return response.data
+}
+
+/**
+ * Get item by ID
+ */
+export async function getItem(id: number): Promise<Item> {
+  const response = await apiClient.get<Item>(`/api/v1/admin/items/${id}`)
+  return response.data
+}
+
+/**
+ * Create item
+ */
+export async function createItem(payload: CreateItemPayload): Promise<Item> {
+  const formData = new FormData()
+  formData.append('name', payload.name)
+  if (payload.smiles) formData.append('smiles', payload.smiles)
+  if (payload.description) formData.append('description', payload.description)
+  if (payload.tags) formData.append('tags', JSON.stringify(payload.tags))
+  if (payload.status) formData.append('status', payload.status)
+  if (payload.stock !== undefined) formData.append('stock', payload.stock.toString())
+  if (payload.structure_file) formData.append('structure_file', payload.structure_file)
+  
+  const response = await apiClient.post<Item>('/api/v1/admin/items', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return response.data
+}
+
+/**
+ * Update item
+ */
+export async function updateItem(id: number, payload: UpdateItemPayload): Promise<Item> {
+  const formData = new FormData()
+  if (payload.name) formData.append('name', payload.name)
+  if (payload.smiles !== undefined) formData.append('smiles', payload.smiles || '')
+  if (payload.description !== undefined) formData.append('description', payload.description || '')
+  if (payload.tags) formData.append('tags', JSON.stringify(payload.tags))
+  if (payload.status) formData.append('status', payload.status)
+  if (payload.stock !== undefined) formData.append('stock', payload.stock.toString())
+  if (payload.structure_file) formData.append('structure_file', payload.structure_file)
+  
+  const response = await apiClient.put<Item>(`/api/v1/admin/items/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return response.data
+}
+
+/**
+ * Delete item
+ */
+export async function deleteItem(id: number): Promise<{ status: string; id: number }> {
+  const response = await apiClient.delete(`/api/v1/admin/items/${id}`)
+  return response.data
+}
+

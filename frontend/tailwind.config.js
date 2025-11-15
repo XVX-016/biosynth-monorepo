@@ -7,34 +7,53 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Primary Colors
+        chrome: '#C0C5D2',
+        ivory: '#F6F7F8',
+        spaceGrey: '#2B2E33',
+        ionBlack: '#0F1115',
+        frostedGlass: 'rgba(255,255,255,0.06)',
+        
+        // Accents
+        neonCyan: '#8BF3FF',
+        plasmaTeal: '#3BC7C9',
+        violetEdge: '#C6BDFE',
+        
+        // Legacy aliases for gradual migration
         aluminum: {
-          light: '#F5F5F7',
-          DEFAULT: '#E5E7EA',
-          dark: '#C9CCD1',
+          light: '#F6F7F8',
+          DEFAULT: '#C0C5D2',
+          dark: '#2B2E33',
         },
         panel: {
-          DEFAULT: '#FFFFFF',
-          soft: '#F8F9FA',
+          DEFAULT: 'rgba(255,255,255,0.06)',
+          soft: 'rgba(255,255,255,0.03)',
         },
         accent: {
-          blue: '#4EA7FF',
-          green: '#6EE787',
-          red: '#FF6B6B',
+          cyan: '#8BF3FF',
+          teal: '#3BC7C9',
+          violet: '#C6BDFE',
         },
         text: {
-          primary: '#1A1A1C',
-          secondary: '#5C5C5F',
-          tertiary: '#9A9A9E',
+          primary: '#F6F7F8',
+          secondary: '#C0C5D2',
+          tertiary: '#2B2E33',
         },
+      },
+      backgroundImage: {
+        'chrome-gradient': 'linear-gradient(135deg, #E3E6EB, #C0C5D2)',
+        'ivory-gradient': 'linear-gradient(135deg, #FFFFFF, #F6F7F8)',
+        'plasma-neon': 'linear-gradient(135deg, #3BC7C9, #8BF3FF)',
       },
       borderRadius: {
         xl: '22px',
         lg: '18px',
       },
       boxShadow: {
-        soft: '0 4px 24px rgba(0,0,0,0.06)',
-        'elev-1': '0 2px 4px rgba(0,0,0,0.06), 0 8px 20px rgba(0,0,0,0.04)',
-        inset: 'inset 0 2px 4px rgba(0,0,0,0.06)',
+        chrome: '0 4px 6px -1px rgba(192, 197, 210, 0.1), 0 2px 4px -1px rgba(192, 197, 210, 0.06)',
+        glass: '0 8px 32px 0 rgba(15, 17, 21, 0.37)',
+        neon: '0 0 20px rgba(139, 243, 255, 0.3)',
+        'neon-sm': '0 0 10px rgba(139, 243, 255, 0.2)',
       },
     },
   },

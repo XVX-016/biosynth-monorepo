@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from backend.routes import predict as predict_router
 from backend.routes import generate as generate_router
 from backend.routes import library as library_router
+from backend.routes import admin as admin_router
 from backend.db import init_db
 
 app = FastAPI(title="BioSynth AI Backend", version="0.1.0")
@@ -14,6 +15,7 @@ init_db()
 app.include_router(predict_router.router, prefix="/predict", tags=["predict"])
 app.include_router(generate_router.router, prefix="/generate", tags=["generate"])
 app.include_router(library_router.router, tags=["molecules"])
+app.include_router(admin_router.router, tags=["admin"])
 
 
 class PredictFastIn(BaseModel):

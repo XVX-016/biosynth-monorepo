@@ -145,12 +145,13 @@ export default function MoleculeViewer() {
     <div className="relative">
       <div
         style={{ height: 420, cursor }}
-        className="rounded-lg overflow-hidden bg-aluminum-light"
+        className="rounded-lg overflow-hidden bg-spaceGrey"
       >
         <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 12], fov: 45 }}>
-          <ambientLight intensity={0.25} />
-          <directionalLight position={[5, 10, 7]} intensity={1.0} castShadow />
-          <hemisphereLight intensity={0.35} groundColor={0x888888 as any} />
+          {/* Cold white/ivory lighting - NO blue */}
+          <ambientLight intensity={0.4} color="#F6F7F8" />
+          <directionalLight position={[5, 10, 7]} intensity={1.2} color="#FFFFFF" castShadow />
+          <hemisphereLight intensity={0.35} groundColor={0x2B2E33 as any} skyColor={0xF6F7F8 as any} />
         <Suspense fallback={null}>
             {atoms.map((atom) => (
               <AtomMesh
@@ -171,10 +172,10 @@ export default function MoleculeViewer() {
             ))}
             <InteractionLayer />
             <CanvasClickHandler />
-            <ContactShadows opacity={0.3} blur={2.5} far={12} resolution={256} color="#000000" />
+            <ContactShadows opacity={0.2} blur={2.5} far={12} resolution={256} color="#0F1115" />
         </Suspense>
-          {/* Use Environment if available; fallback is lights above */}
-          <Environment preset="city" />
+          {/* Chrome-like environment with cold white reflections */}
+          <Environment preset="city" environmentIntensity={0.8} />
           <OrbitControls
             enablePan={tool === 'select'} 
             enableZoom={true} 
@@ -214,12 +215,12 @@ function PropertyBadge({
     if (!atom) return null
 
     return (
-      <div className="absolute bottom-4 left-4 bg-panel rounded-lg shadow-elev-1 p-3 text-sm">
-        <div className="font-semibold text-text-primary mb-1">Atom: {atom.element}</div>
-        <div className="text-text-secondary">
+      <div className="absolute bottom-4 left-4 frosted-glass rounded-lg shadow-glass border border-chrome/20 p-3 text-sm backdrop-blur-md">
+        <div className="font-semibold text-ivory mb-1">Atom: {atom.element}</div>
+        <div className="text-chrome">
           Position: ({atom.position[0].toFixed(2)}, {atom.position[1].toFixed(2)}, {atom.position[2].toFixed(2)})
         </div>
-        <div className="text-text-secondary">
+        <div className="text-chrome/70">
           ID: {atom.id}
         </div>
       </div>
@@ -240,14 +241,14 @@ function PropertyBadge({
     const length = Math.sqrt(dx * dx + dy * dy + dz * dz)
 
     return (
-      <div className="absolute bottom-4 left-4 bg-panel rounded-lg shadow-elev-1 p-3 text-sm">
-        <div className="font-semibold text-text-primary mb-1">
+      <div className="absolute bottom-4 left-4 frosted-glass rounded-lg shadow-glass border border-chrome/20 p-3 text-sm backdrop-blur-md">
+        <div className="font-semibold text-ivory mb-1">
           Bond: {bond.order === 1 ? 'Single' : bond.order === 2 ? 'Double' : 'Triple'}
         </div>
-        <div className="text-text-secondary">
+        <div className="text-chrome">
           Length: {length.toFixed(2)} Å
         </div>
-        <div className="text-text-secondary">
+        <div className="text-chrome">
           Between: {atom1.element} - {atom2.element}
         </div>
       </div>

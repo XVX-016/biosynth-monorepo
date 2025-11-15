@@ -10,7 +10,7 @@ export default function Panel({ children, className }: PanelProps) {
 	return (
 		<div
 			className={clsx(
-				'bg-panel rounded-xl shadow-soft border border-aluminum-DEFAULT p-4',
+				'frosted-glass rounded-xl shadow-glass border border-chrome/20 p-4 text-ivory',
 				className
 			)}
 		>

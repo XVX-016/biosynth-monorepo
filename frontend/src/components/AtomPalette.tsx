@@ -29,9 +29,9 @@ export default function AtomPalette() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="fixed left-20 top-4 z-50 bg-panel rounded-lg shadow-elev-1 p-3"
+        className="fixed left-20 top-4 z-50 frosted-glass rounded-lg shadow-glass border border-chrome/20 p-3 backdrop-blur-md"
       >
-        <div className="text-xs text-text-secondary mb-2">Select Element</div>
+        <div className="text-xs text-chrome mb-2">Select Element</div>
         <div className="grid grid-cols-5 gap-2">
           {ELEMENTS.map((el) => (
             <motion.button
@@ -41,7 +41,7 @@ export default function AtomPalette() {
               onClick={() => setAtomToAdd(el.element)}
               className={`w-10 h-10 rounded-lg font-semibold text-white transition-all ${
                 atomToAdd === el.element
-                  ? 'ring-2 ring-accent-blue ring-offset-2'
+                  ? 'ring-2 ring-neonCyan ring-offset-2 shadow-neon-sm'
                   : ''
               }`}
               style={{ backgroundColor: el.color }}

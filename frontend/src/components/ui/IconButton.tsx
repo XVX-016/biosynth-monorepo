@@ -11,7 +11,7 @@ export default function IconButton({ className, children, ...rest }: IconButtonP
 			type="button"
 			{...rest}
 			className={clsx(
-				'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-aluminum-DEFAULT bg-panel text-text-secondary hover:text-text-primary hover:bg-aluminum-light focus:outline-none focus:ring-2 focus:ring-accent-blue',
+				'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-chrome/20 bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 focus:outline-none focus:ring-2 focus:ring-neonCyan/50 transition-all',
 				className
 			)}
 		>

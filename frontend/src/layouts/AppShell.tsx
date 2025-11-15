@@ -16,7 +16,7 @@ export default function AppShell({ children }: AppShellProps) {
 	const RLink = (props: any) => React.createElement(Link as any, props);
 
 	return (
-		<div className="min-h-screen bg-aluminum-light text-text-primary">
+		<div className="min-h-screen bg-ionBlack text-ivory">
 			<Navbar onToggleMenu={() => setMobileOpen((v) => !v)} />
 			<div className="flex">
 				<aside
@@ -25,13 +25,15 @@ export default function AppShell({ children }: AppShellProps) {
 					} sm:block w-64 shrink-0`}
 					aria-label="Sidebar"
 				>
-					<div className="sticky top-0 sm:top-16 sm:h-[calc(100vh-4rem)] bg-panel border-r border-aluminum-DEFAULT shadow-soft">
+					<div className="sticky top-0 sm:top-16 sm:h-[calc(100vh-4rem)] frosted-glass border-r border-chrome/20 shadow-glass backdrop-blur-md">
 						<nav className="p-4 space-y-1">
 							<RLink
 								to="/"
 								onClick={() => setMobileOpen(false)}
-								className={`block px-3 py-2 rounded-lg transition-colors ${
-									isActive('/', true) ? 'bg-aluminum-light text-text-primary' : 'text-text-secondary hover:text-text-primary'
+								className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+									isActive('/', true) 
+										? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
+										: 'text-chrome hover:text-ivory hover:bg-frostedGlass'
 								}`}
 							>
 								Dashboard
@@ -39,8 +41,10 @@ export default function AppShell({ children }: AppShellProps) {
 							<RLink
 								to="/lab"
 								onClick={() => setMobileOpen(false)}
-								className={`block px-3 py-2 rounded-lg transition-colors ${
-									isActive('/lab') ? 'bg-aluminum-light text-text-primary' : 'text-text-secondary hover:text-text-primary'
+								className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+									isActive('/lab') 
+										? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
+										: 'text-chrome hover:text-ivory hover:bg-frostedGlass'
 								}`}
 							>
 								Lab
@@ -48,8 +52,10 @@ export default function AppShell({ children }: AppShellProps) {
 							<RLink
 								to="/library"
 								onClick={() => setMobileOpen(false)}
-								className={`block px-3 py-2 rounded-lg transition-colors ${
-									isActive('/library') ? 'bg-aluminum-light text-text-primary' : 'text-text-secondary hover:text-text-primary'
+								className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+									isActive('/library') 
+										? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
+										: 'text-chrome hover:text-ivory hover:bg-frostedGlass'
 								}`}
 							>
 								Library
@@ -57,8 +63,10 @@ export default function AppShell({ children }: AppShellProps) {
 							<RLink
 								to="/profile"
 								onClick={() => setMobileOpen(false)}
-								className={`block px-3 py-2 rounded-lg transition-colors ${
-									isActive('/profile') ? 'bg-aluminum-light text-text-primary' : 'text-text-secondary hover:text-text-primary'
+								className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+									isActive('/profile') 
+										? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
+										: 'text-chrome hover:text-ivory hover:bg-frostedGlass'
 								}`}
 							>
 								Profile

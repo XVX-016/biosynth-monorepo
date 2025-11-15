@@ -48,13 +48,13 @@ export default function AtomMesh({ id, position, element }: AtomMeshProps) {
   const color = ELEMENT_COLORS[element] || 0x9da3ae
   const isSelected = selectedAtomId === id
   
-  // Visual feedback based on tool
+  // Visual feedback based on tool - using neonCyan for selection
   let scale = isSelected ? 1.15 : 1.0
-  let outlineColor = 0x4EA7FF // Blue for select/hover
+  let outlineColor = 0x8BF3FF // neonCyan for select/hover
   if (tool === 'delete' && (isHovered || isSelected)) {
-    outlineColor = 0xFF6B6B // Red for delete
+    outlineColor = 0xC6BDFE // violetEdge for delete
   } else if (tool === 'bond' && (isHovered || isSelected)) {
-    outlineColor = 0x4EA7FF // Blue for bond
+    outlineColor = 0x8BF3FF // neonCyan for bond
   }
   
   const opacity = isDragging ? 0.7 : 1.0
@@ -141,13 +141,14 @@ export default function AtomMesh({ id, position, element }: AtomMeshProps) {
       <sphereGeometry args={[radius, segments, segments]} />
       <meshPhysicalMaterial
         color={color}
-        roughness={0.15}
-        metalness={0.6}
+        roughness={0.1}
+        metalness={0.8}
         clearcoat={1}
-        clearcoatRoughness={0.1}
+        clearcoatRoughness={0.05}
         thickness={0.8}
         transparent={isDragging}
         opacity={opacity}
+        envMapIntensity={1.5}
       />
       {(isHovered || isSelected) && (
         <Outlines thickness={0.1} color={outlineColor} />
