@@ -1,0 +1,55 @@
+.template-panel {
+  @apply w-full;
+}
+
+.template-panel-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+.template-panel-title {
+  @apply text-lg font-bold text-ivory;
+}
+
+.template-panel-toggle {
+  @apply text-chrome hover:text-ivory transition-colors cursor-pointer;
+  @apply bg-transparent border-none p-1;
+}
+
+.template-panel-content {
+  @apply overflow-hidden;
+}
+
+.template-panel-search {
+  @apply mb-4;
+}
+
+.template-panel-search-input {
+  @apply w-full px-3 py-2 rounded-lg;
+  @apply bg-ionBlack/50 border border-chrome/30;
+  @apply text-ivory placeholder-spaceGrey;
+  @apply focus:outline-none focus:border-neonCyan/50 focus:ring-2 focus:ring-neonCyan/20;
+  @apply transition-all duration-200;
+}
+
+.template-panel-categories {
+  @apply max-h-96 overflow-y-auto;
+  @apply pr-2;
+}
+
+.template-panel-categories::-webkit-scrollbar {
+  @apply w-2;
+}
+
+.template-panel-categories::-webkit-scrollbar-track {
+  @apply bg-ionBlack/30 rounded;
+}
+
+.template-panel-categories::-webkit-scrollbar-thumb {
+  @apply bg-chrome/40 rounded hover:bg-chrome/60;
+}
+
+.template-panel-empty {
+  @apply text-center text-spaceGrey py-8;
+  @apply text-sm;
+}
+

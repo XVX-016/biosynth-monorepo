@@ -1,42 +1,86 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { getTemplates } from '../../kernel/templateLoader';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getTemplates, loadTemplate, placeTemplate } from '../../kernel/templateLoader';
 import { useTemplateToolStore } from '../../store/templateTool.store';
-import Button from '../ui/Button';
+import { useUIStore } from '../../store/uiStore';
+import { TemplateCategory } from './TemplateCategory';
+import './TemplatePanel.css';
 
-type TemplateCategory = 'all' | 'rings' | 'groups' | 'atoms';
+type TemplateCategoryType = 'rings' | 'groups' | 'atoms' | 'common';
+
+interface TemplateWithCategory {
+  id: string;
+  name: string;
+  category: TemplateCategoryType;
+}
+
+// Categorize templates
+const categorizeTemplate = (templateId: string): TemplateCategoryType => {
+  if (templateId === 'benzene') return 'rings';
+  if (['water', 'ethanol'].includes(templateId)) return 'groups';
+  if (templateId === 'methane') return 'atoms';
+  return 'common';
+};
+
+// Simple fuzzy search
+const fuzzyMatch = (text: string, query: string): boolean => {
+  const textLower = text.toLowerCase();
+  const queryLower = query.toLowerCase();
+  
+  // Exact match
+  if (textLower.includes(queryLower)) return true;
+  
+  // Character sequence match (fuzzy)
+  let textIndex = 0;
+  for (let i = 0; i < queryLower.length; i++) {
+    const char = queryLower[i];
+    const foundIndex = textLower.indexOf(char, textIndex);
+    if (foundIndex === -1) return false;
+    textIndex = foundIndex + 1;
+  }
+  return true;
+};
 
 export const TemplatePanel: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all');
   const templates = getTemplates();
   const { startTemplateDrag, stopTemplateDrag } = useTemplateToolStore();
+  const { templatePanelExpanded, toggleTemplatePanel } = useUIStore();
 
-  // Filter templates based on search and category
+  // Add categories to templates
+  const templatesWithCategories = useMemo<TemplateWithCategory[]>(() => {
+    return templates.map((t) => ({
+      id: t.id,
+      name: t.name,
+      category: categorizeTemplate(t.id),
+    }));
+  }, [templates]);
+
+  // Filter templates based on search
   const filteredTemplates = useMemo(() => {
-    let filtered = templates;
+    if (!searchQuery.trim()) return templatesWithCategories;
 
-    // Category filter
-    if (activeCategory === 'rings') {
-      filtered = filtered.filter((t) => t.id === 'benzene');
-    } else if (activeCategory === 'groups') {
-      filtered = filtered.filter((t) => ['water', 'ethanol'].includes(t.id));
-    } else if (activeCategory === 'atoms') {
-      filtered = filtered.filter((t) => t.id === 'methane');
-    }
+    const query = searchQuery.trim();
+    return templatesWithCategories.filter((t) =>
+      fuzzyMatch(t.name, query) || fuzzyMatch(t.id, query)
+    );
+  }, [templatesWithCategories, searchQuery]);
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.name.toLowerCase().includes(query) ||
-          t.id.toLowerCase().includes(query)
-      );
-    }
+  // Group by category
+  const templatesByCategory = useMemo(() => {
+    const grouped: Record<TemplateCategoryType, TemplateWithCategory[]> = {
+      rings: [],
+      groups: [],
+      atoms: [],
+      common: [],
+    };
 
-    return filtered;
-  }, [templates, searchQuery, activeCategory]);
+    filteredTemplates.forEach((template) => {
+      grouped[template.category].push(template);
+    });
+
+    return grouped;
+  }, [filteredTemplates]);
 
   const handleDragStart = (e: React.DragEvent, templateId: string) => {
     e.dataTransfer.effectAllowed = 'copy';
@@ -48,83 +92,86 @@ export const TemplatePanel: React.FC = () => {
     stopTemplateDrag();
   };
 
-  const categories: Array<{ id: TemplateCategory; label: string }> = [
-    { id: 'all', label: 'All' },
-    { id: 'rings', label: 'Rings' },
-    { id: 'groups', label: 'Functional Groups' },
-    { id: 'atoms', label: 'Core Atoms' },
-  ];
+  const handleTemplateClick = (templateId: string) => {
+    const template = loadTemplate(templateId);
+    if (template) {
+      placeTemplate(template, { x: 0, y: 0, z: 0 });
+    }
+  };
 
   return (
-    <div className="p-4 bg-frostedGlass rounded-lg border border-chrome/30 w-full">
-      <h3 className="text-lg font-bold mb-3 text-ivory">Templates</h3>
-
-      {/* Search Bar */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search templates..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-ionBlack/50 border border-chrome/30 text-ivory placeholder-spaceGrey focus:outline-none focus:border-neonCyan/50 focus:ring-2 focus:ring-neonCyan/20"
-        />
+    <div className="template-panel">
+      {/* Header with collapse button */}
+      <div className="template-panel-header">
+        <h3 className="template-panel-title">Templates</h3>
+        <button
+          onClick={toggleTemplatePanel}
+          className="template-panel-toggle"
+          aria-label={templatePanelExpanded ? 'Collapse' : 'Expand'}
+        >
+          {templatePanelExpanded ? '▼' : '▶'}
+        </button>
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`px-3 py-1 rounded text-sm font-medium transition-all ${
-              activeCategory === cat.id
-                ? 'bg-chrome text-spaceGrey border border-neonCyan/50'
-                : 'bg-ionBlack/30 text-ivory border border-chrome/20 hover:border-chrome/40'
-            }`}
+      <AnimatePresence>
+        {templatePanelExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="template-panel-content"
           >
-            {cat.label}
-          </button>
-        ))}
-      </div>
+            {/* Search Bar */}
+            <div className="template-panel-search">
+              <input
+                type="text"
+                placeholder="Search templates..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="template-panel-search-input"
+              />
+            </div>
 
-      {/* Template Grid */}
-      <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
-        {filteredTemplates.length === 0 ? (
-          <div className="col-span-2 text-center text-spaceGrey py-4">
-            No templates found
-          </div>
-        ) : (
-          filteredTemplates.map((template) => (
-            <motion.div
-              key={template.id}
-              draggable
-              data-template-id={template.id}
-              onDragStart={(e) => handleDragStart(e as any, template.id)}
-              onDragEnd={handleDragEnd}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="cursor-grab active:cursor-grabbing"
-            >
-              <Button
-                variant="secondary"
-                className="w-full text-left justify-start"
-                onClick={() => {
-                  // Click handler can also trigger template placement
-                  // This will be handled by the drag-drop system
-                }}
-              >
-                <div className="flex flex-col items-start">
-                  <span className="font-semibold text-ivory">{template.name}</span>
-                  <span className="text-xs text-spaceGrey mt-1">
-                    {template.id}
-                  </span>
-                </div>
-              </Button>
-            </motion.div>
-          ))
+            {/* Template Categories */}
+            <div className="template-panel-categories">
+              <TemplateCategory
+                title="Rings"
+                templates={templatesByCategory.rings}
+                onTemplateClick={handleTemplateClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              />
+              <TemplateCategory
+                title="Functional Groups"
+                templates={templatesByCategory.groups}
+                onTemplateClick={handleTemplateClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              />
+              <TemplateCategory
+                title="Core Atoms"
+                templates={templatesByCategory.atoms}
+                onTemplateClick={handleTemplateClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              />
+              <TemplateCategory
+                title="Common"
+                templates={templatesByCategory.common}
+                onTemplateClick={handleTemplateClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              />
+            </div>
+
+            {filteredTemplates.length === 0 && (
+              <div className="template-panel-empty">
+                No templates found
+              </div>
+            )}
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
-

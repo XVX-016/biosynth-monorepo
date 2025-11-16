@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MoleculeViewer from '../components/MoleculeViewer';
 import ToolPanel from '../components/ToolPanel';
 import PropertiesPanel from '../components/PropertiesPanel';
+import { TemplatePanel } from '../components/TemplatePanel';
 import Button from '../components/ui/Button';
 import { useMoleculeStore } from '../store/moleculeStore';
 import { saveMolecule } from '../lib/api';
@@ -40,9 +41,12 @@ export default function Lab() {
 
 	return (
 		<div className="grid grid-cols-12 gap-4">
-			<div className="col-span-12 lg:col-span-3">
+			<div className="col-span-12 lg:col-span-3 space-y-4">
 				<div className="frosted-glass rounded-xl shadow-glass border border-chrome/20 p-4">
 					<ToolPanel />
+				</div>
+				<div className="frosted-glass rounded-xl shadow-glass border border-chrome/20 p-4">
+					<TemplatePanel />
 				</div>
 			</div>
 			<div className="col-span-12 lg:col-span-6">
