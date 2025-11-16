@@ -146,25 +146,6 @@ The UI follows the **BioSynth Aluminium** design system:
   }
   ```
 
-## Development Guidelines
-
-See `cursor.json` for detailed coding standards:
-
-- **Frontend**: React + TypeScript + Tailwind + Framer Motion, R3F for 3D
-- **Engine**: Pure TypeScript, deterministic functions, unit-testable
-- **Backend**: FastAPI, modular ML models, RDKit in utils
-- **Testing**: Vitest (frontend/engine), Pytest (backend)
-- **Type Safety**: Strong typing required, no `any` types
-
-## Next Steps
-
-1. Implement full molecular engine features (force field, SMILES export)
-2. Add ML model training scripts
-3. Implement molecule generator (Transformer-based)
-4. Add ONNX export for production inference
-5. Set up CI/CD pipeline
-6. Add comprehensive documentation
-
 ## License
 
 Private - All Rights Reserved
