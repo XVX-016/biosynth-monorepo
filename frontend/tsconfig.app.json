@@ -5,7 +5,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "types": ["vite/client"],
+    "types": ["vite/client", "vitest/globals", "node"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -17,8 +17,11 @@
     "jsx": "react-jsx",
 
     /* Paths */
+    "baseUrl": ".",
     "paths": {
-      "vite": ["./node_modules/vite"]
+      "vite": ["./node_modules/vite"],
+      "@/*": ["src/*"],
+      "@biosynth/engine/*": ["../packages/engine/src/*"]
     },
 
     /* Linting */
