@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useMoleculeStore } from '../../store/moleculeStore'
-import { addBond } from '../../lib/engineAdapter'
+import { createBondSafe } from '../../kernel/bonds'
+import { pushState } from '../../store/historyStore'
 
 /**
  * BondTool - Handles bond creation between selected atoms
@@ -59,8 +60,19 @@ export function useBondTool() {
     )
 
     if (!existingBond) {
-      // Create bond with current bond order
-      addBond(atom1, atom2, currentBondOrder)
+      // Create bond using kernel function with validation
+      const bondId = createBondSafe(
+        currentMolecule,
+        atom1,
+        atom2,
+        currentBondOrder as 1 | 2 | 3
+      )
+      if (bondId) {
+        // Update store with cloned molecule
+        const cloned = currentMolecule.clone()
+        useMoleculeStore.getState().setMolecule(cloned)
+        pushState()
+      }
     }
 
     // Reset after bond creation

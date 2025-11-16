@@ -22,12 +22,23 @@ describe('valence helpers', () => {
       element: 'C',
       position: [1.4, 0, 0],
     };
-    // Both have full valence available
+    // Both have full valence available - defaults to single bond (conservative)
     expect(suggestBondOrder(a, b, [])).toBe(1);
     
-    // One has limited valence
-    const bonds = [{ a1: 'a1', a2: 'other', order: 3 }];
-    expect(suggestBondOrder(a, b, bonds)).toBe(1); // a has 1 remaining, b has 4
+    // When both atoms have limited remaining valence, suggest higher order
+    const bonds = [
+      { a1: 'a1', a2: 'other1', order: 2 },
+      { a1: 'a2', a2: 'other2', order: 2 },
+    ];
+    // Both have 2 remaining, so can form double bond
+    expect(suggestBondOrder(a, b, bonds)).toBe(2);
+    
+    // Triple bond case: both have exactly 3 remaining
+    const tripleBonds = [
+      { a1: 'a1', a2: 'other1', order: 1 },
+      { a1: 'a2', a2: 'other2', order: 1 },
+    ];
+    expect(suggestBondOrder(a, b, tripleBonds)).toBe(3);
   });
 
   it('should form bond when in threshold and valence available', () => {

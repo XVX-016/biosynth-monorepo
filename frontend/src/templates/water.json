@@ -1,0 +1,12 @@
+{
+  "atoms": [
+    { "element": "O", "coords": { "x": 0, "y": 0, "z": 0 } },
+    { "element": "H", "coords": { "x": 0.96, "y": 0.3, "z": 0 } },
+    { "element": "H", "coords": { "x": -0.96, "y": 0.3, "z": 0 } }
+  ],
+  "bonds": [
+    { "a": 0, "b": 1, "order": 1 },
+    { "a": 0, "b": 2, "order": 1 }
+  ]
+}
+

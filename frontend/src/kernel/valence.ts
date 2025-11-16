@@ -55,6 +55,7 @@ export function getCurrentBondCount(atom: Atom, bonds: Array<{ a1: string; a2: s
 
 /**
  * Suggest bond order based on remaining valence
+ * Conservative approach: defaults to single bond unless both atoms clearly need higher order
  */
 export function suggestBondOrder(
   a: Atom,
@@ -66,9 +67,12 @@ export function suggestBondOrder(
   const remA = Math.max(0, getValence(a.element) - currentBondsA);
   const remB = Math.max(0, getValence(b.element) - currentBondsB);
   const minRem = Math.min(remA, remB);
-  if (minRem >= 3) return 3;
-  if (minRem >= 2) return 2;
-  if (minRem >= 1) return 1;
+  
+  // Conservative: prefer single bonds unless there's strong evidence for higher order
+  // Only suggest double/triple if both atoms have limited remaining valence
+  if (minRem >= 3 && remA <= 3 && remB <= 3) return 3;
+  if (minRem >= 2 && remA <= 2 && remB <= 2) return 2;
+  // Default to single bond
   return 1;
 }
 

@@ -1,0 +1,22 @@
+{
+  "atoms": [
+    { "element": "C", "coords": { "x": -0.7, "y": 0, "z": 0 } },
+    { "element": "C", "coords": { "x": 0.7, "y": 0, "z": 0 } },
+    { "element": "O", "coords": { "x": 1.6, "y": 0.8, "z": 0 } },
+    { "element": "H", "coords": { "x": -1.2, "y": -0.9, "z": 0 } },
+    { "element": "H", "coords": { "x": -1.2, "y": 0.9, "z": 0 } },
+    { "element": "H", "coords": { "x": 0, "y": -0.9, "z": 0 } },
+    { "element": "H", "coords": { "x": 0, "y": 0.9, "z": 0 } },
+    { "element": "H", "coords": { "x": 2.1, "y": 1.4, "z": 0 } }
+  ],
+  "bonds": [
+    { "a": 0, "b": 1, "order": 1 },
+    { "a": 1, "b": 2, "order": 1 },
+    { "a": 0, "b": 3, "order": 1 },
+    { "a": 0, "b": 4, "order": 1 },
+    { "a": 1, "b": 5, "order": 1 },
+    { "a": 1, "b": 6, "order": 1 },
+    { "a": 2, "b": 7, "order": 1 }
+  ]
+}
+

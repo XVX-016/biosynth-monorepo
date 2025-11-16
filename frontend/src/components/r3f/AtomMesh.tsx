@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber'
 import { Outlines } from '@react-three/drei'
 import { selectionManager } from './SelectionManager'
 import { useMoleculeStore } from '../../store/moleculeStore'
+import { kernelSelectionManager } from '../../kernel/selectionManager'
 
 interface AtomMeshProps {
   id: string
@@ -85,7 +86,10 @@ export default function AtomMesh({ id, position, element }: AtomMeshProps) {
         remove(id)
       })
     } else {
+      // Update both UI and kernel selection managers
       selectionManager.onSelect(id)
+      kernelSelectionManager.selectAtom(id)
+      useMoleculeStore.getState().selectAtom(id)
     }
   }
 

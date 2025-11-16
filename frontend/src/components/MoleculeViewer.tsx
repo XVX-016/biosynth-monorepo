@@ -9,6 +9,7 @@ import { moleculeToRenderable, removeAtom, removeBond, updateAtomPosition } from
 import { selectionManager } from './r3f/SelectionManager'
 import { useBondTool } from './r3f/BondTool'
 import { screenToWorld } from '../lib/raycasting'
+import { useAutoBondOnDrop } from '../hooks/useAutoBondOnDrop'
 
 // Interaction layer component
 function InteractionLayer() {
@@ -87,6 +88,9 @@ export default function MoleculeViewer() {
 
   // Use bond tool
   useBondTool()
+  
+  // Auto-bond on atom drop (when autoBond is enabled)
+  useAutoBondOnDrop()
 
   // Auto-update predictions when molecule changes
   useEffect(() => {

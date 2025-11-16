@@ -1,8 +1,11 @@
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useMoleculeStore, Tool } from '../store/moleculeStore'
 import { useHistoryStore } from '../store/historyStore'
 import { undo, redo } from '../store/historyStore'
+import { createBondSafe } from '../kernel/bonds'
+import { pushState } from '../store/historyStore'
+import { TemplatePanel } from './TemplatePanel/TemplatePanel'
 
 export default function ToolPanel() {
   const tool = useMoleculeStore((state) => state.tool)
@@ -13,6 +16,20 @@ export default function ToolPanel() {
   const setAutoBond = useMoleculeStore((state) => state.setAutoBond)
   const canUndo = useHistoryStore((state) => state.canUndo)
   const canRedo = useHistoryStore((state) => state.canRedo)
+  const currentMolecule = useMoleculeStore((state) => state.currentMolecule)
+  const selectedAtomId = useMoleculeStore((state) => state.selectedAtomId)
+  const [templatesExpanded, setTemplatesExpanded] = React.useState(false)
+  
+  // Handle Create Bond button - creates bond between two selected atoms
+  // This is a helper button that shows instructions when bond tool is active
+  const handleCreateBond = () => {
+    // The actual bond creation happens via BondTool when two atoms are clicked
+    // This button just provides visual feedback
+    if (!currentMolecule || !selectedAtomId) {
+      // Switch to bond tool if not already active
+      setTool('bond')
+    }
+  }
 
   const tools: Array<{ id: Tool; label: string; icon: string; hotkey?: string }> = [
     { id: 'select', label: 'Select', icon: '👆', hotkey: 'S' },
@@ -145,7 +162,7 @@ export default function ToolPanel() {
 
       {/* Auto-bond toggle */}
       <div className="pt-2 border-t border-chrome/20 space-y-1">
-        <div className="text-xs text-chrome text-center">Auto-Bond</div>
+        <div className="text-xs text-chrome text-center mb-1">Auto-Bond</div>
         <button
           onClick={() => setAutoBond(!autoBond)}
           className={`w-24 mx-auto h-8 rounded-lg text-sm transition-all ${
@@ -158,6 +175,55 @@ export default function ToolPanel() {
         >
           {autoBond ? 'On' : 'Off'}
         </button>
+      </div>
+
+      {/* Create Bond button (when bond tool is active) */}
+      {tool === 'bond' && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="pt-2 border-t border-chrome/20"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCreateBond}
+            className="w-full px-3 py-2 rounded-lg text-sm transition-all bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20"
+            title="Click two atoms to create a bond"
+          >
+            Create Bond
+          </motion.button>
+          <div className="text-xs text-chrome/70 text-center mt-1">
+            Select 2 atoms
+          </div>
+        </motion.div>
+      )}
+
+      {/* Templates Section */}
+      <div className="pt-2 border-t border-chrome/20">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setTemplatesExpanded(!templatesExpanded)}
+          className="w-full px-3 py-2 rounded-lg text-sm transition-all bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20 flex items-center justify-between"
+        >
+          <span>Templates</span>
+          <span className="text-xs">{templatesExpanded ? '▼' : '▶'}</span>
+        </motion.button>
+        <AnimatePresence>
+          {templatesExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 overflow-hidden"
+            >
+              <div className="max-h-96 overflow-y-auto">
+                <TemplatePanel />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   )
