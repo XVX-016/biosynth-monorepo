@@ -235,50 +235,10 @@ const fakeMoleculeStore = makeFakeStore(moleculeTemplate);
 const fakeHistoryStore = makeFakeStore(historyTemplate);
 const fakeProfileStore = makeFakeStore(profileTemplate);
 
-// Directly mock the store modules - these paths are relative to where tests import from
-// Mock moleculeStore
-vi.mock('../store/moleculeStore', () => {
-  const useMoleculeStore = (selector?: (state: any) => any) => {
-    if (selector) {
-      return selector(fakeMoleculeStore);
-    }
-    return fakeMoleculeStore;
-  };
-  useMoleculeStore.getState = () => fakeMoleculeStore;
-  useMoleculeStore.setState = fakeMoleculeStore.setState;
-  return { useMoleculeStore };
-});
-
-// Don't mock historyStore - let tests use the real store
-// Tests that need mocks can create their own
-
-// Don't mock profileStore - let tests use the real store
-// Tests that need mocks can create their own
-
-// Also mock from deeper paths (for components in subdirectories)
-vi.mock('../../store/moleculeStore', () => {
-  const useMoleculeStore = (selector?: (state: any) => any) => {
-    if (selector) {
-      return selector(fakeMoleculeStore);
-    }
-    return fakeMoleculeStore;
-  };
-  useMoleculeStore.getState = () => fakeMoleculeStore;
-  useMoleculeStore.setState = fakeMoleculeStore.setState;
-  return { useMoleculeStore };
-});
-
-vi.mock('../../../store/moleculeStore', () => {
-  const useMoleculeStore = (selector?: (state: any) => any) => {
-    if (selector) {
-      return selector(fakeMoleculeStore);
-    }
-    return fakeMoleculeStore;
-  };
-  useMoleculeStore.getState = () => fakeMoleculeStore;
-  useMoleculeStore.setState = fakeMoleculeStore.setState;
-  return { useMoleculeStore };
-});
+// Don't mock stores globally - let tests use real stores
+// Tests that need mocks can create their own in their test files
+// This allows logic tests (engineAdapter, historyStore) to use real implementations
+// while component tests can mock if needed
 
 // Provide globals for manual access if needed
 (globalThis as any).__FAKE_STORES__ = {
