@@ -1,0 +1,75 @@
+name: BioSynth CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          check-latest: true
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Vite build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules/.vite
+            frontend/.vite
+            packages/engine/node_modules/.vite
+          key: vite-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+          restore-keys: |
+            vite-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Check TypeScript (Frontend)
+        run: cd frontend && npx tsc --noEmit
+
+      - name: Check TypeScript (Engine)
+        run: cd packages/engine && npx tsc --noEmit
+
+      - name: Lint (Frontend)
+        run: cd frontend && npm run lint
+
+      - name: Run Vitest (Frontend)
+        run: cd frontend && npm test -- --run --reporter=verbose
+
+      - name: Run Vitest (Engine)
+        run: cd packages/engine && npm test -- --run --reporter=verbose
+
+      - name: Build Frontend
+        run: cd frontend && npm run build
+
+      - name: Build Engine
+        run: cd packages/engine && npm run build
+
+      - name: Upload Frontend Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+      - name: Upload Engine Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: engine-dist
+          path: packages/engine/dist/
+          retention-days: 7
+

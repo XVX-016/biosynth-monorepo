@@ -2,6 +2,13 @@
 
 Full-stack molecular design system with React + R3F frontend, TypeScript engine, and FastAPI + PyTorch backend.
 
+## CI Status
+
+![CI](https://github.com/YOUR-ORG/biosynth-monorepo/actions/workflows/ci.yml/badge.svg)
+![Deploy](https://github.com/YOUR-ORG/biosynth-monorepo/actions/workflows/deploy.yml/badge.svg)
+
+> **Note:** Replace `YOUR-ORG` with your actual GitHub organization or username in the badge URLs above.
+
 ## Architecture
 
 ```
