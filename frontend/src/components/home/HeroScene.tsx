@@ -1,6 +1,7 @@
 import React, { useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, EffectComposer, ChromaticAberration, Bloom } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
+import { EffectComposer, ChromaticAberration, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { MoleculeGraph } from '@biosynth/engine';
 import AtomMesh from '../r3f/AtomMesh';

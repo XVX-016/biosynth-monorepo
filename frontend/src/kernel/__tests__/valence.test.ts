@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getValence, shouldFormBond, suggestBondOrder } from '../valence';
-import { Atom } from '@biosynth/engine';
+import type { Atom } from '@biosynth/engine';
 
 describe('valence helpers', () => {
   it('returns known valences', () => {

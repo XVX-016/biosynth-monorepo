@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { MoleculeGraph, Element } from '@biosynth/engine'
+import { MoleculeGraph } from '@biosynth/engine'
+import type { Element } from '@biosynth/engine'
 import { predict, generate, predictFast } from '../lib/api'
 
 interface BackendPredictions {

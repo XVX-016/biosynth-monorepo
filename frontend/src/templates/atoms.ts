@@ -1,5 +1,5 @@
 // src/templates/atoms.ts
-import { Element } from "@biosynth/engine";
+import type { Element } from "@biosynth/engine";
 
 /**
  * Atomic templates - preconfigured atoms with default properties

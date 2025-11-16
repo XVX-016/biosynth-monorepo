@@ -6,7 +6,7 @@
  * Chemist review recommended to extend element list and pair-wise thresholds.
  */
 
-import { Atom } from '@biosynth/engine';
+import type { Atom } from '@biosynth/engine';
 
 export const STANDARD_VALENCE: Record<string, number> = {
   H: 1,

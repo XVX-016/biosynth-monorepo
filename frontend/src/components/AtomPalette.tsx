@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Element } from '@biosynth/engine'
+import type { Element } from '@biosynth/engine'
 import { useMoleculeStore } from '../store/moleculeStore'
 
 // Element colors using Ivory & Chrome palette - distinct but theme-consistent
