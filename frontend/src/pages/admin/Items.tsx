@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { listItems, createItem, updateItem, deleteItem, Item } from '../../lib/api';
+import { listItems, createItem, updateItem, deleteItem } from '../../lib/api';
+import type { Item } from '../../lib/api';
 
 export default function AdminItems() {
   const [items, setItems] = useState<Item[]>([]);

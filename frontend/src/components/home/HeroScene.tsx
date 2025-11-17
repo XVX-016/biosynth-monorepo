@@ -1,5 +1,5 @@
-import React, { useRef, Suspense } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { useRef, useMemo, Suspense } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { EffectComposer, ChromaticAberration, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -126,22 +126,44 @@ function SceneContent({ molecule }: { molecule: MoleculeGraph | null }) {
         preset="city"
       />
       
-      <EffectComposer>
-        <Bloom
-          intensity={1.5}
-          luminanceThreshold={0.9}
-          luminanceSmoothing={0.9}
-          height={300}
-          opacity={0.8}
-        />
-        <ChromaticAberration
-          offset={[0.001, 0.001]}
-          radialModulation={true}
-          modulationOffset={0.15}
-        />
-      </EffectComposer>
+      <PostProcessingEffects />
     </>
   );
+}
+
+function PostProcessingEffects() {
+  const { gl } = useThree();
+
+  const supportsComposer = useMemo(() => {
+    if (!gl) return false;
+    return gl.capabilities.isWebGL2 || gl.extensions.has('WEBGL_draw_buffers');
+  }, [gl]);
+
+  const passes = useMemo(
+    () => [
+      <Bloom
+        key="bloom"
+        intensity={1.5}
+        luminanceThreshold={0.9}
+        luminanceSmoothing={0.9}
+        height={300}
+        opacity={0.8}
+      />,
+      <ChromaticAberration
+        key="chromatic"
+        offset={[0.001, 0.001]}
+        radialModulation
+        modulationOffset={0.15}
+      />,
+    ],
+    []
+  );
+
+  if (!supportsComposer) {
+    return null;
+  }
+
+  return <EffectComposer>{passes}</EffectComposer>;
 }
 
 export default function HeroScene({ molecule: propMolecule }: HeroSceneProps) {
