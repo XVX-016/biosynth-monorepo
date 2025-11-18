@@ -59,7 +59,7 @@ def create_item(
     status: Optional[str] = Form("in-stock"),
     stock: Optional[int] = Form(0),
     structure_file: Optional[UploadFile] = File(None),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_db),
 ):
     """Create new item"""
     # Parse tags
@@ -108,7 +108,7 @@ def update_item(
     status: Optional[str] = Form(None),
     stock: Optional[int] = Form(None),
     structure_file: Optional[UploadFile] = File(None),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_db),
 ):
     """Update item"""
     item = session.get(Item, item_id)
@@ -161,7 +161,7 @@ def update_item(
 
 
 @router.delete("/{item_id}", response_model=dict)
-def delete_item(item_id: int, session: Session = Depends(get_session)):
+def delete_item(item_id: int, session: Session = Depends(get_db)):
     """Delete item"""
     item = session.get(Item, item_id)
     if not item:

@@ -1,6 +1,6 @@
 # backend/models/schemas/molecule_schema.py
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -45,7 +45,7 @@ class ItemCreate(BaseModel):
     name: str
     smiles: Optional[str] = None
     description: Optional[str] = None
-    tags: Optional[list[str]] = None
+    tags: Optional[List[str]] = None
     status: Optional[str] = 'in-stock'
     stock: Optional[int] = 0
 
@@ -55,7 +55,7 @@ class ItemUpdate(BaseModel):
     name: Optional[str] = None
     smiles: Optional[str] = None
     description: Optional[str] = None
-    tags: Optional[list[str]] = None
+    tags: Optional[List[str]] = None
     status: Optional[str] = None
     stock: Optional[int] = None
 

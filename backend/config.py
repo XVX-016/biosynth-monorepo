@@ -4,7 +4,7 @@ Centralized configuration management
 """
 import os
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, List
 
 # Load environment variables
 load_dotenv()
@@ -25,7 +25,7 @@ class Settings:
     API_DESCRIPTION: str = "Backend API for MolForge molecular design platform"
     
     # CORS
-    CORS_ORIGINS: list[str] = [
+    CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",

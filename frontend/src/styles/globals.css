@@ -228,8 +228,20 @@
   }
 
   /* Shadow utilities */
+  .shadow-neon {
+    box-shadow: var(--shadow-neon);
+  }
+
   .shadow-neon-hover {
     box-shadow: var(--shadow-neon-hover);
+  }
+
+  .shadow-glass {
+    box-shadow: var(--shadow-glass);
+  }
+
+  .shadow-neon-sm {
+    box-shadow: var(--shadow-neon);
   }
 }
 
