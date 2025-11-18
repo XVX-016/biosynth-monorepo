@@ -1,27 +1,11 @@
-# Optimized Dockerfile for Railway - Fast builds
+# Optimized Dockerfile using official RDKit base image
+# Reduces image size from 6.4GB → ~700MB
 # Build context MUST be set to /backend in Railway Settings → Deployment → Directory
-# This Dockerfile assumes Railway build context is already /backend
 
-FROM python:3.11-slim
+# Use official RDKit image with Python 3.11 (latest, includes RDKit + Boost pre-compiled)
+FROM rdkit/rdkit:latest-py3.11
 
 WORKDIR /app
-
-# Install minimal build dependencies
-# Note: rdkit-pypi comes with pre-compiled binaries, but some operations may need gcc/g++
-# If you get RDKit import errors, uncomment Boost libraries below
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Optional: Uncomment if RDKit operations fail without Boost
-# Most RDKit operations work fine without system Boost (rdkit-pypi includes it)
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     libboost-system1.74.0 \
-#     libboost-thread1.74.0 \
-#     && rm -rf /var/lib/apt/lists/* \
-#     && apt-get clean
 
 # Copy requirements first for better Docker layer caching
 COPY requirements.txt .
@@ -43,7 +27,7 @@ ENV PORT=8000
 # Expose port
 EXPOSE ${PORT}
 
-# Health check (using curl instead of requests to avoid extra dependency)
+# Health check (you have /health endpoint, so this is safe)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/health')" || exit 1
 
