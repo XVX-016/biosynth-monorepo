@@ -20,7 +20,8 @@ COPY . .
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-# Cloud Run uses PORT 8080 by default, but supports any port
+# PORT is provided by platform (Railway or Cloud Run)
+# Railway uses $PORT, Cloud Run uses 8080
 ENV PORT=8080
 
 EXPOSE ${PORT}
