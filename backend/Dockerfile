@@ -2,15 +2,22 @@ FROM rdkit/rdkit:2023.09.1-py3.11-slim
 
 WORKDIR /app
 
-# Upgrade pip, install CPU PyTorch
+# Upgrade pip first
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install CPU-only PyTorch FIRST (before other deps to avoid conflicts)
+# Using CPU-only wheels reduces size from ~800MB to ~120MB
+# This MUST be installed separately to ensure CPU-only version
+RUN pip install --no-cache-dir \
+    torch==2.4.1+cpu \
+    torchvision==0.19.1+cpu \
+    torchaudio==2.4.1+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install ML dependencies (transformers, onnxruntime, etc.)
 # Build context is repo root, so use backend/ prefix
 COPY backend/requirements-model.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir torch==2.4.1+cpu \
-        torchvision==0.19.1+cpu \
-        torchaudio==2.4.1+cpu \
-        --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements-model.txt
+RUN pip install --no-cache-dir -r requirements-model.txt
 
 # Install lightweight dependencies
 COPY backend/requirements.txt .
