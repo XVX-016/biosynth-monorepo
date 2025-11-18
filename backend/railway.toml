@@ -1,5 +1,6 @@
 # Railway configuration file
-# This file is optional - Railway can auto-detect most settings
+# Note: Railway will use railway.toml from repo root instead
+# This file is kept for reference but root railway.toml takes precedence
 
 [build]
 builder = "DOCKERFILE"

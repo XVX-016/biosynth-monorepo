@@ -10,14 +10,24 @@ RUN apt-get update && apt-get install -y \
     libboost-thread-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# Copy requirements first for better caching
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy backend code
+COPY backend/ ./backend/
+# Copy packages if needed (for engine)
+COPY packages/ ./packages/
+
+# Set working directory to backend
+WORKDIR /app/backend
 
 # Railway provides PORT environment variable
 # Default to 8000 for local development
 ENV PORT=8000
+
+# Add parent directory to Python path so imports work
+ENV PYTHONPATH=/app
 
 CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
 
