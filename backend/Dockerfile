@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
-COPY backend/ .
+# Copy backend code (context is already /backend, so no backend/ prefix needed)
+COPY . .
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
