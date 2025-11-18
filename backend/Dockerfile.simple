@@ -1,0 +1,28 @@
+# Simplified Dockerfile for Railway when Root Directory is set to "backend"
+# Use this if you set Root Directory to "backend" in Railway settings
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies for RDKit
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libboost-dev \
+    libboost-system-dev \
+    libboost-thread-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy all backend code
+COPY . .
+
+# Railway provides PORT environment variable
+ENV PORT=8000
+
+# Run the application
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
+
