@@ -1,27 +1,35 @@
 /**
- * Ivory & Chrome Synthetic Metallic Palette
- * Futuristic synthetic-metal lab aesthetic
- * 
- * All colors must use these tokens - NO default Tailwind colors allowed
+ * MolForge Minimal Monochrome Palette
+ * Clean, modern, scientific interface
+ * Grey, white, silver, and black only
  */
 
 export const colors = {
   // Primary Colors
-  chrome: '#C0C5D2',
-  ivory: '#F6F7F8',
-  spaceGrey: '#2B2E33',
-  ionBlack: '#0F1115',
-  frostedGlass: 'rgba(255,255,255,0.06)',
+  white: '#FFFFFF',
+  offwhite: '#F7F7F7',
+  lightGrey: '#E5E5E5',
+  midGrey: '#B5B5B5',
+  darkGrey: '#3A3A3A',
+  black: '#0F0F0F',
+  border: 'rgba(0,0,0,0.06)',
   
-  // Accents
-  neonCyan: '#8BF3FF',
-  plasmaTeal: '#3BC7C9',
-  violetEdge: '#C6BDFE',
+  // Legacy aliases for backward compatibility (mapped to new colors)
+  chrome: '#B5B5B5',
+  ivory: '#F7F7F7',
+  spaceGrey: '#3A3A3A',
+  ionBlack: '#0F0F0F',
+  frostedGlass: 'rgba(0,0,0,0.02)',
   
-  // Gradients
-  chromeGradient: 'linear-gradient(135deg, #E3E6EB, #C0C5D2)',
-  ivoryGradient: 'linear-gradient(135deg, #FFFFFF, #F6F7F8)',
-  plasmaNeon: 'linear-gradient(135deg, #3BC7C9, #8BF3FF)',
+  // Removed neon accents - using greys instead
+  neonCyan: '#B5B5B5',
+  plasmaTeal: '#3A3A3A',
+  violetEdge: '#E5E5E5',
+  
+  // Gradients - minimal
+  chromeGradient: 'linear-gradient(135deg, #F7F7F7, #E5E5E5)',
+  ivoryGradient: 'linear-gradient(135deg, #FFFFFF, #F7F7F7)',
+  plasmaNeon: 'linear-gradient(135deg, #3A3A3A, #0F0F0F)',
 } as const;
 
 export type ColorName = keyof typeof colors;
@@ -30,6 +38,14 @@ export type ColorName = keyof typeof colors;
  * CSS variable names for use in stylesheets
  */
 export const cssVars = {
+  white: 'var(--color-white)',
+  offwhite: 'var(--color-offwhite)',
+  lightGrey: 'var(--color-lightGrey)',
+  midGrey: 'var(--color-midGrey)',
+  darkGrey: 'var(--color-darkGrey)',
+  black: 'var(--color-black)',
+  border: 'var(--color-border)',
+  // Legacy aliases
   chrome: 'var(--color-chrome)',
   ivory: 'var(--color-ivory)',
   spaceGrey: 'var(--color-spaceGrey)',

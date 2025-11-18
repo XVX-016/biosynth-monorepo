@@ -5,7 +5,7 @@ import os
 import torch
 import onnx
 import onnxruntime as ort
-from backend.models.property_predictor import create_model
+from backend.ai.property_predictor import create_model
 
 
 def export_to_onnx(

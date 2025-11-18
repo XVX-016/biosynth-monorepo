@@ -141,10 +141,10 @@ After setup, test the key components:
 python -c "from backend.db import init_db; init_db(); print('Database OK')"
 
 # Test RDKit featurization
-python -c "from backend.utils.featurizer import featurize_smiles; print(featurize_smiles('CCO'))"
+python -c "from backend.ai.featurizer import featurize_smiles; print(featurize_smiles('CCO'))"
 
 # Test model loading
-python -c "from backend.models.property_predictor import create_model; m = create_model(); print('Model OK')"
+python -c "from backend.ai.property_predictor import create_model; m = create_model(); print('Model OK')"
 
 # Run tests
 pytest

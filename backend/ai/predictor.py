@@ -3,20 +3,23 @@ Property prediction model wrapper
 """
 import os
 import torch
-from backend.models.property_predictor import create_model
+from backend.ai.property_predictor import create_model
+from backend.config import settings
 
 
 class ModelLoader:
     """
     Loads and manages PropertyPredictor model
     """
-    def __init__(self, weights_path: str = 'backend/weights/property_predictor.pt'):
+    def __init__(self, weights_path: str = None):
         """
         Initialize model loader
         
         Args:
-            weights_path: Path to model weights file
+            weights_path: Path to model weights file (defaults to config)
         """
+        if weights_path is None:
+            weights_path = settings.MODEL_WEIGHTS_PATH
         self.weights_path = weights_path
         self.model = None
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -77,7 +80,9 @@ class PropertyPredictor:
     Wrapper for molecular property prediction model
     Maintains backward compatibility with existing code
     """
-    def __init__(self, weights_path: str = 'backend/weights/property_predictor.pt'):
+    def __init__(self, weights_path: str = None):
+        if weights_path is None:
+            weights_path = settings.MODEL_WEIGHTS_PATH
         self.loader = ModelLoader(weights_path)
     
     def predict(self, features):

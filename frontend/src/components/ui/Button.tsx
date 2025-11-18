@@ -15,9 +15,9 @@ export default function Button({
 	...rest
 }: ButtonProps) {
 	const variantClasses = {
-		primary: 'bg-chrome text-spaceGrey border border-chrome/30 hover:border-neonCyan/50 hover:shadow-neon-sm disabled:opacity-50 font-semibold interactive-glow',
-		secondary: 'bg-frostedGlass text-ivory border border-chrome/30 hover:border-neonCyan/50 hover:shadow-neon-sm disabled:opacity-50 backdrop-blur-sm interactive-glow',
-		danger: 'bg-violetEdge/20 text-violetEdge border border-violetEdge/30 hover:bg-violetEdge/30 hover:border-violetEdge/50 disabled:opacity-50 interactive-glow',
+		primary: 'bg-black text-white border border-black hover:bg-darkGrey hover:shadow-neon disabled:opacity-50 font-semibold interactive-glow',
+		secondary: 'bg-white text-black border border-lightGrey hover:bg-offwhite hover:shadow-neon disabled:opacity-50 interactive-glow',
+		danger: 'bg-white text-black border border-lightGrey hover:bg-offwhite hover:shadow-neon disabled:opacity-50 interactive-glow',
 	};
 
 	const sizeClasses = {
@@ -31,7 +31,7 @@ export default function Button({
 			{...rest}
 			disabled={disabled}
 			className={clsx(
-				'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-neonCyan/50',
+				'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-darkGrey/20',
 				variantClasses[variant],
 				sizeClasses[size],
 				className

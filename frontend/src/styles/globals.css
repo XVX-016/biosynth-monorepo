@@ -1,68 +1,62 @@
 /**
- * Global styles for Ivory & Chrome theme
- * Base theme with CSS variables and utilities
+ * Global styles for MolForge Minimal Monochrome theme
+ * Clean, modern, scientific interface
  */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables - Ivory & Chrome Palette */
+/* CSS Variables - MolForge Minimal Palette */
 :root {
   /* Primary Colors */
-  --color-chrome: #C0C5D2;
-  --color-ivory: #F6F7F8;
-  --color-spaceGrey: #2B2E33;
-  --color-ionBlack: #0F1115;
-  --color-frostedGlass: rgba(255, 255, 255, 0.06);
+  --color-white: #FFFFFF;
+  --color-offwhite: #F7F7F7;
+  --color-lightGrey: #E5E5E5;
+  --color-midGrey: #B5B5B5;
+  --color-darkGrey: #3A3A3A;
+  --color-black: #0F0F0F;
+  --color-border: rgba(0, 0, 0, 0.06);
   
-  /* Accents */
-  --color-neonCyan: #8BF3FF;
-  --color-plasmaTeal: #3BC7C9;
-  --color-violetEdge: #C6BDFE;
+  /* Legacy aliases for backward compatibility */
+  --color-chrome: #B5B5B5;
+  --color-ivory: #F7F7F7;
+  --color-spaceGrey: #3A3A3A;
+  --color-ionBlack: #0F0F0F;
+  --color-frostedGlass: rgba(0, 0, 0, 0.02);
+  --color-neonCyan: #B5B5B5;
+  --color-plasmaTeal: #3A3A3A;
+  --color-violetEdge: #E5E5E5;
   
-  /* Gradients */
-  --gradient-chrome: linear-gradient(135deg, #E3E6EB, #C0C5D2);
-  --gradient-ivory: linear-gradient(135deg, #FFFFFF, #F6F7F8);
-  --gradient-plasmaNeon: linear-gradient(135deg, #3BC7C9, #8BF3FF);
+  /* Gradients - minimal */
+  --gradient-chrome: linear-gradient(135deg, #F7F7F7, #E5E5E5);
+  --gradient-ivory: linear-gradient(135deg, #FFFFFF, #F7F7F7);
+  --gradient-plasmaNeon: linear-gradient(135deg, #3A3A3A, #0F0F0F);
   
-  /* Shadows */
-  --shadow-chrome: 0 4px 6px -1px rgba(192, 197, 210, 0.1), 0 2px 4px -1px rgba(192, 197, 210, 0.06);
-  --shadow-glass: 0 8px 32px 0 rgba(15, 17, 21, 0.37);
-  --shadow-neon: 0 0 20px rgba(139, 243, 255, 0.3);
-  --shadow-neon-hover: 0 0 15px rgba(139, 243, 255, 0.4);
+  /* Shadows - soft and minimal */
+  --shadow-chrome: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-glass: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-neon: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-neon-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Base theme - ionBlack with frostedGlass overlay */
+/* Base theme - white background with minimal styling */
 @layer base {
   * {
-    @apply border-chrome/20;
+    @apply border-lightGrey;
   }
   
   body {
-    @apply bg-ionBlack text-ivory;
+    @apply bg-white text-black;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
-    background: var(--color-ionBlack);
-    color: var(--color-ivory);
+    background: var(--color-white);
+    color: var(--color-black);
   }
   
   /* Lab layout */
   .lab-layout {
     @apply flex h-full w-full;
-  }
-
-  /* Base layer with frostedGlass overlay effect */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--color-frostedGlass);
-    pointer-events: none;
-    z-index: 0;
   }
   
   #root {
@@ -70,33 +64,30 @@
     z-index: 1;
   }
   
-  /* Headings - ivory text */
+  /* Headings - black text */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-ivory font-semibold;
+    @apply text-black font-semibold;
   }
   
-  /* Links - neonCyan with hover glow */
+  /* Links - dark grey with subtle hover */
   a {
-    @apply text-neonCyan transition-all duration-200;
+    @apply text-darkGrey transition-all duration-200;
   }
   
   a:hover {
-    @apply text-plasmaTeal;
-    text-shadow: 0 0 10px rgba(139, 243, 255, 0.5);
+    @apply text-black;
   }
 }
 
 /* Component utilities */
 @layer components {
-  /* Frosted glass card */
+  /* Minimal card */
   .frosted-glass {
-    background: var(--color-frostedGlass);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(192, 197, 210, 0.2);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
   }
   
-  /* Chrome gradient backgrounds */
+  /* Gradient backgrounds - minimal */
   .chrome-gradient {
     background: var(--gradient-chrome);
   }
@@ -109,7 +100,7 @@
     background: var(--gradient-plasmaNeon);
   }
   
-  /* Neon glow effects */
+  /* Subtle shadow effects */
   .neon-glow {
     box-shadow: var(--shadow-neon);
   }
@@ -121,40 +112,40 @@
   /* Button base styles */
   .btn-base {
     @apply rounded-lg font-medium transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-neonCyan/50;
+    @apply focus:outline-none focus:ring-2 focus:ring-darkGrey/20;
   }
   
   .btn-chrome {
-    @apply btn-base bg-chrome text-spaceGrey;
-    @apply hover:bg-chrome/90 hover:border-neonCyan/50 hover:shadow-neon-sm;
-    @apply border border-chrome/30;
+    @apply btn-base bg-lightGrey text-black;
+    @apply hover:bg-midGrey hover:shadow-neon;
+    @apply border border-lightGrey;
   }
   
   .btn-primary {
-    @apply btn-base bg-plasma-neon text-ionBlack font-semibold;
-    @apply hover:shadow-neon-sm;
+    @apply btn-base bg-black text-white font-semibold;
+    @apply hover:bg-darkGrey hover:shadow-neon;
   }
   
   .btn-secondary {
-    @apply btn-base frosted-glass text-ivory;
-    @apply hover:border-neonCyan/50 hover:shadow-neon-sm;
-    @apply border border-chrome/30;
+    @apply btn-base bg-white text-black;
+    @apply hover:bg-offwhite hover:shadow-neon;
+    @apply border border-lightGrey;
   }
   
   /* Card base styles */
   .card-base {
-    @apply frosted-glass rounded-xl shadow-glass;
-    @apply border border-chrome/20;
+    @apply bg-white rounded-xl shadow-neon;
+    @apply border border-lightGrey;
   }
   
-  /* Interactive element glow */
+  /* Interactive element hover */
   .interactive-glow {
     @apply transition-shadow duration-300;
   }
   
   .interactive-glow:hover {
-    @apply shadow-neon-sm;
-    border-color: rgba(139, 243, 255, 0.3);
+    box-shadow: var(--shadow-neon-hover);
+    border-color: var(--color-midGrey);
   }
 }
 
@@ -234,6 +225,11 @@
   
   .border-violetEdge {
     border-color: var(--color-violetEdge);
+  }
+
+  /* Shadow utilities */
+  .shadow-neon-hover {
+    box-shadow: var(--shadow-neon-hover);
   }
 }
 

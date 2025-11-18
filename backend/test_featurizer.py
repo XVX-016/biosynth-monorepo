@@ -1,5 +1,5 @@
 import pytest
-from backend.utils.featurizer import featurize_smiles, validate_smiles
+from backend.ai.featurizer import featurize_smiles, validate_smiles
 
 
 def test_featurize_valid_smiles():

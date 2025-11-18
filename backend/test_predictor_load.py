@@ -3,8 +3,8 @@ Test model loading
 """
 import pytest
 import torch
-from backend.models.predictor import ModelLoader, PropertyPredictor
-from backend.models.property_predictor import create_model
+from backend.ai.predictor import ModelLoader, PropertyPredictor
+from backend.ai.property_predictor import create_model
 
 
 def test_model_loader_creates_model():

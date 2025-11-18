@@ -81,19 +81,19 @@ export default function Library() {
     >
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="min-w-0">
-          <h1 className="text-3xl font-bold text-ivory truncate">Molecule Library</h1>
-          <p className="text-chrome mt-1">Your saved molecular structures</p>
+          <h1 className="text-3xl font-bold text-black truncate">Molecule Library</h1>
+          <p className="text-darkGrey mt-1">Your saved molecular structures</p>
         </div>
         <div className="flex items-center gap-3">
           <input
             value={q}
             onChange={(e) => { setQ(e.target.value); setPage(1); }}
             placeholder="Search by name or SMILES..."
-            className="w-64 rounded-lg border border-chrome/20 bg-frostedGlass text-ivory px-3 py-2 outline-none focus:ring-2 focus:ring-neonCyan/50 focus:border-neonCyan/50 placeholder:text-chrome"
+            className="w-64 rounded-lg border border-lightGrey bg-white text-black px-3 py-2 outline-none focus:ring-2 focus:ring-darkGrey/20 focus:border-darkGrey placeholder:text-midGrey"
           />
           <button
             onClick={loadMolecules}
-            className="px-4 py-2 bg-plasma-neon text-ionBlack rounded-lg font-medium hover:shadow-neon-sm transition-all"
+            className="btn-secondary px-4 py-2"
           >
             Refresh
           </button>
@@ -101,11 +101,11 @@ export default function Library() {
       </header>
 
       {loading ? (
-        <div className="text-center py-12 text-chrome">Loading molecules...</div>
+        <div className="text-center py-12 text-midGrey">Loading molecules...</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-chrome mb-2">No results</div>
-          <p className="text-chrome/70 text-sm">Try clearing the search or saving molecules in the Lab</p>
+          <div className="text-midGrey mb-2">No results</div>
+          <p className="text-midGrey text-sm">Try clearing the search or saving molecules in the Lab</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -126,17 +126,17 @@ export default function Library() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1 rounded border border-chrome/20 bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 disabled:opacity-50 transition-all"
+            className="btn-secondary px-3 py-1 text-sm disabled:opacity-50"
           >
             Prev
           </button>
-          <div className="text-sm text-chrome">
-            Page <span className="font-semibold text-ivory">{page}</span> of {totalPages}
+          <div className="text-sm text-darkGrey">
+            Page <span className="font-semibold text-black">{page}</span> of {totalPages}
           </div>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1 rounded border border-chrome/20 bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 disabled:opacity-50 transition-all"
+            className="btn-secondary px-3 py-1 text-sm disabled:opacity-50"
           >
             Next
           </button>

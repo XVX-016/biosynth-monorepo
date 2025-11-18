@@ -15,8 +15,8 @@ import numpy as np
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from backend.models.property_predictor import create_model
-from backend.utils.featurizer import featurize_smiles
+from backend.ai.property_predictor import create_model
+from backend.ai.featurizer import featurize_smiles
 
 
 class MoleculeDataset(Dataset):

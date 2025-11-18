@@ -106,8 +106,8 @@ def task_predict_properties(smiles: str) -> Dict[str, Any]:
     """
     Predict properties task
     """
-    from backend.models.predictor import get_predictor
-    from backend.utils.featurizer import featurize_smiles
+    from backend.ai.predictor import get_predictor
+    from backend.ai.featurizer import featurize_smiles
     
     try:
         features = featurize_smiles(smiles)

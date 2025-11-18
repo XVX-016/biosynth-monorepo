@@ -1,20 +1,15 @@
-# backend/models/__init__.py
-from .db import Molecule, Item
-from .schemas import (
+# backend/models/schemas/__init__.py
+from .molecule_schema import (
     MoleculeCreate,
     MoleculeUpdate,
     MoleculeResponse,
     ItemCreate,
     ItemUpdate,
-    PredictIn,
-    PredictOut,
-    GenerateIn,
-    GenerateOut,
 )
+from .prediction_schema import PredictIn, PredictOut
+from .generation_schema import GenerateIn, GenerateOut
 
 __all__ = [
-    "Molecule",
-    "Item",
     "MoleculeCreate",
     "MoleculeUpdate",
     "MoleculeResponse",
@@ -25,3 +20,4 @@ __all__ = [
     "GenerateIn",
     "GenerateOut",
 ]
+

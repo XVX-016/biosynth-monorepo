@@ -13,13 +13,82 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const RLink = (props: any) => React.createElement(Link as any, props);
 	return (
-		<header className="frosted-glass border-b border-chrome/20 backdrop-blur-md">
+		<header className="bg-white border-b border-lightGrey shadow-neon">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="h-16 flex items-center justify-between">
+					{/* Logo */}
 					<div className="flex items-center gap-3">
+						<span className="text-xl font-bold text-black">MolForge</span>
+					</div>
+					
+					{/* Center Navigation */}
+					<nav className="hidden sm:flex items-center gap-1">
+						<RLink
+							to="/"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+								isActive('/', true) 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Home
+						</RLink>
+						<RLink
+							to="/library"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+								isActive('/library') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Library
+						</RLink>
+						<RLink
+							to="/lab"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+								isActive('/lab') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Lab
+						</RLink>
+						<RLink
+							to="/models"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+								isActive('/models') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Models
+						</RLink>
+						<RLink
+							to="/docs"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+								isActive('/docs') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Docs
+						</RLink>
+					</nav>
+					
+					{/* Right side: Search + Profile */}
+					<div className="flex items-center gap-3">
+						{/* Search input - hidden on mobile */}
+						<div className="hidden md:block">
+							<input
+								type="text"
+								placeholder="Search..."
+								className="w-48 rounded-lg border border-lightGrey bg-white text-black px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-darkGrey/20 focus:border-darkGrey placeholder:text-midGrey"
+							/>
+						</div>
+						{/* Mobile menu button */}
 						<button
 							type="button"
-							className="sm:hidden inline-flex items-center justify-center rounded-lg p-2 text-chrome hover:text-ivory hover:bg-frostedGlass focus:outline-none focus:ring-2 focus:ring-neonCyan/50"
+							className="sm:hidden inline-flex items-center justify-center rounded-lg p-2 text-darkGrey hover:text-black hover:bg-offwhite focus:outline-none focus:ring-2 focus:ring-darkGrey/20"
 							aria-label="Toggle navigation"
 							onClick={onToggleMenu}
 						>
@@ -27,67 +96,82 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 								<path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 							</svg>
 						</button>
-						<span className="text-xl font-bold text-ivory">BioSynth AI</span>
+						{/* Profile icon */}
+						<Link
+							to="/profile"
+							className="w-8 h-8 rounded-full bg-lightGrey border border-lightGrey hover:border-darkGrey transition-colors flex items-center justify-center"
+							aria-label="Profile"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-darkGrey">
+								<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor" />
+							</svg>
+						</Link>
 					</div>
-					<nav className="hidden sm:flex items-center gap-2">
+				</div>
+			</div>
+			
+			{/* Mobile menu */}
+			{onToggleMenu && (
+				<div className="sm:hidden border-t border-lightGrey bg-white">
+					<nav className="px-4 py-2 space-y-1">
 						<RLink
 							to="/"
-							className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+							onClick={onToggleMenu}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
 								isActive('/', true) 
-									? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
-									: 'text-chrome hover:text-ivory hover:bg-frostedGlass hover:border-b-2 hover:border-neonCyan'
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
 							}`}
 						>
-							Dashboard
-						</RLink>
-						<RLink
-							to="/welcome"
-							className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/welcome') 
-									? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
-									: 'text-chrome hover:text-ivory hover:bg-frostedGlass hover:border-b-2 hover:border-neonCyan'
-							}`}
-						>
-							Welcome
-						</RLink>
-						<RLink
-							to="/lab"
-							className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/lab') 
-									? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
-									: 'text-chrome hover:text-ivory hover:bg-frostedGlass hover:border-b-2 hover:border-neonCyan'
-							}`}
-						>
-							Lab
+							Home
 						</RLink>
 						<RLink
 							to="/library"
-							className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+							onClick={onToggleMenu}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
 								isActive('/library') 
-									? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
-									: 'text-chrome hover:text-ivory hover:bg-frostedGlass hover:border-b-2 hover:border-neonCyan'
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
 							}`}
 						>
 							Library
 						</RLink>
 						<RLink
-							to="/profile"
-							className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/profile') 
-									? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
-									: 'text-chrome hover:text-ivory hover:bg-frostedGlass hover:border-b-2 hover:border-neonCyan'
+							to="/lab"
+							onClick={onToggleMenu}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+								isActive('/lab') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
 							}`}
 						>
-							Profile
+							Lab
+						</RLink>
+						<RLink
+							to="/models"
+							onClick={onToggleMenu}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+								isActive('/models') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Models
+						</RLink>
+						<RLink
+							to="/docs"
+							onClick={onToggleMenu}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
+								isActive('/docs') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Docs
 						</RLink>
 					</nav>
-					<div className="flex items-center">
-						<div className="w-8 h-8 rounded-full bg-spaceGrey border border-chrome/30" aria-label="Profile avatar" />
-					</div>
 				</div>
-			</div>
+			)}
 		</header>
 	);
 }
-
-

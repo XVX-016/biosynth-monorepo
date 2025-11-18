@@ -1,11 +1,12 @@
-# backend/models_db.py
+# backend/models/db/molecule.py
 from sqlmodel import SQLModel, Field
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel
 import json
 
+
 class Molecule(SQLModel, table=True):
+    """Database model for molecules"""
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     smiles: Optional[str] = None
@@ -16,15 +17,9 @@ class Molecule(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     owner_id: Optional[str] = None     # optional user id if auth added later
 
-class MoleculeCreate(BaseModel):
-    name: str
-    smiles: Optional[str] = None
-    json_graph: Optional[str] = None
-    coords: Optional[str] = None
-    properties: Optional[str] = None
-    thumbnail_b64: Optional[str] = None
 
 class Item(SQLModel, table=True):
+    """Database model for items (admin/inventory)"""
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     smiles: Optional[str] = None
@@ -48,20 +43,4 @@ class Item(SQLModel, table=True):
     def set_tags(self, tags: List[str]):
         """Set tags from list"""
         self.tags = json.dumps(tags) if tags else None
-
-class ItemCreate(BaseModel):
-    name: str
-    smiles: Optional[str] = None
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
-    status: Optional[str] = 'in-stock'
-    stock: Optional[int] = 0
-
-class ItemUpdate(BaseModel):
-    name: Optional[str] = None
-    smiles: Optional[str] = None
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
-    status: Optional[str] = None
-    stock: Optional[int] = None
 

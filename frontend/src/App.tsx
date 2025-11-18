@@ -5,7 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Library from './pages/Library';
 import Lab from './pages/Lab';
 import Profile from './pages/Profile';
-import Welcome from './pages/Welcome';
+import Models from './pages/Models';
+import Docs from './pages/Docs';
 import AdminItems from './pages/admin/Items';
 
 export default function App() {
@@ -13,9 +14,10 @@ export default function App() {
 		<AppShell>
 			<Routes>
 				<Route path="/" element={<Dashboard />} />
-				<Route path="/welcome" element={<Welcome />} />
 				<Route path="/lab" element={<Lab />} />
 				<Route path="/library" element={<Library />} />
+				<Route path="/models" element={<Models />} />
+				<Route path="/docs" element={<Docs />} />
 				<Route path="/profile" element={<Profile />} />
 				<Route path="/admin/items" element={<AdminItems />} />
 			</Routes>

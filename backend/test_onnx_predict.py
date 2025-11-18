@@ -4,7 +4,7 @@ Test ONNX predictor
 import pytest
 import numpy as np
 import os
-from backend.models.onnx_predictor import ONNXPredictor
+from backend.ai.onnx_predictor import ONNXPredictor
 
 
 def test_onnx_predictor_requires_file():
@@ -58,7 +58,7 @@ def test_onnx_predictor_predict():
 )
 def test_onnx_matches_pytorch():
     """Test that ONNX predictions match PyTorch (within tolerance)"""
-    from backend.models.predictor import PropertyPredictor
+    from backend.ai.predictor import PropertyPredictor
     
     # Create features
     features = [0.5] * 2048

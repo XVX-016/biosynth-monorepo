@@ -1,8 +1,9 @@
 /* Ivory & Chrome Theme Styles */
+/* Note: These styles are overridden by globals.css for consistency */
 #root {
   min-height: 100vh;
-  background: var(--ionBlack);
-  color: var(--ivory);
+  background: var(--color-white);
+  color: var(--color-black);
 }
 
 /* Neon glow animations */
