@@ -1,65 +1,61 @@
 # backend/routes/library.py
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import select, Session
+from sqlmodel import Session
 from typing import List
-from backend.db import get_session
-from backend.models_db import Molecule, MoleculeCreate
+from backend.core.dependencies import get_db
+from backend.services.molecule_service import MoleculeService
+from backend.models.schemas.molecule_schema import MoleculeCreate, MoleculeResponse
 
 router = APIRouter(prefix="/molecules", tags=["molecules"])
 
 @router.post("/save", response_model=dict)
-def save_molecule(payload: MoleculeCreate, session: Session = Depends(get_session)):
-    mol = Molecule(
-        name=payload.name,
-        smiles=payload.smiles,
-        json_graph=payload.json_graph,
-        coords=payload.coords,
-        properties=payload.properties,
-        thumbnail_b64=payload.thumbnail_b64,
-    )
-    session.add(mol)
-    session.commit()
-    session.refresh(mol)
-    return {"id": mol.id, "name": mol.name, "created_at": mol.created_at.isoformat()}
+def save_molecule(payload: MoleculeCreate, db: Session = Depends(get_db)):
+    """Save a molecule to the library"""
+    molecule = MoleculeService.create_molecule(db, payload)
+    return {
+        "id": molecule.id,
+        "name": molecule.name,
+        "created_at": molecule.created_at.isoformat()
+    }
 
 @router.get("/list", response_model=List[dict])
-def list_molecules(limit: int = 50, session: Session = Depends(get_session)):
-    q = select(Molecule).order_by(Molecule.created_at.desc()).limit(limit)
-    results = session.exec(q).all()
-    out = []
-    for m in results:
-        out.append({
+def list_molecules(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+    """List molecules with pagination"""
+    molecules = MoleculeService.list_molecules(db, limit=limit, offset=offset)
+    return [
+        {
             "id": m.id,
             "name": m.name,
             "smiles": m.smiles,
             "properties": m.properties,
             "thumbnail_b64": m.thumbnail_b64,
             "created_at": m.created_at.isoformat()
-        })
-    return out
+        }
+        for m in molecules
+    ]
 
 @router.get("/{mol_id}", response_model=dict)
-def get_molecule(mol_id: int, session: Session = Depends(get_session)):
-    m = session.get(Molecule, mol_id)
-    if not m:
+def get_molecule(mol_id: int, db: Session = Depends(get_db)):
+    """Get a molecule by ID"""
+    molecule = MoleculeService.get_molecule(db, mol_id)
+    if not molecule:
         raise HTTPException(status_code=404, detail="Molecule not found")
     return {
-        "id": m.id,
-        "name": m.name,
-        "smiles": m.smiles,
-        "json_graph": m.json_graph,
-        "coords": m.coords,
-        "properties": m.properties,
-        "thumbnail_b64": m.thumbnail_b64,
-        "created_at": m.created_at.isoformat()
+        "id": molecule.id,
+        "name": molecule.name,
+        "smiles": molecule.smiles,
+        "json_graph": molecule.json_graph,
+        "coords": molecule.coords,
+        "properties": molecule.properties,
+        "thumbnail_b64": molecule.thumbnail_b64,
+        "created_at": molecule.created_at.isoformat()
     }
 
 @router.delete("/{mol_id}", response_model=dict)
-def delete_molecule(mol_id: int, session: Session = Depends(get_session)):
-    m = session.get(Molecule, mol_id)
-    if not m:
+def delete_molecule(mol_id: int, db: Session = Depends(get_db)):
+    """Delete a molecule"""
+    success = MoleculeService.delete_molecule(db, mol_id)
+    if not success:
         raise HTTPException(status_code=404, detail="Molecule not found")
-    session.delete(m)
-    session.commit()
     return {"status": "deleted", "id": mol_id}
 

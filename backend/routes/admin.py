@@ -6,8 +6,9 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import select, Session
 from typing import List, Optional
-from backend.db import get_session
-from backend.models_db import Item, ItemCreate, ItemUpdate
+from backend.core.dependencies import get_db
+from backend.models.db.molecule import Item
+from backend.models.schemas.molecule_schema import ItemCreate, ItemUpdate
 
 router = APIRouter(prefix="/api/v1/admin/items", tags=["admin"])
 
@@ -33,7 +34,7 @@ def item_to_dict(item: Item) -> dict:
 
 
 @router.get("", response_model=List[dict])
-def list_items(session: Session = Depends(get_session)):
+def list_items(session: Session = Depends(get_db)):
     """List all items"""
     query = select(Item).order_by(Item.created_at.desc())
     items = session.exec(query).all()
@@ -41,7 +42,7 @@ def list_items(session: Session = Depends(get_session)):
 
 
 @router.get("/{item_id}", response_model=dict)
-def get_item(item_id: int, session: Session = Depends(get_session)):
+def get_item(item_id: int, session: Session = Depends(get_db)):
     """Get item by ID"""
     item = session.get(Item, item_id)
     if not item:

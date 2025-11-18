@@ -1,23 +1,28 @@
+"""
+MolForge Backend API
+FastAPI application entrypoint
+"""
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from dotenv import load_dotenv
-import os
-
-# Load environment variables from .env file
-load_dotenv()
-
+from backend.config import settings
 from backend.routes import predict as predict_router
 from backend.routes import generate as generate_router
 from backend.routes import library as library_router
 from backend.routes import admin as admin_router
 from backend.db import init_db
+from backend.services.prediction_service import PredictionService
+from backend.models.schemas.prediction_schema import PredictOut, PredictIn
 
-app = FastAPI(title="BioSynth AI Backend", version="0.1.0")
+app = FastAPI(
+    title=settings.API_TITLE,
+    version=settings.API_VERSION,
+    description=settings.API_DESCRIPTION
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,7 +44,10 @@ class PredictFastIn(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message": "BioSynth AI Backend API", "version": "0.1.0"}
+    return {
+        "message": "MolForge Backend API",
+        "version": settings.API_VERSION
+    }
 
 
 @app.post("/predict-fast")
@@ -47,31 +55,16 @@ def predict_fast(payload: PredictFastIn):
     """
     Fast prediction using ONNX model
     """
-    from backend.models.onnx_predictor import get_onnx_predictor
-    from backend.utils.featurizer import featurize_smiles, validate_smiles
-    from backend.routes.predict import PredictOut
-    
-    if not validate_smiles(payload.smiles):
-        raise HTTPException(status_code=400, detail="Invalid SMILES string")
-    
-    features = featurize_smiles(payload.smiles)
-    if features is None:
-        raise HTTPException(status_code=400, detail="Failed to featurize SMILES")
-    
     try:
-        predictor = get_onnx_predictor()
-        if predictor is None:
-            # Fallback to regular predictor if ONNX not available
-            from backend.routes.predict import predict
-            from backend.routes.predict import PredictIn
-            return predict(PredictIn(smiles=payload.smiles))
-        properties = predictor.predict(features)
-        return PredictOut(properties=properties)
-    except (FileNotFoundError, ImportError) as e:
-        # Fallback to regular predictor if ONNX not available
-        from backend.routes.predict import predict
-        from backend.routes.predict import PredictIn
-        return predict(PredictIn(smiles=payload.smiles))
+        properties = PredictionService.predict_properties(payload.smiles, use_onnx=True)
+        return PredictOut(properties=properties, smiles=payload.smiles)
+    except Exception as e:
+        # Fallback to regular predictor if ONNX fails
+        try:
+            properties = PredictionService.predict_properties(payload.smiles, use_onnx=False)
+            return PredictOut(properties=properties, smiles=payload.smiles)
+        except Exception as e2:
+            raise HTTPException(status_code=500, detail=str(e2))
 
 
 @app.get("/health")
