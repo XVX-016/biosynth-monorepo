@@ -1,21 +1,20 @@
 /**
- * LibraryPage - Alternative Library page implementation using Firebase
+ * LibraryPage - Alternative Library page implementation using Supabase
  * 
- * This is an optional implementation that uses Firebase instead of the backend API.
+ * This is an optional implementation that uses Supabase instead of the backend API.
  * To use this, update your routing to point to LibraryPage instead of Library.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase';
-import { listMolecules, deleteMolecule, searchMolecules, type FirebaseMolecule } from '../lib/firebaseMoleculeStore';
+import { supabase } from '../supabase';
+import { listMolecules, deleteMolecule, searchMolecules, type SupabaseMolecule } from '../lib/supabaseMoleculeStore';
 import MoleculeCard from '../components/MoleculeCard';
 import { useMoleculeStore } from '../store/moleculeStore';
 import { moleculeFromJSON } from '../lib/engineAdapter';
 
 export default function LibraryPage() {
-  const [items, setItems] = useState<FirebaseMolecule[]>([]);
+  const [items, setItems] = useState<SupabaseMolecule[]>([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
@@ -24,15 +23,31 @@ export default function LibraryPage() {
   const setMolecule = useMoleculeStore((state) => state.setMolecule);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid);
+    if (!supabase) return;
+
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUserId(session.user.id);
       } else {
         setUserId(null);
         setItems([]);
       }
     });
-    return () => unsubscribe();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUserId(session.user.id);
+      } else {
+        setUserId(null);
+        setItems([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -55,7 +70,7 @@ export default function LibraryPage() {
     }
   };
 
-  const openInLab = async (molecule: FirebaseMolecule) => {
+  const openInLab = async (molecule: SupabaseMolecule) => {
     try {
       if (molecule.json_graph) {
         const moleculeGraph = moleculeFromJSON(molecule.json_graph);
@@ -178,7 +193,7 @@ export default function LibraryPage() {
                 smiles: item.smiles,
                 properties: item.properties,
                 thumbnail_b64: item.thumbnail_b64,
-                created_at: new Date(item.createdAt).toISOString(),
+                created_at: item.created_at,
               }}
               onOpen={() => openInLab(item)}
               onDelete={() => item.id && remove(item.id)}

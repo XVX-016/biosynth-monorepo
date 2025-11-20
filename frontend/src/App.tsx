@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import Models from './pages/Models';
 import Docs from './pages/Docs';
 import AdminItems from './pages/admin/Items';
+import SupabaseTest from './pages/SupabaseTest';
 
 export default function App() {
 	return (
@@ -20,6 +21,7 @@ export default function App() {
 				<Route path="/docs" element={<Docs />} />
 				<Route path="/profile" element={<Profile />} />
 				<Route path="/admin/items" element={<AdminItems />} />
+				<Route path="/supabase-test" element={<SupabaseTest />} />
 			</Routes>
 		</AppShell>
 	);
