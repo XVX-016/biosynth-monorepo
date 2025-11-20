@@ -47,9 +47,24 @@ function validateSupabaseConfig() {
     return false;
   }
 
-  // Validate key format (anon keys start with eyJ)
+  // Validate key format (anon keys start with eyJ, NOT sb_secret_)
+  if (supabaseAnonKey.startsWith('sb_secret_')) {
+    console.error('❌ ERROR: You are using a SECRET KEY instead of ANON KEY!');
+    console.error('   Secret keys (sb_secret_...) should NEVER be used in client-side code!');
+    console.error('   They are only for server-side use and will expose your database!');
+    console.error('');
+    console.error('📝 How to fix:');
+    console.error('   1. Go to Supabase Dashboard → Settings → API');
+    console.error('   2. Find "anon public" key (NOT "service_role" or "secret")');
+    console.error('   3. The anon key starts with "eyJ" (it\'s a JWT token)');
+    console.error('   4. Update VITE_SUPABASE_ANON_KEY in .env with the anon key');
+    console.error('   5. Restart dev server');
+    return false;
+  }
+  
   if (!supabaseAnonKey.startsWith('eyJ')) {
     console.warn('⚠️ VITE_SUPABASE_ANON_KEY appears invalid. Should start with "eyJ"');
+    console.warn('   Make sure you\'re using the "anon public" key, not the "service_role" or "secret" key');
     return false;
   }
 
