@@ -1,11 +1,9 @@
-import React, { useRef, useMemo, Suspense } from 'react';
+import React, { Suspense, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { EffectComposer, ChromaticAberration, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { MoleculeGraph } from '@biosynth/engine';
-import AtomMesh from '../r3f/AtomMesh';
-import BondMesh from '../r3f/BondMesh';
 import { moleculeToRenderable } from '../../lib/engineAdapter';
 import { listMolecules } from '../../lib/api';
 import { createMoleculeFromTemplate, getTemplateByName } from '../../data/molecule-templates';
@@ -30,22 +28,16 @@ const ELEMENT_RADII: Record<string, number> = {
 function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
   const groupRef = useRef<THREE.Group>(null);
   const renderable = moleculeToRenderable(molecule);
-  
-  // Floating animation
+
   useFrame((state) => {
-    if (groupRef.current) {
-      // Subtle rotation
-      groupRef.current.rotation.y += 0.002;
-      
-      // Floating motion
-      const time = state.clock.elapsedTime;
-      groupRef.current.position.y = Math.sin(time * 0.5) * 0.2;
-    }
+    if (!groupRef.current) return;
+    groupRef.current.rotation.y += 0.002;
+    const time = state.clock.elapsedTime;
+    groupRef.current.position.y = Math.sin(time * 0.5) * 0.2;
   });
-  
+
   return (
     <group ref={groupRef}>
-      {/* Atoms with material override */}
       {renderable.atoms.map((atom) => {
         const radius = ELEMENT_RADII[atom.element] || 1.0;
         return (
@@ -60,9 +52,9 @@ function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
           </mesh>
         );
       })}
-      
-      {/* Bonds with material override */}
+
       {renderable.bonds.map((bond) => {
+        // compute geometry transforms per bond (kept simple and deterministic)
         const vFrom = new THREE.Vector3(...bond.from);
         const vTo = new THREE.Vector3(...bond.to);
         const diff = new THREE.Vector3().subVectors(vTo, vFrom);
@@ -73,7 +65,7 @@ function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
           diff.clone().normalize()
         );
         const radius = bond.order === 1 ? 0.14 : bond.order === 2 ? 0.18 : 0.22;
-        
+
         return (
           <mesh
             key={bond.id}
@@ -96,20 +88,17 @@ function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
 
 function SceneContent({ molecule }: { molecule: MoleculeGraph | null }) {
   if (!molecule) return null;
-  
+
   return (
     <>
-      {/* Ivory & Chrome lighting - NO blue */}
       <ambientLight intensity={0.4} color="#F6F7F8" />
       <pointLight position={[5, 5, 5]} intensity={1.4} color="#C0C5D2" />
       <pointLight position={[-5, -5, -5]} intensity={1.4} color="#C0C5D2" />
-      
-      {/* Rim-light with plasmaTeal tone */}
       <pointLight position={[0, 0, -8]} intensity={0.8} color="#3BC7C9" />
       <pointLight position={[0, 8, 0]} intensity={0.6} color="#3BC7C9" />
-      
+
       <FloatingMolecule molecule={molecule} />
-      
+
       <OrbitControls
         enableZoom={false}
         enablePan={false}
@@ -118,17 +107,45 @@ function SceneContent({ molecule }: { molecule: MoleculeGraph | null }) {
         minPolarAngle={Math.PI / 3}
         maxPolarAngle={Math.PI / 2.2}
       />
-      
-      {/* Chrome-like environment with cold white reflections */}
-      <Environment
-        environmentIntensity={0.8}
-        environmentRotation={[0, 0, 0]}
-        preset="city"
-      />
-      
+
+      <Environment environmentIntensity={0.8} environmentRotation={[0, 0, 0]} preset="city" />
+
       <PostProcessingEffects />
     </>
   );
+}
+
+// Lightweight error boundary specifically to isolate Canvas rendering errors
+class CanvasErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, info: unknown) {
+    // eslint-disable-next-line no-console
+    console.error('[CanvasErrorBoundary] caught error:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // render a simple fallback that is friendly and non-blocking
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-ionBlack">
+          <div className="text-chrome">Graphics unavailable — try reloading the page.</div>
+        </div>
+      );
+    }
+
+    return <>{this.props.children}</>;
+  }
 }
 
 function PostProcessingEffects() {
@@ -136,95 +153,71 @@ function PostProcessingEffects() {
   const [isReady, setIsReady] = React.useState(false);
   const [hasError, setHasError] = React.useState(false);
 
-  // ALWAYS call all hooks unconditionally before any early returns
-  // Create effects using useMemo - always called, but may return null
-  const bloomEffect = React.useMemo(() => {
-    if (!Bloom) return null;
-    return (
-      <Bloom
-        key="bloom"
-        intensity={1.5}
-        luminanceThreshold={0.9}
-        luminanceSmoothing={0.9}
-        height={300}
-        opacity={0.8}
-      />
-    );
-  }, []);
+  const areImportsAvailable = Boolean(EffectComposer && Bloom && ChromaticAberration);
 
-  const chromaticEffect = React.useMemo(() => {
-    if (!ChromaticAberration) return null;
-    return (
-      <ChromaticAberration
-        key="chromatic"
-        offset={[0.001, 0.001]}
-        radialModulation
-        modulationOffset={0.15}
-      />
-    );
-  }, []);
-
-  // Filter effects array - always called
-  const effects = React.useMemo(() => {
-    return [bloomEffect, chromaticEffect].filter(Boolean);
-  }, [bloomEffect, chromaticEffect]);
-
-  React.useEffect(() => {
-    // Wait for WebGL context to be fully initialized
-    if (!gl) {
-      setIsReady(false);
-      return;
+  const supportsPostProcessing = React.useMemo(() => {
+    try {
+      if (!gl) return false;
+      const isWebGL2 = !!(gl as any).capabilities?.isWebGL2;
+      const extGetter = (gl as any).getExtension ? (name: string) => (gl as any).getExtension(name) : () => null;
+      const hasDrawBuffers = !!extGetter('WEBGL_draw_buffers') || !!extGetter('EXT_draw_buffers');
+      const validSize = !!size && size.width > 0 && size.height > 0;
+      return (isWebGL2 || hasDrawBuffers) && validSize;
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('supportsPostProcessing check failed', e);
+      return false;
     }
-
-    // Small delay to ensure WebGL is ready
-    const timer = setTimeout(() => {
-      try {
-        // Check if WebGL2 or required extensions are available
-        const isWebGL2 = gl.capabilities?.isWebGL2 || false;
-        const hasDrawBuffers = gl.extensions?.has?.('WEBGL_draw_buffers') || false;
-        const hasSupport = isWebGL2 || hasDrawBuffers;
-        
-        // Also check if size is valid
-        const hasValidSize = size && size.width > 0 && size.height > 0;
-        
-        setIsReady(hasSupport && hasValidSize);
-        setHasError(false);
-      } catch (error) {
-        console.warn('Post-processing not supported:', error);
-        setIsReady(false);
-        setHasError(true);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
   }, [gl, size]);
 
-  // Now we can do early returns - all hooks have been called
-  if (hasError || !isReady) {
+  React.useEffect(() => {
+    let mounted = true;
+    const t = setTimeout(() => {
+      if (!mounted) return;
+      setIsReady(Boolean(gl) && supportsPostProcessing && areImportsAvailable);
+      setHasError(!supportsPostProcessing || !areImportsAvailable ? true : false);
+    }, 50);
+    return () => {
+      mounted = false;
+      clearTimeout(t);
+    };
+  }, [gl, supportsPostProcessing, areImportsAvailable]);
+
+  if (!isReady || hasError) {
+    if (!areImportsAvailable) {
+      // eslint-disable-next-line no-console
+      console.warn('[PostProcessingEffects] imports missing (EffectComposer/Bloom/ChromaticAberration).');
+    }
     return null;
   }
 
-  // Verify all effects are imported and defined
-  if (!Bloom || !ChromaticAberration || !EffectComposer) {
-    console.warn('Post-processing effects not available');
-    return null;
-  }
-
-  // Double-check: ensure we have valid effects
-  if (!effects || effects.length === 0) {
-    console.warn('No valid post-processing effects to render');
-    return null;
-  }
-
-  // Render with error boundary
   try {
     return (
-      <EffectComposer>
-        {effects}
+      <EffectComposer multisampling={4}>
+        {Bloom ? (
+          <Bloom
+            intensity={1.5}
+            luminanceThreshold={0.9}
+            luminanceSmoothing={0.9}
+            height={300}
+            opacity={0.8}
+            key="bloom"
+          />
+        ) : null}
+
+        {ChromaticAberration ? (
+          <ChromaticAberration
+            offset={[0.001, 0.001]}
+            radialModulation
+            modulationOffset={0.15}
+            key="chromatic"
+          />
+        ) : null}
       </EffectComposer>
     );
-  } catch (error) {
-    console.error('EffectComposer render error:', error);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[PostProcessingEffects] render error:', err);
     setHasError(true);
     return null;
   }
@@ -234,48 +227,43 @@ export default function HeroScene({ molecule: propMolecule }: HeroSceneProps) {
   const [featuredMolecule, setFeaturedMolecule] = React.useState<MoleculeGraph | null>(
     propMolecule || null
   );
-  
+
   React.useEffect(() => {
-    // Load featured molecule
     if (propMolecule) {
       setFeaturedMolecule(propMolecule);
       return;
     }
-    
-    // Try to load from API
+
     let cancelled = false;
     (async () => {
       try {
         const molecules = await listMolecules(1);
         if (!cancelled && molecules.length > 0) {
-          // Try to load from saved molecule
-          // For now, use a template as fallback
           const template = getTemplateByName('Benzene');
           if (template) {
             setFeaturedMolecule(createMoleculeFromTemplate(template));
           }
         } else {
-          // Use default template
           const template = getTemplateByName('Benzene') || getTemplateByName('Water');
           if (template) {
             setFeaturedMolecule(createMoleculeFromTemplate(template));
           }
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to load featured molecule:', error);
-        // Fallback to template
         const template = getTemplateByName('Benzene') || getTemplateByName('Water');
         if (template) {
           setFeaturedMolecule(createMoleculeFromTemplate(template));
         }
       }
     })();
-    
+
     return () => {
       cancelled = true;
     };
   }, [propMolecule]);
-  
+
   if (!featuredMolecule) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-ionBlack">
@@ -283,26 +271,31 @@ export default function HeroScene({ molecule: propMolecule }: HeroSceneProps) {
       </div>
     );
   }
-  
+
   return (
-    <div className="w-full h-full relative overflow-hidden frosted-glass border border-chrome/30 rounded-xl" style={{
-      background: 'linear-gradient(135deg, rgba(227, 230, 235, 0.1), rgba(192, 197, 210, 0.05))',
-      borderImage: 'linear-gradient(135deg, #E3E6EB, #C0C5D2) 1'
-    }}>
-      {/* neonCyan glow bloom */}
-      <div className="absolute inset-0 bg-gradient-to-br from-neonCyan/10 via-transparent to-neonCyan/5 pointer-events-none" style={{
-        boxShadow: 'inset 0 0 60px rgba(139, 243, 255, 0.2)'
-      }} />
-      <Canvas
-        camera={{ position: [0, 0, 8], fov: 50 }}
-        gl={{ antialias: true, alpha: true, toneMappingExposure: 1.2 }}
-        style={{ background: 'transparent' }}
-      >
-        <Suspense fallback={null}>
-          <SceneContent molecule={featuredMolecule} />
-        </Suspense>
-      </Canvas>
+    <div
+      className="w-full h-full relative overflow-hidden frosted-glass border border-chrome/30 rounded-xl"
+      style={{
+        background: 'linear-gradient(135deg, rgba(227, 230, 235, 0.1), rgba(192, 197, 210, 0.05))',
+        borderImage: 'linear-gradient(135deg, #E3E6EB, #C0C5D2) 1',
+      }}
+    >
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-neonCyan/10 via-transparent to-neonCyan/5 pointer-events-none"
+        style={{ boxShadow: 'inset 0 0 60px rgba(139, 243, 255, 0.2)' }}
+      />
+
+      <CanvasErrorBoundary>
+        <Canvas
+          camera={{ position: [0, 0, 8], fov: 50 }}
+          gl={{ antialias: true, alpha: true, toneMappingExposure: 1.2 }}
+          style={{ background: 'transparent' }}
+        >
+          <Suspense fallback={null}>
+            <SceneContent molecule={featuredMolecule} />
+          </Suspense>
+        </Canvas>
+      </CanvasErrorBoundary>
     </div>
   );
 }
-

@@ -14,7 +14,7 @@
     "@biosynth/engine": "file:../packages/engine",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "8.15.9",
-    "@react-three/postprocessing": "^3.0.4",
+    "@react-three/postprocessing": "^2.15.13",
     "axios": "1.6.8",
     "clsx": "2.1.0",
     "firebase": "^12.6.0",
