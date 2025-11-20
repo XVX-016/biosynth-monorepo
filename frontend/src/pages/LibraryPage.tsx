@@ -8,20 +8,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../supabase';
-import { listMolecules, deleteMolecule, searchMolecules, type SupabaseMolecule } from '../lib/supabaseMoleculeStore';
+import { listUserMolecules, deleteUserMolecule, searchUserMolecules, type UserMolecule } from '../lib/userMoleculeStore';
 import MoleculeCard from '../components/MoleculeCard';
 import SearchBar from '../components/SearchBar';
-import { useMoleculeStore } from '../store/moleculeStore';
-import { moleculeFromJSON } from '../lib/engineAdapter';
 
 export default function LibraryPage() {
-  const [items, setItems] = useState<SupabaseMolecule[]>([]);
+  const [items, setItems] = useState<UserMolecule[]>([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState<string | null>(null);
   const pageSize = 12;
-  const setMolecule = useMoleculeStore((state) => state.setMolecule);
 
   useEffect(() => {
     if (!supabase) return;
@@ -56,7 +53,7 @@ export default function LibraryPage() {
     
     setLoading(true);
     try {
-      const molecules = await listMolecules(userId);
+      const molecules = await listUserMolecules(userId);
       setItems(molecules);
     } catch (error) {
       console.error('Failed to load molecules:', error);
@@ -95,21 +92,13 @@ export default function LibraryPage() {
     }
   }, [userId, loadMolecules]);
 
-  const openInLab = async (molecule: SupabaseMolecule) => {
+  const openInLab = async (molecule: UserMolecule) => {
     try {
-      if (molecule.json_graph) {
-        const moleculeGraph = moleculeFromJSON(molecule.json_graph);
-        if (moleculeGraph) {
-          setMolecule(moleculeGraph);
-          // Navigate to lab page
-          window.location.href = '/lab';
-        }
-      } else {
-        alert('Molecule data not available');
-      }
+      // Navigate to lab with molecule ID and source
+      window.location.href = `/lab?id=${molecule.id}&source=user`;
     } catch (error) {
-      console.error('Failed to load molecule:', error);
-      alert('Failed to load molecule');
+      console.error('Failed to open molecule:', error);
+      alert('Failed to open molecule');
     }
   };
 
@@ -118,7 +107,7 @@ export default function LibraryPage() {
     if (!confirm('Delete this molecule?')) return;
     
     try {
-      await deleteMolecule(userId, moleculeId);
+      await deleteUserMolecule(userId, moleculeId);
       setItems(items.filter((i) => i.id !== moleculeId));
     } catch (error) {
       console.error('Failed to delete molecule:', error);
@@ -134,7 +123,7 @@ export default function LibraryPage() {
       if (q.trim()) {
         setLoading(true);
         try {
-          const results = await searchMolecules(userId, q.trim());
+          const results = await searchUserMolecules(userId, q.trim());
           setItems(results);
         } catch (error) {
           console.error('Search error:', error);
@@ -195,8 +184,8 @@ export default function LibraryPage() {
     >
       <header className="mb-6">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold text-black truncate">Molecule Library</h1>
-          <p className="text-darkGrey mt-1">Your saved molecular structures</p>
+          <h1 className="text-3xl font-bold text-black truncate">My Molecule Library</h1>
+          <p className="text-darkGrey mt-1">Your personal saved molecular structures</p>
         </div>
         <div className="flex items-center gap-3">
           <SearchBar
@@ -242,6 +231,7 @@ export default function LibraryPage() {
               }}
               onOpen={() => openInLab(item)}
               onDelete={() => item.id && remove(item.id)}
+              showFork={false}
             />
           ))}
         </div>

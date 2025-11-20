@@ -10,6 +10,7 @@ import Docs from './pages/Docs';
 import AdminItems from './pages/admin/Items';
 import SupabaseTest from './pages/SupabaseTest';
 import SeedLibrary from './pages/SeedLibrary';
+import PublicLibrary from './pages/PublicLibrary';
 
 export default function App() {
 	return (
@@ -18,6 +19,7 @@ export default function App() {
 				<Route path="/" element={<Dashboard />} />
 				<Route path="/lab" element={<Lab />} />
 				<Route path="/library" element={<LibraryPage />} />
+				<Route path="/library/public" element={<PublicLibrary />} />
 				<Route path="/models" element={<Models />} />
 				<Route path="/docs" element={<Docs />} />
 				<Route path="/profile" element={<Profile />} />
