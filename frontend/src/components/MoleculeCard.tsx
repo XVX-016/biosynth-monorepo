@@ -87,8 +87,10 @@ export default function MoleculeCard({
                 mode="card"
                 height={180}
                 hovered={hovered}
-                interactive={hovered}
+                interactive={false}
                 autorotate={hovered}
+                atomScale={0.28}
+                bondRadius={0.06}
               />
             </Suspense>
           </div>

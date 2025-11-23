@@ -67,10 +67,13 @@ export default function Library() {
   }, [items, q])
 
   const { data: paged, totalPages } = useMemo(() => paginate(filtered, page, pageSize), [filtered, page])
+  
+  // Clamp page when filtered results change (e.g., after search)
   useEffect(() => {
-    // clamp page when filter changes
-    if (page > totalPages) setPage(1)
-  }, [totalPages])
+    if (totalPages > 0 && page > totalPages) {
+      setPage(1)
+    }
+  }, [totalPages]) // Only depend on totalPages, not page, to avoid flickering
 
   return (
     <motion.div

@@ -1,21 +1,73 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import BenzeneGLBViewer from '../components/BenzeneGLBViewer'
-import { listMolecules } from '../lib/api'
+import { listMolecules, convertSMILESToMolfile } from '../lib/api'
 import type { MoleculeItem } from '../lib/api'
 import Card from '../components/ui/Card'
 import BarbellViewer from '../components/BarbellViewer'
 
+// Caffeine SMILES: CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+const CAFFEINE_SMILES = 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C'
+
+/* --------- Inline Icons (clean, modern SVG) ---------- */
+function SparklesIcon({ className = 'w-7 h-7 text-indigo-600' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2l1.5 3L17 7l-3.5 1L12 11l-1.5-3L7 7l3.5-2L12 2z" fill="currentColor" opacity="0.95"/>
+      <path d="M4 14l.9 1.8L7 17l-1.1 1.2L6 20l-2-1.2L2 20l.1-1.8L1 17l2-1.2L4 14z" fill="currentColor" opacity="0.75"/>
+      <path d="M20 14l.9 1.8L23 17l-1.1 1.2L22 20l-2-1.2L18 20l.1-1.8L17 17l2-1.2L20 14z" fill="currentColor" opacity="0.65"/>
+    </svg>
+  );
+}
+
+function CubeIcon({ className = 'w-7 h-7 text-emerald-500' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M21 16V8l-9-5-9 5v8l9 5 9-5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" opacity="0.95"/>
+      <path d="M12 3v18" stroke="#ffffff" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.3"/>
+      <path d="M3 8l9 5 9-5" stroke="#ffffff" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.3"/>
+    </svg>
+  );
+}
+
+function LibraryIcon({ className = 'w-7 h-7 text-sky-500' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 6h18v14H3z" fill="currentColor" opacity="0.95"/>
+      <path d="M7 6v14" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"/>
+      <path d="M11 6v14" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"/>
+      <path d="M15 6v14" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"/>
+    </svg>
+  );
+}
+
 export default function Dashboard(){
   const navigate = useNavigate()
   const [recent, setRecent] = useState<MoleculeItem[]>([])
+  const [caffeineMolfile, setCaffeineMolfile] = useState<string | null>(null)
+
+  // Load caffeine molfile on mount
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const result = await convertSMILESToMolfile(CAFFEINE_SMILES)
+        if (!cancelled && result.molfile) {
+          setCaffeineMolfile(result.molfile)
+        }
+      } catch (error) {
+        console.error('Failed to load caffeine molfile:', error)
+        if (!cancelled) setCaffeineMolfile(null)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
-        const items = await listMolecules(12)
+        const items = await listMolecules(24)
         if (!cancelled) setRecent(items ?? [])
       } catch {
         if (!cancelled) setRecent([])
@@ -48,13 +100,13 @@ export default function Dashboard(){
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           {/* Subheading */}
-          <p className="text-sm font-semibold text-blue-600 tracking-wide uppercase">
+          <p className="text-sm font-semibold text-indigo-600 tracking-wide uppercase">
             AI-Powered Molecular Design
           </p>
 
           {/* Main Heading */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight">
-            Reimagine Molecular<br />Discovery with AI
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black leading-tight">
+            Reimagine Molecular Discovery with AI
           </h1>
 
           {/* Description */}
@@ -84,7 +136,7 @@ export default function Dashboard(){
           </div>
 
           {/* Quick Stats */}
-          <div className="flex gap-8 pt-4">
+          <div className="flex gap-8 pt-6">
             <div>
               <div className="text-sm text-midGrey mb-1">Total saved</div>
               <div className="text-3xl font-bold text-black">{kpis.total}</div>
@@ -93,32 +145,50 @@ export default function Dashboard(){
               <div className="text-sm text-midGrey mb-1">Avg stability</div>
               <div className="text-3xl font-bold text-black">{kpis.avgStability}</div>
             </div>
+            <div className="hidden md:block">
+              <div className="text-sm text-midGrey mb-1">Last generated</div>
+              <div className="text-sm text-black truncate max-w-[120px]" title={kpis.lastGenerated}>{kpis.lastGenerated}</div>
+            </div>
           </div>
         </motion.div>
 
-        {/* Right Section - 3D Viewer (Smaller, Better Positioned) */}
+        {/* Right Section - 3D Viewer (Caffeine) */}
         <motion.div
           className="flex justify-center items-center"
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.7, delay: 0.12 }}
         >
-          <div className="w-full max-w-[450px] h-[400px] rounded-2xl overflow-hidden border border-lightGrey shadow-xl bg-white relative">
+          <div className="w-full max-w-[480px] h-[420px] rounded-2xl overflow-hidden border border-lightGrey shadow-xl bg-white relative">
             {/* Subtle glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/40 to-transparent pointer-events-none" />
             
             {/* 3D Viewer */}
             <div className="relative w-full h-full z-10">
-              <BenzeneGLBViewer
-                mode="hero"
-                height={400}
-                className="w-full h-full"
-              />
+              {caffeineMolfile ? (
+                <BarbellViewer
+                  molfile={caffeineMolfile}
+                  mode="hero"
+                  autorotate={true}
+                  interactive={true}
+                  atomScale={0.28}
+                  bondRadius={0.06}
+                  height={420}
+                  className="w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <div className="text-sm text-gray-500">Loading molecule...</div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Label */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
-              Molecule Preview: Benzene (C₆H₆)
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/75 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
+              Molecule Preview: Caffeine (C₈H₁₀N₄O₂)
             </div>
           </div>
         </motion.div>
@@ -127,26 +197,38 @@ export default function Dashboard(){
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 hover:shadow-neon-hover transition-all duration-300">
-            <div className="text-3xl mb-4">🧬</div>
-            <h3 className="text-xl font-semibold text-black mb-2">AI Molecule Generator</h3>
-            <p className="text-darkGrey text-sm leading-relaxed">
-              Build molecules instantly using machine learning. Generate novel structures from natural language prompts.
-            </p>
+          <Card className="p-6 hover:shadow-neon-hover transition-all duration-300 flex gap-4 items-start">
+            <div className="mt-1 flex-shrink-0">
+              <SparklesIcon />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-black mb-2">AI Molecule Generator</h3>
+              <p className="text-darkGrey text-sm leading-relaxed">
+                Build molecules instantly using machine learning. Generate novel structures from natural language prompts.
+              </p>
+            </div>
           </Card>
-          <Card className="p-6 hover:shadow-neon-hover transition-all duration-300">
-            <div className="text-3xl mb-4">🔬</div>
-            <h3 className="text-xl font-semibold text-black mb-2">3D Molecular Viewer</h3>
-            <p className="text-darkGrey text-sm leading-relaxed">
-              Interact with high-quality 3D visualizations. Rotate, zoom, and explore molecular structures in real-time.
-            </p>
+          <Card className="p-6 hover:shadow-neon-hover transition-all duration-300 flex gap-4 items-start">
+            <div className="mt-1 flex-shrink-0">
+              <CubeIcon />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-black mb-2">3D Molecular Viewer</h3>
+              <p className="text-darkGrey text-sm leading-relaxed">
+                Interact with high-quality 3D visualizations. Rotate, zoom, and explore molecular structures in real-time.
+              </p>
+            </div>
           </Card>
-          <Card className="p-6 hover:shadow-neon-hover transition-all duration-300">
-            <div className="text-3xl mb-4">📚</div>
-            <h3 className="text-xl font-semibold text-black mb-2">Your Molecule Library</h3>
-            <p className="text-darkGrey text-sm leading-relaxed">
-              Save, manage, and explore your creations. Build a personal collection of molecular structures.
-            </p>
+          <Card className="p-6 hover:shadow-neon-hover transition-all duration-300 flex gap-4 items-start">
+            <div className="mt-1 flex-shrink-0">
+              <LibraryIcon />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-black mb-2">Your Molecule Library</h3>
+              <p className="text-darkGrey text-sm leading-relaxed">
+                Save, manage, and explore your creations. Build a personal collection of molecular structures.
+              </p>
+            </div>
           </Card>
         </div>
       </section>
@@ -193,24 +275,24 @@ export default function Dashboard(){
             recent.slice(0, 12).map((m) => (
               <motion.div
                 key={m.id}
-                className="min-w-[200px] flex-shrink-0"
+                className="min-w-[220px] flex-shrink-0"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.28 }}
               >
                 <div 
                   className="cursor-pointer h-full"
                   onClick={() => navigate(`/lab?id=${m.id}`)}
                 >
                 <Card className="overflow-hidden hover:shadow-neon-hover transition-all h-full">
-                  <div className="h-32 flex items-center justify-center overflow-hidden bg-offwhite">
+                  <div className="h-36 flex items-center justify-center overflow-hidden bg-offwhite">
                     {m.molfile ? (
                       <BarbellViewer
                         molfile={m.molfile}
                         mode="card"
-                        height={128}
-                        atomScale={0.2}
-                        bondRadius={0.05}
+                        height={140}
+                        atomScale={0.18}
+                        bondRadius={0.04}
                       />
                     ) : m.thumbnail_b64 ? (
                       <img 

@@ -234,8 +234,8 @@ export default function BarbellViewer({
   const interactive = interactiveProp !== undefined 
     ? interactiveProp 
     : (mode === 'hero' || (mode === 'card' && hovered));
-  // Use lower quality for card mode to reduce GPU load, high quality for hero/lab
-  const quality = mode === 'card' ? 'low' : 'high';
+  // Use high quality for all modes - better visual quality
+  const quality = 'high';
 
   // Calculate camera distance based on molecule size
   const cameraRadius = useMemo(() => {
@@ -294,9 +294,9 @@ export default function BarbellViewer({
           fov: 45,
         }}
         style={{ width: '100%', height: '100%' }}
-        dpr={mode === 'card' ? 0.5 : window.devicePixelRatio}
+        dpr={window.devicePixelRatio}
         performance={{ min: 0.5 }}
-        flat={mode === 'card'}
+        flat={false}
         shadows={mode !== 'card'}
       >
         <ambientLight intensity={0.6} />
@@ -313,12 +313,12 @@ export default function BarbellViewer({
         {interactive && (
           <OrbitControls
             enablePan={mode === 'card' ? false : true}
-            enableZoom={mode === 'card' ? hovered : true}
-            enableRotate={true}
+            enableZoom={mode === 'card' ? false : true}
+            enableRotate={mode === 'card' ? false : true}
             enableDamping={true}
             dampingFactor={0.05}
             autoRotate={mode === 'card' ? (autorotate && hovered) : autorotate}
-            autoRotateSpeed={mode === 'card' ? 0.3 : 0.5}
+            autoRotateSpeed={mode === 'card' ? 0.5 : 0.5}
             minDistance={mode === 'card' ? 2 : 1}
             maxDistance={mode === 'card' ? 8 : 20}
           />
