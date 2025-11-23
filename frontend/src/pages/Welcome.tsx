@@ -1,13 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import BarbellViewer from '../components/BarbellViewer';
-import { listPublicMolecules } from '../lib/publicMoleculeStore';
+import BenzeneGLBViewer from '../components/BenzeneGLBViewer';
 
 export default function Welcome() {
   const sceneRef = useRef<HTMLDivElement>(null);
   const [showScene, setShowScene] = React.useState(false);
-  const [benzeneMolfile, setBenzeneMolfile] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,81 +26,6 @@ export default function Welcome() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Load benzene from public_molecules
-  useEffect(() => {
-    let cancelled = false;
-    
-    // Properly formatted benzene molfile (C6H6 with 6 carbons in ring)
-    // Note: This is a simplified version without hydrogens for cleaner visualization
-    const fallbackBenzeneMolfile = `
-
-
-  6  6  0  0  0  0  0  0  0  0999 V2000
-    1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000   -1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2990   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0  0  0  0
-  2  3  2  0  0  0  0
-  3  4  1  0  0  0  0
-  4  5  2  0  0  0  0
-  5  6  1  0  0  0  0
-  6  1  2  0  0  0  0
-M  END
-`;
-    
-    const loadBenzene = async () => {
-      try {
-        // First try to find benzene by name
-        const allMolecules = await listPublicMolecules();
-        console.log('Loaded public molecules:', allMolecules.length);
-        
-        const benzene = allMolecules.find(m => 
-          m.name.toLowerCase() === 'benzene' || 
-          m.formula === 'C6H6'
-        );
-        
-        if (benzene) {
-          console.log('Found benzene:', benzene.name, 'molfile exists:', !!benzene.molfile, 'molfile length:', benzene.molfile?.length);
-          if (benzene.molfile && benzene.molfile.trim()) {
-            if (!cancelled) {
-              console.log('Setting benzene molfile, length:', benzene.molfile.length);
-              setBenzeneMolfile(benzene.molfile);
-              setLoading(false);
-              return;
-            }
-          } else {
-            console.warn('Benzene found but no valid molfile');
-          }
-        } else {
-          console.warn('Benzene not found in public_molecules');
-        }
-        
-        // Use fallback if benzene not found or has no molfile
-        if (!cancelled) {
-          console.warn('Using fallback benzene molfile');
-          setBenzeneMolfile(fallbackBenzeneMolfile);
-        }
-      } catch (error) {
-        console.error('Failed to load benzene molecule:', error);
-        if (!cancelled) {
-          // Use fallback on error
-          setBenzeneMolfile(fallbackBenzeneMolfile);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadBenzene();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-ionBlack text-ivory">
@@ -221,24 +143,13 @@ M  END
               }}
             />
             
-            {/* Hero Molecule Viewer */}
+            {/* Hero Benzene 3D Model */}
             <div className="relative w-full h-full z-10">
-              {loading ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-chrome">Loading molecule...</div>
-                </div>
-              ) : benzeneMolfile ? (
-                <BarbellViewer
-                  molfile={benzeneMolfile}
-                  mode="hero"
-                  height={500}
-                  className="w-full h-full"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-chrome">No molecule data available</div>
-                </div>
-              )}
+              <BenzeneGLBViewer
+                mode="hero"
+                height={500}
+                className="w-full h-full"
+              />
             </div>
           </div>
         </motion.div>

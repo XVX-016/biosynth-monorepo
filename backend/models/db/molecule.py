@@ -14,6 +14,7 @@ class Molecule(SQLModel, table=True):
     coords: Optional[str] = None       # optional stored coordinates (JSON)
     properties: Optional[str] = None   # JSON string of properties
     thumbnail_b64: Optional[str] = None
+    molfile: Optional[str] = None      # V2000/V3000 molfile for 3D coordinates
     created_at: datetime = Field(default_factory=datetime.utcnow)
     owner_id: Optional[str] = None     # optional user id if auth added later
 

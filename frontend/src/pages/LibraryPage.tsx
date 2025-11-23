@@ -4,8 +4,9 @@
  * Shows both public_molecules (read-only, forkable) and user_molecules (editable, deletable)
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 import { supabase } from '../supabase';
 import { 
   listUserMolecules, 
@@ -29,7 +30,15 @@ export default function LibraryPage() {
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const pageSize = 12;
+  
+  // Infinite scroll trigger
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
 
   useEffect(() => {
     if (!supabase) return;
@@ -59,27 +68,54 @@ export default function LibraryPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadMolecules = React.useCallback(async () => {
-    setLoading(true);
+  const loadMolecules = React.useCallback(async (reset: boolean = true) => {
+    if (reset) {
+      setLoading(true);
+      setPage(1);
+      setHasMore(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+    
     try {
       if (tab === 'public') {
         // Load public molecules (no auth required)
         const molecules = await listPublicMolecules();
-        setItems(molecules);
+        if (reset) {
+          setItems(molecules);
+        } else {
+          // For infinite scroll, append new items (though Supabase returns all)
+          // In a real implementation with cursor-based pagination, you'd append here
+          setItems(molecules);
+        }
+        setHasMore(false); // Supabase listPublicMolecules returns all, so no more pages
       } else {
         // Load user molecules (auth required)
         if (!userId) {
           setItems([]);
+          setHasMore(false);
           return;
         }
         const molecules = await listUserMolecules(userId);
-        setItems(molecules);
+        if (reset) {
+          setItems(molecules);
+        } else {
+          setItems(molecules);
+        }
+        setHasMore(false); // Supabase listUserMolecules returns all, so no more pages
       }
     } catch (error) {
       console.error('Failed to load molecules:', error);
-      setItems([]);
+      if (reset) {
+        setItems([]);
+      }
+      setHasMore(false);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
     }
   }, [tab, userId]);
 
@@ -215,6 +251,15 @@ export default function LibraryPage() {
       setPage(1);
     }
   }, [totalPages, page]);
+
+  // Infinite scroll: load more when scroll trigger is in view
+  useEffect(() => {
+    if (inView && !loading && !isLoadingMore && hasMore && page < totalPages) {
+      const nextPage = page + 1;
+      console.log('Infinite scroll triggered:', { current: page, next: nextPage, totalPages });
+      setPage(nextPage);
+    }
+  }, [inView, loading, isLoadingMore, hasMore, page, totalPages]);
 
   // Debug: Log molecule data
   useEffect(() => {
@@ -356,7 +401,16 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Infinite scroll trigger */}
+      {filtered.length > 0 && page < totalPages && (
+        <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center">
+          {isLoadingMore && (
+            <div className="text-sm text-midGrey">Loading more molecules...</div>
+          )}
+        </div>
+      )}
+
+      {/* Pagination controls (optional, can be hidden if using infinite scroll) */}
       {filtered.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
           <button

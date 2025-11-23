@@ -13,7 +13,7 @@ import { parseMolfile, type Atom, type Bond } from '../utils/molfileParser';
 
 interface BarbellViewerProps {
   molfile?: string | null;
-  mode?: 'card' | 'hero';
+  mode?: 'card' | 'hero' | 'preview';
   className?: string;
   atomScale?: number;
   bondRadius?: number;
@@ -45,12 +45,13 @@ const ELEMENT_COLORS: Record<string, number> = {
 const DEFAULT_COLOR = 0xcccccc;
 
 // Atom sphere component
-function AtomSphere({ atom, scale }: { atom: Atom; scale: number }) {
+function AtomSphere({ atom, scale, quality = 'high' }: { atom: Atom; scale: number; quality?: 'high' | 'low' }) {
   const color = ELEMENT_COLORS[atom.element] || DEFAULT_COLOR;
+  const segments = quality === 'low' ? 8 : 16;
   
   return (
     <mesh position={[atom.x, atom.y, atom.z]}>
-      <sphereGeometry args={[scale, 16, 16]} />
+      <sphereGeometry args={[scale, segments, segments]} />
       <meshStandardMaterial color={color} metalness={0.15} roughness={0.5} />
     </mesh>
   );
@@ -60,11 +61,13 @@ function AtomSphere({ atom, scale }: { atom: Atom; scale: number }) {
 function BondCylinder({ 
   start, 
   end, 
-  radius 
+  radius,
+  quality = 'high'
 }: { 
   start: THREE.Vector3; 
   end: THREE.Vector3; 
   radius: number;
+  quality?: 'high' | 'low';
 }) {
   const length = start.distanceTo(end);
   const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
@@ -74,9 +77,11 @@ function BondCylinder({
   const yAxis = new THREE.Vector3(0, 1, 0);
   const quaternion = new THREE.Quaternion().setFromUnitVectors(yAxis, direction);
   
+  const segments = quality === 'low' ? 6 : 8;
+  
   return (
     <mesh position={mid} quaternion={quaternion}>
-      <cylinderGeometry args={[radius, radius, length, 8]} />
+      <cylinderGeometry args={[radius, radius, length, segments]} />
       <meshStandardMaterial color={0xcccccc} metalness={0.2} roughness={0.6} />
     </mesh>
   );
@@ -88,11 +93,13 @@ function MoleculeScene({
   autorotate = false,
   atomScale = 0.25,
   bondRadius = 0.06,
+  quality = 'high',
 }: {
   molfile: string;
   autorotate?: boolean;
   atomScale?: number;
   bondRadius?: number;
+  quality?: 'high' | 'low';
 }) {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -177,9 +184,10 @@ function MoleculeScene({
       {/* Render atoms */}
       {atoms.map((atom, i) => {
         const pos = new THREE.Vector3(atom.x, atom.y, atom.z).sub(centroid);
+        const segments = quality === 'low' ? 12 : 24;
         return (
           <mesh key={`atom-${i}`} position={pos.toArray()}>
-            <sphereGeometry args={[atomScale, 24, 24]} />
+            <sphereGeometry args={[atomScale, segments, segments]} />
             <meshStandardMaterial
               color={ELEMENT_COLORS[atom.element] || DEFAULT_COLOR}
               metalness={0.15}
@@ -196,6 +204,7 @@ function MoleculeScene({
           start={bond.start}
           end={bond.end}
           radius={bondRadius}
+          quality={quality}
         />
       ))}
     </group>
@@ -213,6 +222,7 @@ export default function BarbellViewer({
 }: BarbellViewerProps) {
   const autorotate = mode === 'hero';
   const interactive = mode === 'hero';
+  const quality = mode === 'preview' || mode === 'card' ? 'low' : 'high';
 
   // Calculate camera distance based on molecule size
   const cameraRadius = useMemo(() => {
@@ -271,15 +281,20 @@ export default function BarbellViewer({
           fov: 45,
         }}
         style={{ width: '100%', height: '100%' }}
+        dpr={quality === 'low' ? 1 : window.devicePixelRatio}
+        performance={{ min: 0.5 }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={0.8} />
-        <directionalLight position={[-5, -3, -2]} intensity={0.4} />
+        <ambientLight intensity={quality === 'low' ? 0.7 : 0.6} />
+        <directionalLight position={[5, 5, 5]} intensity={quality === 'low' ? 0.6 : 0.8} />
+        {quality === 'high' && (
+          <directionalLight position={[-5, -3, -2]} intensity={0.4} />
+        )}
         <MoleculeScene
           molfile={molfile}
           autorotate={autorotate}
           atomScale={atomScale}
           bondRadius={bondRadius}
+          quality={quality}
         />
         {interactive && (
           <OrbitControls

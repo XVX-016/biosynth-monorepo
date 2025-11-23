@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import MoleculeViewer from '../components/MoleculeViewer'
-import HeroScene from '../components/home/HeroScene'
+import BenzeneGLBViewer from '../components/BenzeneGLBViewer'
 import { useMoleculeStore } from '../store/moleculeStore'
 import { listMolecules } from '../lib/api'
 import type { MoleculeItem } from '../lib/api'
@@ -50,7 +50,11 @@ export default function Dashboard(){
           </div>
         </div>
         <div className="w-full h-[400px] rounded-xl overflow-hidden border border-lightGrey shadow-neon bg-white">
-          <HeroScene molecule={currentMolecule} />
+          <BenzeneGLBViewer
+            mode="hero"
+            height={400}
+            className="w-full h-full"
+          />
         </div>
       </div>
       

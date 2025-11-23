@@ -62,6 +62,8 @@ export interface MoleculeItem {
   smiles?: string
   properties?: string
   thumbnail_b64?: string
+  molfile?: string
+  formula?: string
   created_at: string
 }
 

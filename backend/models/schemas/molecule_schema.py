@@ -12,6 +12,7 @@ class MoleculeCreate(BaseModel):
     coords: Optional[str] = None
     properties: Optional[str] = None
     thumbnail_b64: Optional[str] = None
+    molfile: Optional[str] = None
 
 
 class MoleculeUpdate(BaseModel):
@@ -22,6 +23,7 @@ class MoleculeUpdate(BaseModel):
     coords: Optional[str] = None
     properties: Optional[str] = None
     thumbnail_b64: Optional[str] = None
+    molfile: Optional[str] = None
 
 
 class MoleculeResponse(BaseModel):
@@ -33,6 +35,7 @@ class MoleculeResponse(BaseModel):
     coords: Optional[str] = None
     properties: Optional[str] = None
     thumbnail_b64: Optional[str] = None
+    molfile: Optional[str] = None
     created_at: datetime
     owner_id: Optional[str] = None
 

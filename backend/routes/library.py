@@ -29,6 +29,7 @@ def list_molecules(limit: int = 50, offset: int = 0, db: Session = Depends(get_d
             "smiles": m.smiles,
             "properties": m.properties,
             "thumbnail_b64": m.thumbnail_b64,
+            "molfile": m.molfile,
             "created_at": m.created_at.isoformat()
         }
         for m in molecules
@@ -48,6 +49,7 @@ def get_molecule(mol_id: int, db: Session = Depends(get_db)):
         "coords": molecule.coords,
         "properties": molecule.properties,
         "thumbnail_b64": molecule.thumbnail_b64,
+        "molfile": molecule.molfile,
         "created_at": molecule.created_at.isoformat()
     }
 

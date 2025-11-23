@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import type { MoleculeItem } from '../lib/api'
 import BarbellViewer from './BarbellViewer'
+import { useGPUSafe } from '../hooks/useGPUSafe'
 
 interface MoleculeCardProps {
   item: MoleculeItem & { molfile?: string | null; formula?: string | null }
@@ -20,6 +21,7 @@ export default function MoleculeCard({
   showFork = false
 }: MoleculeCardProps) {
   const [hovered, setHovered] = useState(false)
+  const isGPUSafe = useGPUSafe()
   
   // Lazy load 3D viewer only when card enters viewport and is hovered
   const { ref, inView } = useInView({
@@ -34,7 +36,8 @@ export default function MoleculeCard({
   }
 
   const has3DData = !!(item.molfile && item.molfile.trim().length > 0)
-  const show3D = hovered && inView && has3DData
+  // Only show 3D on desktop devices (GPU safe) and when hovered/in view
+  const show3D = hovered && inView && has3DData && isGPUSafe
   // Show thumbnail as background if it exists, or as fallback if no 3D data
   const showThumbnail = !!(item.thumbnail_b64 && (!has3DData || !show3D))
   
@@ -90,11 +93,17 @@ export default function MoleculeCard({
             transition={{ duration: 0.3 }}
             key={`3d-${item.id}-${hovered}`}
           >
-            <BarbellViewer
-              molfile={item.molfile}
-              mode="card"
-              height={160}
-            />
+            <Suspense fallback={
+              <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                <div className="text-xs text-gray-400">Loading 3D...</div>
+              </div>
+            }>
+              <BarbellViewer
+                molfile={item.molfile}
+                mode="card"
+                height={160}
+              />
+            </Suspense>
           </motion.div>
         )}
         
