@@ -154,7 +154,7 @@ export default function Dashboard(){
 
         {/* Right Section - 3D Viewer (Caffeine) - Floating, no boundary card */}
         <motion.div
-          className="flex justify-center items-center relative w-full"
+          className="flex justify-center items-center relative w-full h-full min-h-[600px]"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, delay: 0.12 }}
@@ -162,16 +162,17 @@ export default function Dashboard(){
           {/* Subtle soft glow behind molecule */}
           <div className="absolute inset-0 blur-3xl bg-indigo-300/20 rounded-full -z-10 opacity-60" />
           
-          {/* 3D Viewer - Floating, no container, properly sized to match left column */}
-          <div className="relative w-full max-w-[550px] aspect-square z-10">
+          {/* 3D Viewer - Floating, no container, sized to match full left column height */}
+          <div className="relative w-full h-full max-w-[650px] z-10 flex items-center justify-center">
             {caffeineMolfile ? (
               <BarbellViewer
                 molfile={caffeineMolfile}
                 mode="hero"
                 autorotate={true}
                 interactive={true}
-                atomScale={0.38}
-                bondRadius={0.08}
+                atomScale={0.5}
+                bondRadius={0.11}
+                height={600}
                 className="w-full h-full"
               />
             ) : (

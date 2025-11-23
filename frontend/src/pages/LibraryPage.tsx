@@ -6,7 +6,6 @@
 
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
 import { supabase } from '../supabase';
 import { 
   listUserMolecules, 
@@ -31,19 +30,11 @@ export default function LibraryPage() {
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const pageSize = 12;
   
   // Track which molecules have been converted to prevent duplicate conversions
   const convertedIdsRef = useRef<Set<string>>(new Set());
   const convertingRef = useRef<boolean>(false);
-  
-  // Infinite scroll trigger
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.1,
-    rootMargin: '100px',
-  });
 
   useEffect(() => {
     if (!supabase) return;
@@ -73,54 +64,29 @@ export default function LibraryPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadMolecules = React.useCallback(async (reset: boolean = true) => {
-    if (reset) {
-      setLoading(true);
-      setPage(1);
-      setHasMore(true);
-    } else {
-      setIsLoadingMore(true);
-    }
+  const loadMolecules = React.useCallback(async () => {
+    setLoading(true);
+    setPage(1);
     
     try {
       if (tab === 'public') {
         // Load public molecules (no auth required)
         const molecules = await listPublicMolecules();
-        if (reset) {
-          setItems(molecules);
-        } else {
-          // For infinite scroll, append new items (though Supabase returns all)
-          // In a real implementation with cursor-based pagination, you'd append here
-          setItems(molecules);
-        }
-        setHasMore(false); // Supabase listPublicMolecules returns all, so no more pages
+        setItems(molecules);
       } else {
         // Load user molecules (auth required)
         if (!userId) {
           setItems([]);
-          setHasMore(false);
           return;
         }
         const molecules = await listUserMolecules(userId);
-        if (reset) {
-          setItems(molecules);
-        } else {
-          setItems(molecules);
-        }
-        setHasMore(false); // Supabase listUserMolecules returns all, so no more pages
+        setItems(molecules);
       }
     } catch (error) {
       console.error('Failed to load molecules:', error);
-      if (reset) {
-        setItems([]);
-      }
-      setHasMore(false);
+      setItems([]);
     } finally {
-      if (reset) {
-        setLoading(false);
-      } else {
-        setIsLoadingMore(false);
-      }
+      setLoading(false);
     }
   }, [tab, userId]);
 
@@ -252,27 +218,19 @@ export default function LibraryPage() {
   }, [filtered, page, pageSize]);
 
   // Reset page when filtered items change significantly (e.g., after search or tab change)
+  // Only reset if page exceeds maxPage, don't reset on every page change
   useEffect(() => {
     const maxPage = Math.ceil(filtered.length / pageSize);
     if (maxPage > 0 && page > maxPage) {
       setPage(1);
     }
-  }, [filtered.length, pageSize, page]);
+  }, [filtered.length, pageSize]); // Don't depend on page to avoid resetting on valid page changes
 
+  // Scroll to top when page changes
   useEffect(() => {
-    if (page > totalPages && totalPages > 0) {
-      setPage(1);
-    }
-  }, [totalPages, page]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
 
-  // Infinite scroll: load more when scroll trigger is in view
-  useEffect(() => {
-    if (inView && !loading && !isLoadingMore && page < totalPages) {
-      const nextPage = page + 1;
-      console.log('Infinite scroll triggered:', { current: page, next: nextPage, totalPages, filteredLength: filtered.length });
-      setPage(nextPage);
-    }
-  }, [inView, loading, isLoadingMore, page, totalPages, filtered.length]);
 
   // Convert SMILES to molfile ONCE per molecule (runs after items are loaded)
   useEffect(() => {
@@ -468,8 +426,7 @@ export default function LibraryPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-blue-800">
             <strong>Note:</strong> 3D previews are always visible when molecules have molfile data. 
-            Hover over a molecule to interact with it (rotate, zoom). Molecules with SMILES but no molfile 
-            are automatically converted when the page loads. Thumbnails are shown as fallback.
+            Molecules with SMILES but no molfile are automatically converted when the page loads. Thumbnails are shown as fallback.
           </p>
         </div>
       )}
@@ -522,24 +479,7 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* Infinite scroll trigger - must be after the grid */}
-      {filtered.length > 0 && page < totalPages && (
-        <div 
-          ref={loadMoreRef} 
-          className="h-20 w-full flex items-center justify-center py-4"
-        >
-          {isLoadingMore ? (
-            <div className="text-sm text-midGrey flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-midGrey border-t-transparent rounded-full animate-spin"></div>
-              Loading more molecules...
-            </div>
-          ) : (
-            <div className="text-xs text-midGrey">Scroll for more</div>
-          )}
-        </div>
-      )}
-
-      {/* Pagination controls (optional, can be hidden if using infinite scroll) */}
+      {/* Pagination controls */}
       {filtered.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
           <button

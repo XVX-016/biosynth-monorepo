@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { listMolecules, getMolecule, deleteMolecule } from '../lib/api'
 import type { MoleculeItem } from '../lib/api'
@@ -66,14 +66,20 @@ export default function Library() {
     return items.filter(i => i.name.toLowerCase().includes(query) || (i.smiles || '').toLowerCase().includes(query))
   }, [items, q])
 
-  const { data: paged, totalPages } = useMemo(() => paginate(filtered, page, pageSize), [filtered, page])
+  const { data: paged, totalPages } = useMemo(() => paginate(filtered, page, pageSize), [filtered, page, pageSize])
   
-  // Clamp page when filtered results change (e.g., after search)
+  // Only reset page when search query changes or when page exceeds totalPages after filtering
   useEffect(() => {
-    if (totalPages > 0 && page > totalPages) {
+    const maxPage = Math.ceil(filtered.length / pageSize)
+    if (maxPage > 0 && page > maxPage) {
       setPage(1)
     }
-  }, [totalPages]) // Only depend on totalPages, not page, to avoid flickering
+  }, [filtered.length, pageSize]) // Only depend on filtered length, not page or totalPages
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [page])
 
   return (
     <motion.div
@@ -117,17 +123,18 @@ export default function Library() {
         </div>
       ) : (
         <motion.div 
+          key={`page-${page}`}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ duration: 0.3 }}
         >
           {paged.map((item, index) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
+              transition={{ duration: 0.2, delay: index * 0.03 }}
             >
               <MoleculeCard
                 item={item}

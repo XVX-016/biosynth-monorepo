@@ -146,12 +146,12 @@ export default function MoleculeViewer() {
   }, [tool, selectedAtomId, selectedBondId])
 
   return (
-    <div className="relative">
+    <div className="relative w-full h-full">
       <div
-        style={{ height: 420, cursor }}
-        className="rounded-lg overflow-hidden bg-spaceGrey"
+        style={{ cursor }}
+        className="w-full h-full rounded-lg overflow-hidden bg-spaceGrey"
       >
-        <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 12], fov: 45 }}>
+        <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 12], fov: 45 }} style={{ width: '100%', height: '100%' }}>
           {/* Cold white/ivory lighting - NO blue */}
           <ambientLight intensity={0.4} color="#F6F7F8" />
           <directionalLight position={[5, 10, 7]} intensity={1.2} color="#FFFFFF" castShadow />
