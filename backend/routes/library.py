@@ -2,11 +2,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from typing import List
+from pydantic import BaseModel
 from backend.core.dependencies import get_db
 from backend.services.molecule_service import MoleculeService
-from backend.models.schemas.molecule_schema import MoleculeCreate, MoleculeResponse
+from backend.models.schemas.molecule_schema import MoleculeCreate, MoleculeResponse, MoleculeUpdate
 
 router = APIRouter(prefix="/molecules", tags=["molecules"])
+
+class MolfileUpdate(BaseModel):
+    molfile: str
 
 @router.post("/save", response_model=dict)
 def save_molecule(payload: MoleculeCreate, db: Session = Depends(get_db)):
@@ -60,4 +64,18 @@ def delete_molecule(mol_id: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="Molecule not found")
     return {"status": "deleted", "id": mol_id}
+
+@router.patch("/{mol_id}/molfile", response_model=dict)
+def save_molfile(mol_id: int, payload: MolfileUpdate, db: Session = Depends(get_db)):
+    """Save/update molfile for a molecule"""
+    molecule = MoleculeService.get_molecule(db, mol_id)
+    if not molecule:
+        raise HTTPException(status_code=404, detail="Molecule not found")
+    
+    update_data = MoleculeUpdate(molfile=payload.molfile)
+    updated = MoleculeService.update_molecule(db, mol_id, update_data)
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update molecule")
+    
+    return {"ok": True, "id": mol_id}
 

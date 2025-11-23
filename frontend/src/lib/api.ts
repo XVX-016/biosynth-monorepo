@@ -122,6 +122,14 @@ export async function convertSMILESToMolfile(smiles: string): Promise<{ molfile:
 }
 
 /**
+ * Save molfile to molecule (persist after conversion)
+ */
+export async function saveMolfile(moleculeId: number, molfile: string): Promise<{ ok: boolean; id: number }> {
+  const response = await apiClient.patch<{ ok: boolean; id: number }>(`/molecules/${moleculeId}/molfile`, { molfile })
+  return response.data
+}
+
+/**
  * Thumbnail Generation API
  */
 export interface GenerateThumbnailRequest {

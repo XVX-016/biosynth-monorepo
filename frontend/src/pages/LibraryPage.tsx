@@ -261,12 +261,12 @@ export default function LibraryPage() {
 
   // Infinite scroll: load more when scroll trigger is in view
   useEffect(() => {
-    if (inView && !loading && !isLoadingMore && hasMore && page < totalPages) {
+    if (inView && !loading && !isLoadingMore && page < totalPages) {
       const nextPage = page + 1;
-      console.log('Infinite scroll triggered:', { current: page, next: nextPage, totalPages });
+      console.log('Infinite scroll triggered:', { current: page, next: nextPage, totalPages, filteredLength: filtered.length });
       setPage(nextPage);
     }
-  }, [inView, loading, isLoadingMore, hasMore, page, totalPages]);
+  }, [inView, loading, isLoadingMore, page, totalPages, filtered.length]);
 
   // Debug: Log molecule data
   useEffect(() => {
@@ -380,9 +380,9 @@ export default function LibraryPage() {
       {filtered.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> 3D previews appear on hover when molecules have molfile data. 
-            If a molecule has SMILES but no molfile, it will be automatically converted on hover. 
-            Thumbnails are shown as fallback. Molecules saved from the Lab automatically include 3D data.
+            <strong>Note:</strong> 3D previews are always visible when molecules have molfile data. 
+            Hover over a molecule to interact with it (rotate, zoom). If a molecule has SMILES but no molfile, 
+            it will be automatically converted and saved. Thumbnails are shown as fallback.
           </p>
         </div>
       )}
@@ -403,7 +403,7 @@ export default function LibraryPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {paged.map((item) => {
             const isPublic = tab === 'public';
             // Convert UUID string to number for MoleculeItem interface (use hash of UUID)
@@ -415,7 +415,7 @@ export default function LibraryPage() {
               <MoleculeCard
                 key={item.id || `mol-${item.name}`}
                 item={{
-                  id: itemId,
+                  id: typeof item.id === 'string' ? item.id : itemId,
                   name: item.name,
                   smiles: item.smiles || undefined,
                   formula: item.formula || undefined,
@@ -423,22 +423,35 @@ export default function LibraryPage() {
                   properties: (item as any).properties,
                   thumbnail_b64: item.thumbnail_b64 || undefined,
                   created_at: item.created_at,
+                  user_id: !isPublic && userId ? userId : undefined,
                 }}
                 onOpen={() => openInLab(item)}
                 onFork={isPublic ? () => handleFork(item as PublicMolecule) : undefined}
                 showFork={isPublic}
                 onDelete={!isPublic && userId ? () => item.id && remove(item.id) : undefined}
+                onMolfileUpdated={() => {
+                  // Reload molecules to get updated molfile
+                  loadMolecules();
+                }}
               />
             );
           })}
         </div>
       )}
 
-      {/* Infinite scroll trigger */}
+      {/* Infinite scroll trigger - must be after the grid */}
       {filtered.length > 0 && page < totalPages && (
-        <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center">
-          {isLoadingMore && (
-            <div className="text-sm text-midGrey">Loading more molecules...</div>
+        <div 
+          ref={loadMoreRef} 
+          className="h-20 w-full flex items-center justify-center py-4"
+        >
+          {isLoadingMore ? (
+            <div className="text-sm text-midGrey flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-midGrey border-t-transparent rounded-full animate-spin"></div>
+              Loading more molecules...
+            </div>
+          ) : (
+            <div className="text-xs text-midGrey">Scroll for more</div>
           )}
         </div>
       )}

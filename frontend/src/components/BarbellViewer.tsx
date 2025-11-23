@@ -18,6 +18,8 @@ interface BarbellViewerProps {
   atomScale?: number;
   bondRadius?: number;
   height?: number;
+  interactive?: boolean; // Enable OrbitControls when true
+  autorotate?: boolean; // Auto-rotate when true
 }
 
 // CPK element colors
@@ -47,12 +49,12 @@ const DEFAULT_COLOR = 0xcccccc;
 // Atom sphere component
 function AtomSphere({ atom, scale, quality = 'high' }: { atom: Atom; scale: number; quality?: 'high' | 'low' }) {
   const color = ELEMENT_COLORS[atom.element] || DEFAULT_COLOR;
-  const segments = quality === 'low' ? 8 : 16;
+  const segments = quality === 'low' ? 16 : 32; // Increased from 8/16 to 16/32
   
   return (
     <mesh position={[atom.x, atom.y, atom.z]}>
       <sphereGeometry args={[scale, segments, segments]} />
-      <meshStandardMaterial color={color} metalness={0.15} roughness={0.5} />
+      <meshStandardMaterial color={color} metalness={0.2} roughness={0.4} />
     </mesh>
   );
 }
@@ -77,12 +79,12 @@ function BondCylinder({
   const yAxis = new THREE.Vector3(0, 1, 0);
   const quaternion = new THREE.Quaternion().setFromUnitVectors(yAxis, direction);
   
-  const segments = quality === 'low' ? 6 : 8;
+  const segments = quality === 'low' ? 12 : 16; // Increased from 6/8 to 12/16
   
   return (
     <mesh position={mid} quaternion={quaternion}>
       <cylinderGeometry args={[radius, radius, length, segments]} />
-      <meshStandardMaterial color={0xcccccc} metalness={0.2} roughness={0.6} />
+      <meshStandardMaterial color={0xcccccc} metalness={0.25} roughness={0.5} />
     </mesh>
   );
 }
@@ -184,14 +186,14 @@ function MoleculeScene({
       {/* Render atoms */}
       {atoms.map((atom, i) => {
         const pos = new THREE.Vector3(atom.x, atom.y, atom.z).sub(centroid);
-        const segments = quality === 'low' ? 12 : 24;
+        const segments = quality === 'low' ? 24 : 32; // Increased from 12/24 to 24/32
         return (
           <mesh key={`atom-${i}`} position={pos.toArray()}>
             <sphereGeometry args={[atomScale, segments, segments]} />
             <meshStandardMaterial
               color={ELEMENT_COLORS[atom.element] || DEFAULT_COLOR}
-              metalness={0.15}
-              roughness={0.5}
+              metalness={0.2}
+              roughness={0.4}
             />
           </mesh>
         );
@@ -219,10 +221,13 @@ export default function BarbellViewer({
   atomScale = 0.25,
   bondRadius = 0.06,
   height = 200,
+  interactive: interactiveProp,
+  autorotate: autorotateProp,
 }: BarbellViewerProps) {
-  const autorotate = mode === 'hero';
-  const interactive = mode === 'hero';
-  const quality = mode === 'preview' || mode === 'card' ? 'low' : 'high';
+  const autorotate = autorotateProp !== undefined ? autorotateProp : (mode === 'hero');
+  const interactive = interactiveProp !== undefined ? interactiveProp : (mode === 'hero');
+  // Use high quality for all modes now
+  const quality = 'high';
 
   // Calculate camera distance based on molecule size
   const cameraRadius = useMemo(() => {
@@ -281,14 +286,13 @@ export default function BarbellViewer({
           fov: 45,
         }}
         style={{ width: '100%', height: '100%' }}
-        dpr={quality === 'low' ? 1 : window.devicePixelRatio}
+        dpr={window.devicePixelRatio}
         performance={{ min: 0.5 }}
       >
-        <ambientLight intensity={quality === 'low' ? 0.7 : 0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={quality === 'low' ? 0.6 : 0.8} />
-        {quality === 'high' && (
-          <directionalLight position={[-5, -3, -2]} intensity={0.4} />
-        )}
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 5, 5]} intensity={0.9} />
+        <directionalLight position={[-5, -3, -2]} intensity={0.5} />
+        <directionalLight position={[0, 5, -5]} intensity={0.3} />
         <MoleculeScene
           molfile={molfile}
           autorotate={autorotate}
@@ -303,6 +307,8 @@ export default function BarbellViewer({
             enableRotate={true}
             enableDamping={true}
             dampingFactor={0.05}
+            autoRotate={autorotate}
+            autoRotateSpeed={0.5}
           />
         )}
       </Canvas>

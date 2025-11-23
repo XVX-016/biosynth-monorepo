@@ -4,14 +4,17 @@ import { useInView } from 'react-intersection-observer'
 import type { MoleculeItem } from '../lib/api'
 import BarbellViewer from './BarbellViewer'
 import { useGPUSafe } from '../hooks/useGPUSafe'
-import { convertSMILESToMolfile } from '../lib/api'
+import { convertSMILESToMolfile, saveMolfile } from '../lib/api'
+import { updateUserMolecule } from '../lib/userMoleculeStore'
+import { supabase } from '../supabase'
 
 interface MoleculeCardProps {
-  item: MoleculeItem & { molfile?: string | null; formula?: string | null }
+  item: MoleculeItem & { molfile?: string | null; formula?: string | null; user_id?: string }
   onOpen: () => void
   onDelete?: () => void
   onFork?: () => void // For public library molecules
   showFork?: boolean // Whether to show fork button
+  onMolfileUpdated?: () => void // Callback when molfile is persisted
 }
 
 export default function MoleculeCard({ 
@@ -19,14 +22,16 @@ export default function MoleculeCard({
   onOpen, 
   onDelete,
   onFork,
-  showFork = false
+  showFork = false,
+  onMolfileUpdated
 }: MoleculeCardProps) {
   const [hovered, setHovered] = useState(false)
   const [convertedMolfile, setConvertedMolfile] = useState<string | null>(null)
   const [converting, setConverting] = useState(false)
+  const [saving, setSaving] = useState(false)
   const isGPUSafe = useGPUSafe()
   
-  // Lazy load 3D viewer only when card enters viewport and is hovered
+  // Lazy load 3D viewer when card enters viewport
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -45,20 +50,53 @@ export default function MoleculeCard({
 
   const has3DData = !!(molfile && molfile.trim().length > 0)
   
-  // Only show 3D on desktop devices (GPU safe) and when hovered/in view
-  const show3D = hovered && inView && has3DData && isGPUSafe && !converting
+  // Always show 3D when available and in view (not just on hover)
+  const show3D = inView && has3DData && isGPUSafe && !converting
   
-  // Show thumbnail as background if it exists, or as fallback if no 3D data
-  const showThumbnail = !!(item.thumbnail_b64 && (!has3DData || !show3D || converting))
+  // Show thumbnail as background only if no 3D data available
+  const showThumbnail = !!(item.thumbnail_b64 && !has3DData && !converting)
 
-  // Auto-convert SMILES to molfile when hovered and molfile is missing
+  // Auto-convert SMILES to molfile when in view and molfile is missing
   useEffect(() => {
-    if (hovered && inView && !molfile && item.smiles && item.smiles.trim() && !converting && !convertedMolfile) {
+    if (inView && !molfile && item.smiles && item.smiles.trim() && !converting && !convertedMolfile) {
       setConverting(true)
       convertSMILESToMolfile(item.smiles)
-        .then((result) => {
+        .then(async (result) => {
           if (result.molfile && result.molfile.trim().length > 0) {
             setConvertedMolfile(result.molfile)
+            
+            // Persist molfile to database
+            try {
+              setSaving(true)
+              
+              // Try to save via Supabase if user_id is available (user_molecules)
+              if (item.user_id && typeof item.id === 'string') {
+                await updateUserMolecule(item.user_id, item.id, { molfile: result.molfile })
+              } 
+              // Try backend API if numeric ID (legacy molecules table)
+              else if (typeof item.id === 'number') {
+                await saveMolfile(item.id, result.molfile)
+              }
+              // Try Supabase public_molecules if no user_id
+              else if (supabase && typeof item.id === 'string') {
+                const { error } = await supabase
+                  .from('public_molecules')
+                  .update({ molfile: result.molfile })
+                  .eq('id', item.id)
+                
+                if (error) throw error
+              }
+              
+              // Notify parent component if callback provided
+              if (onMolfileUpdated) {
+                onMolfileUpdated()
+              }
+            } catch (error) {
+              console.warn('Failed to persist molfile:', error)
+              // Continue anyway - molfile is cached in state
+            } finally {
+              setSaving(false)
+            }
           }
         })
         .catch((error) => {
@@ -69,7 +107,7 @@ export default function MoleculeCard({
           setConverting(false)
         })
     }
-  }, [hovered, inView, molfile, item.smiles, converting, convertedMolfile])
+  }, [inView, molfile, item.smiles, item.id, item.user_id, converting, convertedMolfile, onMolfileUpdated])
   
   // Debug logging (only log once per molecule to reduce noise)
   React.useEffect(() => {
@@ -97,16 +135,14 @@ export default function MoleculeCard({
     >
       {/* 3D Viewer or Thumbnail with lazy loading */}
       <div className="h-40 bg-offwhite rounded-lg overflow-hidden mb-3 relative">
-        {/* Background thumbnail (shown when not hovering or as fallback) */}
+        {/* Background thumbnail (shown only as fallback when no 3D data) */}
         {showThumbnail && item.thumbnail_b64 && (
           <img
             src={item.thumbnail_b64.startsWith('data:') 
               ? item.thumbnail_b64 
               : `data:image/png;base64,${item.thumbnail_b64}`}
             alt={item.name}
-            className={`w-full h-full object-contain transition-opacity duration-300 ${
-              show3D ? 'opacity-20 blur-sm' : 'opacity-100'
-            }`}
+            className="w-full h-full object-contain"
             onError={(e) => {
               // Hide broken image
               (e.target as HTMLImageElement).style.display = 'none';
@@ -114,34 +150,35 @@ export default function MoleculeCard({
           />
         )}
         
-        {/* Loading state while converting SMILES to molfile */}
-        {converting && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
-            <div className="text-xs text-gray-500">Generating 3D preview...</div>
+        {/* Loading skeleton while converting or saving */}
+        {(converting || saving) && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/90 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="text-xs text-gray-600">
+                {converting ? 'Generating 3D preview...' : 'Saving...'}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Lazy-mounted 3D Viewer - only renders when hovered and in viewport */}
-        {show3D && molfile && (
-          <motion.div
-            className="absolute inset-0 z-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            key={`3d-${item.id}-${hovered}`}
-          >
+        {/* 3D Viewer - always visible when molfile is available, interactive on hover */}
+        {show3D && molfile && !converting && (
+          <div className="absolute inset-0 z-10">
             <Suspense fallback={
               <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                <div className="text-xs text-gray-400">Loading 3D...</div>
+                <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             }>
               <BarbellViewer
                 molfile={molfile}
                 mode="card"
                 height={160}
+                interactive={hovered}
+                autorotate={hovered}
               />
             </Suspense>
-          </motion.div>
+          </div>
         )}
         
         {/* Fallback when no data available */}
