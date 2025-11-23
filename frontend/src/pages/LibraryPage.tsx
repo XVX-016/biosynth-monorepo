@@ -381,6 +381,7 @@ export default function LibraryPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-blue-800">
             <strong>Note:</strong> 3D previews appear on hover when molecules have molfile data. 
+            If a molecule has SMILES but no molfile, it will be automatically converted on hover. 
             Thumbnails are shown as fallback. Molecules saved from the Lab automatically include 3D data.
           </p>
         </div>

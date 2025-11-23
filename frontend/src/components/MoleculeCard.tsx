@@ -1,9 +1,10 @@
-import React, { useState, Suspense } from 'react'
+import React, { useState, Suspense, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import type { MoleculeItem } from '../lib/api'
 import BarbellViewer from './BarbellViewer'
 import { useGPUSafe } from '../hooks/useGPUSafe'
+import { convertSMILESToMolfile } from '../lib/api'
 
 interface MoleculeCardProps {
   item: MoleculeItem & { molfile?: string | null; formula?: string | null }
@@ -21,6 +22,8 @@ export default function MoleculeCard({
   showFork = false
 }: MoleculeCardProps) {
   const [hovered, setHovered] = useState(false)
+  const [convertedMolfile, setConvertedMolfile] = useState<string | null>(null)
+  const [converting, setConverting] = useState(false)
   const isGPUSafe = useGPUSafe()
   
   // Lazy load 3D viewer only when card enters viewport and is hovered
@@ -35,11 +38,38 @@ export default function MoleculeCard({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  const has3DData = !!(item.molfile && item.molfile.trim().length > 0)
+  // Get molfile from item or converted molfile
+  const molfile = item.molfile && item.molfile.trim().length > 0 
+    ? item.molfile 
+    : convertedMolfile
+
+  const has3DData = !!(molfile && molfile.trim().length > 0)
+  
   // Only show 3D on desktop devices (GPU safe) and when hovered/in view
-  const show3D = hovered && inView && has3DData && isGPUSafe
+  const show3D = hovered && inView && has3DData && isGPUSafe && !converting
+  
   // Show thumbnail as background if it exists, or as fallback if no 3D data
-  const showThumbnail = !!(item.thumbnail_b64 && (!has3DData || !show3D))
+  const showThumbnail = !!(item.thumbnail_b64 && (!has3DData || !show3D || converting))
+
+  // Auto-convert SMILES to molfile when hovered and molfile is missing
+  useEffect(() => {
+    if (hovered && inView && !molfile && item.smiles && item.smiles.trim() && !converting && !convertedMolfile) {
+      setConverting(true)
+      convertSMILESToMolfile(item.smiles)
+        .then((result) => {
+          if (result.molfile && result.molfile.trim().length > 0) {
+            setConvertedMolfile(result.molfile)
+          }
+        })
+        .catch((error) => {
+          console.warn('Failed to convert SMILES to molfile:', error)
+          // Don't show error to user, just fall back to thumbnail
+        })
+        .finally(() => {
+          setConverting(false)
+        })
+    }
+  }, [hovered, inView, molfile, item.smiles, converting, convertedMolfile])
   
   // Debug logging (only log once per molecule to reduce noise)
   React.useEffect(() => {
@@ -84,8 +114,15 @@ export default function MoleculeCard({
           />
         )}
         
+        {/* Loading state while converting SMILES to molfile */}
+        {converting && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
+            <div className="text-xs text-gray-500">Generating 3D preview...</div>
+          </div>
+        )}
+
         {/* Lazy-mounted 3D Viewer - only renders when hovered and in viewport */}
-        {show3D && item.molfile && (
+        {show3D && molfile && (
           <motion.div
             className="absolute inset-0 z-10"
             initial={{ opacity: 0 }}
@@ -99,7 +136,7 @@ export default function MoleculeCard({
               </div>
             }>
               <BarbellViewer
-                molfile={item.molfile}
+                molfile={molfile}
                 mode="card"
                 height={160}
               />
@@ -108,13 +145,15 @@ export default function MoleculeCard({
         )}
         
         {/* Fallback when no data available */}
-        {!has3DData && !showThumbnail && (
+        {!has3DData && !showThumbnail && !converting && (
           <div className="w-full h-full flex flex-col items-center justify-center text-midGrey text-sm bg-zinc-100 relative group">
             <div className="text-xs mb-1">No preview</div>
             <div className="text-xs opacity-60">{item.name}</div>
             <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="bg-black/80 text-white text-xs px-2 py-1 rounded text-center">
-                3D preview requires molfile data. Thumbnails are generated when molecules are saved.
+                {item.smiles 
+                  ? '3D preview will be generated on hover if SMILES is available.'
+                  : '3D preview requires molfile or SMILES data. Thumbnails are generated when molecules are saved.'}
               </div>
             </div>
           </div>
