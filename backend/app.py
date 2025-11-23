@@ -2,9 +2,11 @@
 MolForge Backend API
 FastAPI application entrypoint
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import traceback
 from backend.config import settings
 from backend.routes import predict as predict_router
 from backend.routes import generate as generate_router
@@ -22,13 +24,36 @@ app = FastAPI(
     description=settings.API_DESCRIPTION
 )
 
+# CORS middleware must be added before routes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Global exception handler to ensure CORS headers on errors
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Handle all exceptions and ensure CORS headers are included"""
+    import traceback
+    error_detail = str(exc)
+    if settings.LOG_LEVEL == "DEBUG":
+        error_detail += f"\n{traceback.format_exc()}"
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": error_detail,
+            "path": str(request.url),
+        },
+        headers={
+            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
+            "Access-Control-Allow-Credentials": "true",
+        }
+    )
 
 # Initialize database
 init_db()

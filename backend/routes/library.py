@@ -25,19 +25,23 @@ def save_molecule(payload: MoleculeCreate, db: Session = Depends(get_db)):
 @router.get("/list", response_model=List[dict])
 def list_molecules(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
     """List molecules with pagination"""
-    molecules = MoleculeService.list_molecules(db, limit=limit, offset=offset)
-    return [
-        {
-            "id": m.id,
-            "name": m.name,
-            "smiles": m.smiles,
-            "properties": m.properties,
-            "thumbnail_b64": m.thumbnail_b64,
-            "molfile": m.molfile,
-            "created_at": m.created_at.isoformat()
-        }
-        for m in molecules
-    ]
+    try:
+        molecules = MoleculeService.list_molecules(db, limit=limit, offset=offset)
+        return [
+            {
+                "id": m.id,
+                "name": m.name,
+                "smiles": m.smiles,
+                "formula": getattr(m, 'formula', None),  # Add formula if it exists
+                "properties": m.properties,
+                "thumbnail_b64": m.thumbnail_b64,
+                "molfile": m.molfile,
+                "created_at": m.created_at.isoformat()
+            }
+            for m in molecules
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list molecules: {str(e)}")
 
 @router.get("/{mol_id}", response_model=dict)
 def get_molecule(mol_id: int, db: Session = Depends(get_db)):

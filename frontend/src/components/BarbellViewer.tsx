@@ -20,6 +20,7 @@ interface BarbellViewerProps {
   height?: number;
   interactive?: boolean; // Enable OrbitControls when true
   autorotate?: boolean; // Auto-rotate when true
+  hovered?: boolean; // Hover state for card mode (enables interaction)
 }
 
 // CPK element colors
@@ -49,7 +50,8 @@ const DEFAULT_COLOR = 0xcccccc;
 // Atom sphere component
 function AtomSphere({ atom, scale, quality = 'high' }: { atom: Atom; scale: number; quality?: 'high' | 'low' }) {
   const color = ELEMENT_COLORS[atom.element] || DEFAULT_COLOR;
-  const segments = quality === 'low' ? 16 : 32; // Increased from 8/16 to 16/32
+  // Reduced segments for low quality (card mode) to improve performance
+  const segments = quality === 'low' ? 12 : 32;
   
   return (
     <mesh position={[atom.x, atom.y, atom.z]}>
@@ -79,7 +81,8 @@ function BondCylinder({
   const yAxis = new THREE.Vector3(0, 1, 0);
   const quaternion = new THREE.Quaternion().setFromUnitVectors(yAxis, direction);
   
-  const segments = quality === 'low' ? 12 : 16; // Increased from 6/8 to 12/16
+  // Reduced segments for low quality (card mode) to improve performance
+  const segments = quality === 'low' ? 8 : 16;
   
   return (
     <mesh position={mid} quaternion={quaternion}>
@@ -186,7 +189,8 @@ function MoleculeScene({
       {/* Render atoms */}
       {atoms.map((atom, i) => {
         const pos = new THREE.Vector3(atom.x, atom.y, atom.z).sub(centroid);
-        const segments = quality === 'low' ? 24 : 32; // Increased from 12/24 to 24/32
+        // Reduced segments for low quality (card mode) to improve performance
+        const segments = quality === 'low' ? 12 : 32;
         return (
           <mesh key={`atom-${i}`} position={pos.toArray()}>
             <sphereGeometry args={[atomScale, segments, segments]} />
@@ -223,11 +227,15 @@ export default function BarbellViewer({
   height = 200,
   interactive: interactiveProp,
   autorotate: autorotateProp,
+  hovered = false,
 }: BarbellViewerProps) {
   const autorotate = autorotateProp !== undefined ? autorotateProp : (mode === 'hero');
-  const interactive = interactiveProp !== undefined ? interactiveProp : (mode === 'hero');
-  // Use high quality for all modes now
-  const quality = 'high';
+  // For card mode, only enable interaction when hovered
+  const interactive = interactiveProp !== undefined 
+    ? interactiveProp 
+    : (mode === 'hero' || (mode === 'card' && hovered));
+  // Use lower quality for card mode to reduce GPU load, high quality for hero/lab
+  const quality = mode === 'card' ? 'low' : 'high';
 
   // Calculate camera distance based on molecule size
   const cameraRadius = useMemo(() => {
@@ -286,8 +294,10 @@ export default function BarbellViewer({
           fov: 45,
         }}
         style={{ width: '100%', height: '100%' }}
-        dpr={window.devicePixelRatio}
+        dpr={mode === 'card' ? 0.5 : window.devicePixelRatio}
         performance={{ min: 0.5 }}
+        flat={mode === 'card'}
+        shadows={mode !== 'card'}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 5, 5]} intensity={0.9} />
@@ -302,13 +312,15 @@ export default function BarbellViewer({
         />
         {interactive && (
           <OrbitControls
-            enablePan={true}
-            enableZoom={true}
+            enablePan={mode === 'card' ? false : true}
+            enableZoom={mode === 'card' ? hovered : true}
             enableRotate={true}
             enableDamping={true}
             dampingFactor={0.05}
-            autoRotate={autorotate}
-            autoRotateSpeed={0.5}
+            autoRotate={mode === 'card' ? (autorotate && hovered) : autorotate}
+            autoRotateSpeed={mode === 'card' ? 0.3 : 0.5}
+            minDistance={mode === 'card' ? 2 : 1}
+            maxDistance={mode === 'card' ? 8 : 20}
           />
         )}
       </Canvas>

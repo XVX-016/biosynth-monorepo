@@ -4,7 +4,7 @@
  * Shows both public_molecules (read-only, forkable) and user_molecules (editable, deletable)
  */
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { supabase } from '../supabase';
@@ -13,6 +13,7 @@ import {
   deleteUserMolecule, 
   searchUserMolecules, 
   forkPublicMolecule,
+  updateUserMolecule,
   type UserMolecule 
 } from '../lib/userMoleculeStore';
 import { 
@@ -20,6 +21,7 @@ import {
   searchPublicMolecules, 
   type PublicMolecule 
 } from '../lib/publicMoleculeStore';
+import { convertSMILESToMolfile, saveMolfile } from '../lib/api';
 import MoleculeCard from '../components/MoleculeCard';
 
 export default function LibraryPage() {
@@ -32,6 +34,10 @@ export default function LibraryPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const pageSize = 12;
+  
+  // Track which molecules have been converted to prevent duplicate conversions
+  const convertedIdsRef = useRef<Set<string>>(new Set());
+  const convertingRef = useRef<boolean>(false);
   
   // Infinite scroll trigger
   const { ref: loadMoreRef, inView } = useInView({
@@ -268,6 +274,87 @@ export default function LibraryPage() {
     }
   }, [inView, loading, isLoadingMore, page, totalPages, filtered.length]);
 
+  // Convert SMILES to molfile ONCE per molecule (runs after items are loaded)
+  useEffect(() => {
+    // Only convert if not already converting and items are loaded
+    if (convertingRef.current || loading || items.length === 0) {
+      return;
+    }
+
+    const convertMissingMolfiles = async () => {
+      convertingRef.current = true;
+      
+      try {
+        // Process molecules that need conversion
+        const moleculesToConvert = items.filter(
+          (item) => 
+            !item.molfile && 
+            item.smiles && 
+            item.smiles.trim() && 
+            item.id &&
+            !convertedIdsRef.current.has(String(item.id))
+        );
+
+        if (moleculesToConvert.length === 0) {
+          convertingRef.current = false;
+          return;
+        }
+
+        console.log(`Converting ${moleculesToConvert.length} molecules...`);
+
+        // Convert each molecule sequentially to avoid overwhelming the backend
+        for (const molecule of moleculesToConvert) {
+          const moleculeId = String(molecule.id);
+          
+          // Mark as being converted
+          convertedIdsRef.current.add(moleculeId);
+
+          try {
+            // Convert SMILES to molfile
+            const result = await convertSMILESToMolfile(molecule.smiles!);
+            
+            if (result.molfile && result.molfile.trim().length > 0) {
+              // Update molecule in database
+              if (tab === 'user' && userId && typeof molecule.id === 'string') {
+                await updateUserMolecule(userId, molecule.id, { molfile: result.molfile });
+              } else if (typeof molecule.id === 'number') {
+                await saveMolfile(molecule.id, result.molfile);
+              } else if (supabase && typeof molecule.id === 'string') {
+                const { error } = await supabase
+                  .from('public_molecules')
+                  .update({ molfile: result.molfile })
+                  .eq('id', molecule.id);
+                
+                if (error) throw error;
+              }
+
+              // Update local state WITHOUT triggering refetch
+              setItems((prevItems) =>
+                prevItems.map((item) =>
+                  item.id === molecule.id
+                    ? { ...item, molfile: result.molfile }
+                    : item
+                )
+              );
+
+              console.log(`✓ Converted ${molecule.name}`);
+            }
+          } catch (error) {
+            console.warn(`Failed to convert ${molecule.name}:`, error);
+            // Remove from set so it can be retried later
+            convertedIdsRef.current.delete(moleculeId);
+          }
+        }
+      } finally {
+        convertingRef.current = false;
+      }
+    };
+
+    // Small delay to ensure items are fully loaded
+    const timeoutId = setTimeout(convertMissingMolfiles, 500);
+    return () => clearTimeout(timeoutId);
+  }, [items, tab, userId, loading]);
+
   // Debug: Log molecule data
   useEffect(() => {
     if (paged.length > 0) {
@@ -381,8 +468,8 @@ export default function LibraryPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-blue-800">
             <strong>Note:</strong> 3D previews are always visible when molecules have molfile data. 
-            Hover over a molecule to interact with it (rotate, zoom). If a molecule has SMILES but no molfile, 
-            it will be automatically converted and saved. Thumbnails are shown as fallback.
+            Hover over a molecule to interact with it (rotate, zoom). Molecules with SMILES but no molfile 
+            are automatically converted when the page loads. Thumbnails are shown as fallback.
           </p>
         </div>
       )}
@@ -429,10 +516,6 @@ export default function LibraryPage() {
                 onFork={isPublic ? () => handleFork(item as PublicMolecule) : undefined}
                 showFork={isPublic}
                 onDelete={!isPublic && userId ? () => item.id && remove(item.id) : undefined}
-                onMolfileUpdated={() => {
-                  // Reload molecules to get updated molfile
-                  loadMolecules();
-                }}
               />
             );
           })}
