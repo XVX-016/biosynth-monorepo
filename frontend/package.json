@@ -26,6 +26,8 @@
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^10.0.0",
     "react-router-dom": "^6.23.1",
+    "chart.js": "^4.4.0",
+    "react-chartjs-2": "^5.2.0",
     "three": "0.159.0",
     "zustand": "4.5.0"
   },

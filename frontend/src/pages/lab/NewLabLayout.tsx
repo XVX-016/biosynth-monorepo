@@ -11,6 +11,7 @@ import PrecisionPanel from '../../components/lab/sidebar/PrecisionPanel'
 import ValidationOverlay from '../../components/lab/overlay/ValidationOverlay'
 import ContextMenu from '../../components/lab/ui/ContextMenu'
 import { useContextMenu } from '../../components/lab/interaction/useContextMenu'
+import SpectroscopyPanel from '../../components/lab/panels/SpectroscopyPanel'
 
 /**
  * Full-screen Lab layout:
@@ -119,6 +120,11 @@ export default function NewLabLayout() {
           {/* Precision Panel */}
           <div className="w-full px-2 mt-4">
             <PrecisionPanel />
+          </div>
+
+          {/* Spectroscopy Panel */}
+          <div className="w-full px-2 mt-4">
+            <SpectroscopyPanel />
           </div>
 
           {/* Inspector - always visible */}
