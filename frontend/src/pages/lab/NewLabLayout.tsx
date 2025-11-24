@@ -12,6 +12,9 @@ import ValidationOverlay from '../../components/lab/overlay/ValidationOverlay'
 import ContextMenu from '../../components/lab/ui/ContextMenu'
 import { useContextMenu } from '../../components/lab/interaction/useContextMenu'
 import SpectroscopyPanel from '../../components/lab/panels/SpectroscopyPanel'
+import EnergyPanel from '../../components/lab/panels/EnergyPanel'
+import ReactionPanel from '../../components/lab/panels/ReactionPanel'
+import RetrosynthesisPanel from '../../components/lab/panels/RetrosynthesisPanel'
 
 /**
  * Full-screen Lab layout:
@@ -125,6 +128,21 @@ export default function NewLabLayout() {
           {/* Spectroscopy Panel */}
           <div className="w-full px-2 mt-4">
             <SpectroscopyPanel />
+          </div>
+
+          {/* Energy Panel */}
+          <div className="w-full px-2 mt-4">
+            <EnergyPanel />
+          </div>
+
+          {/* Reaction Panel */}
+          <div className="w-full px-2 mt-4">
+            <ReactionPanel />
+          </div>
+
+          {/* Retrosynthesis Panel */}
+          <div className="w-full px-2 mt-4">
+            <RetrosynthesisPanel />
           </div>
 
           {/* Inspector - always visible */}
