@@ -55,4 +55,4 @@ frontend/.vite/
 packages/engine/dist/
 
 # Frontend assets
-frontend/public/chemistry-benzene/
+frontend/public/
