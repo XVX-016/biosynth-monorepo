@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, ContactShadows, Environment } from '@react-three/drei'
 import AtomMesh from './r3f/AtomMesh'
@@ -10,6 +10,10 @@ import { selectionManager } from './r3f/SelectionManager'
 import { useBondTool } from './r3f/BondTool'
 import { screenToWorld } from '../lib/raycasting'
 import { useAutoBondOnDrop } from '../hooks/useAutoBondOnDrop'
+import type { ColorScheme, RenderMode } from '../store/moleculeStore'
+import { clamp, interpolateColor, VALENCE_MAP } from '../utils/chemistry'
+
+const WORKSPACE_LIMIT = 18
 
 // Interaction layer component
 function InteractionLayer() {
@@ -54,11 +58,11 @@ function InteractionLayer() {
         atom.position[1] // Use atom's Y position as plane
       )
 
-      // Clamp position to reasonable bounds
+      // Clamp position to expanded bounds
       const clampedPos: [number, number, number] = [
-        Math.max(-5, Math.min(5, worldPos.x)),
-        Math.max(-5, Math.min(5, worldPos.y)),
-        Math.max(-5, Math.min(5, worldPos.z)),
+        Math.max(-WORKSPACE_LIMIT, Math.min(WORKSPACE_LIMIT, worldPos.x)),
+        Math.max(-WORKSPACE_LIMIT, Math.min(WORKSPACE_LIMIT, worldPos.y)),
+        Math.max(-WORKSPACE_LIMIT, Math.min(WORKSPACE_LIMIT, worldPos.z)),
       ]
 
       // Update atom position
@@ -83,8 +87,40 @@ export default function MoleculeViewer() {
   const tool = useMoleculeStore((state) => state.tool)
   const selectedAtomId = useMoleculeStore((state) => state.selectedAtomId)
   const selectedBondId = useMoleculeStore((state) => state.selectedBondId)
+  const highlightedAtoms = useMoleculeStore((state) => state.highlightedAtoms)
+  const renderMode = useMoleculeStore((state) => state.renderMode)
+  const colorScheme = useMoleculeStore((state) => state.colorScheme)
 
   const { atoms, bonds } = moleculeToRenderable(currentMolecule)
+
+  const electrostaticColors = useMemo(() => {
+    if (!currentMolecule) return new Map<string, number>()
+    const neighborCounts = new Map<string, number>()
+    currentMolecule.bonds.forEach((bond) => {
+      neighborCounts.set(bond.a1, (neighborCounts.get(bond.a1) || 0) + 1)
+      neighborCounts.set(bond.a2, (neighborCounts.get(bond.a2) || 0) + 1)
+    })
+    const map = new Map<string, number>()
+    currentMolecule.atoms.forEach((atom) => {
+      const valence = VALENCE_MAP[atom.element as keyof typeof VALENCE_MAP] ?? 4
+      const neighbors = neighborCounts.get(atom.id) ?? 0
+      const imbalance = clamp((valence - neighbors) / Math.max(valence, 1), -1, 1)
+      const normalized = (imbalance + 1) / 2 // 0..1
+      const color = interpolateColor(0xff6b6b, 0x4dabf7, normalized)
+      map.set(atom.id, color)
+    })
+    return map
+  }, [currentMolecule])
+
+  const colorOverrides = useMemo(() => {
+    if (colorScheme === 'element') return new Map<string, number>()
+    if (colorScheme === 'monochrome') {
+      const map = new Map<string, number>()
+      atoms.forEach((atom) => map.set(atom.id, 0x2b2e33))
+      return map
+    }
+    return electrostaticColors
+  }, [atoms, colorScheme, electrostaticColors])
 
   // Use bond tool
   useBondTool()
@@ -149,7 +185,7 @@ export default function MoleculeViewer() {
     <div className="relative w-full h-full">
       <div
         style={{ cursor }}
-        className="w-full h-full rounded-lg overflow-hidden bg-spaceGrey"
+        className="w-full h-full rounded-2xl overflow-hidden bg-spaceGrey"
       >
         <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 12], fov: 45 }} style={{ width: '100%', height: '100%' }}>
           {/* Cold white/ivory lighting - NO blue */}
@@ -163,6 +199,10 @@ export default function MoleculeViewer() {
                 id={atom.id}
                 position={atom.position}
                 element={atom.element as any}
+                renderMode={renderMode}
+                colorScheme={colorScheme}
+                colorOverride={colorOverrides.get(atom.id)}
+                highlighted={highlightedAtoms.includes(atom.id)}
               />
             ))}
             {bonds.map((bond) => (
@@ -172,6 +212,7 @@ export default function MoleculeViewer() {
                 from={bond.from} 
                 to={bond.to}
                 order={bond.order}
+                renderMode={renderMode}
               />
             ))}
             <InteractionLayer />

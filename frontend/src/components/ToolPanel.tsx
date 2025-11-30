@@ -81,98 +81,99 @@ export default function ToolPanel() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="fixed left-4 top-1/2 -translate-y-1/2 z-50 frosted-glass rounded-lg shadow-glass border border-chrome/20 p-3 space-y-2 backdrop-blur-md"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
     >
-      {/* Tool buttons */}
-      {tools.map((t) => (
-        <motion.button
-          key={t.id}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setTool(t.id)}
-          className={`w-12 h-12 rounded-lg font-medium transition-all ${
-            tool === t.id
-              ? 'bg-plasma-neon text-ionBlack shadow-neon-sm'
-              : 'bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20'
-          }`}
-          title={`${t.label} (${t.hotkey})`}
-        >
-          <span className="text-xl">{t.icon}</span>
-        </motion.button>
-      ))}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {tools.map((t) => (
+          <motion.button
+            key={t.id}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setTool(t.id)}
+            className={`h-12 rounded-lg font-medium transition-all border ${
+              tool === t.id
+                ? 'bg-black text-white border-black shadow-neon-sm'
+                : 'bg-white text-darkGrey border-lightGrey hover:border-darkGrey/40 hover:text-black'
+            }`}
+            title={`${t.label} (${t.hotkey})`}
+          >
+            <span className="text-base">{t.icon}</span>
+            <span className="sr-only">{t.label}</span>
+          </motion.button>
+        ))}
+      </div>
 
       {/* Bond order selector (only when bond tool is active) */}
       {tool === 'bond' && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="mt-2 space-y-1"
+          className="space-y-2"
         >
-          <div className="text-xs text-chrome text-center mb-1">Bond Order</div>
-          {[1, 2, 3].map((order) => (
-            <motion.button
-              key={order}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setBondOrder(order)}
-              className={`w-full px-2 py-1 text-xs rounded transition-all ${
-                currentBondOrder === order
-                  ? 'bg-plasma-neon text-ionBlack shadow-neon-sm'
-                  : 'bg-frostedGlass text-chrome hover:text-ivory border border-chrome/20'
-              }`}
-            >
-              {order === 1 ? 'Single' : order === 2 ? 'Double' : 'Triple'}
-            </motion.button>
-          ))}
+          <div className="text-xs uppercase tracking-[0.3em] text-midGrey">Bond order</div>
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((order) => (
+              <button
+                key={order}
+                onClick={() => setBondOrder(order)}
+                className={`rounded-lg px-2 py-2 text-xs font-semibold transition-all border ${
+                  currentBondOrder === order
+                    ? 'bg-black text-white border-black shadow-neon-sm'
+                    : 'bg-white text-darkGrey border-lightGrey hover:border-darkGrey/40 hover:text-black'
+                }`}
+              >
+                {order === 1 ? 'Single' : order === 2 ? 'Double' : 'Triple'}
+              </button>
+            ))}
+          </div>
         </motion.div>
       )}
 
       {/* Undo/Redo buttons */}
-      <div className="pt-2 border-t border-chrome/20 space-y-1">
+      <div className="grid grid-cols-2 gap-2">
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={undo}
           disabled={!canUndo}
-          className={`w-12 h-10 rounded-lg text-sm transition-all ${
+          className={`h-11 rounded-lg text-sm transition-all border ${
             canUndo
-              ? 'bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20'
-              : 'bg-frostedGlass/50 text-chrome/50 cursor-not-allowed border border-chrome/10'
+              ? 'bg-white text-darkGrey border-lightGrey hover:border-darkGrey/40 hover:text-black'
+              : 'bg-offwhite text-midGrey border-lightGrey cursor-not-allowed'
           }`}
           title="Undo (Ctrl+Z)"
         >
-          ↶
+          ↶ Undo
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={redo}
           disabled={!canRedo}
-          className={`w-12 h-10 rounded-lg text-sm transition-all ${
+          className={`h-11 rounded-lg text-sm transition-all border ${
             canRedo
-              ? 'bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20'
-              : 'bg-frostedGlass/50 text-chrome/50 cursor-not-allowed border border-chrome/10'
+              ? 'bg-white text-darkGrey border-lightGrey hover:border-darkGrey/40 hover:text-black'
+              : 'bg-offwhite text-midGrey border-lightGrey cursor-not-allowed'
           }`}
           title="Redo (Ctrl+Y)"
         >
-          ↷
+          ↷ Redo
         </motion.button>
       </div>
 
       {/* Auto-bond toggle */}
-      <div className="pt-2 border-t border-chrome/20 space-y-1">
-        <div className="text-xs text-chrome text-center mb-1">Auto-Bond</div>
+      <div className="flex items-center justify-between rounded-lg border border-lightGrey px-3 py-2">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-midGrey">Auto-bond</p>
+          <p className="text-sm text-black">{autoBond ? 'Enabled' : 'Disabled'}</p>
+        </div>
         <button
           onClick={() => setAutoBond(!autoBond)}
-          className={`w-24 mx-auto h-8 rounded-lg text-sm transition-all ${
-            autoBond 
-              ? 'bg-plasma-neon text-ionBlack shadow-neon-sm' 
-              : 'bg-frostedGlass text-chrome border border-chrome/20'
+          className={`inline-flex h-8 items-center rounded-full border px-4 text-sm font-medium transition ${
+            autoBond ? 'bg-black text-white border-black' : 'bg-white text-darkGrey border-lightGrey'
           }`}
-          aria-pressed={autoBond}
-          aria-label="Toggle auto-bond mode"
         >
           {autoBond ? 'On' : 'Off'}
         </button>
@@ -183,30 +184,30 @@ export default function ToolPanel() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="pt-2 border-t border-chrome/20"
+          className="rounded-lg border border-lightGrey px-3 py-2 bg-offwhite"
         >
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             onClick={handleCreateBond}
-            className="w-full px-3 py-2 rounded-lg text-sm transition-all bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20"
+            className="w-full rounded-md bg-white px-3 py-2 text-sm font-medium text-darkGrey border border-lightGrey"
             title="Click two atoms to create a bond"
           >
             Create Bond
           </motion.button>
-          <div className="text-xs text-chrome/70 text-center mt-1">
+          <div className="text-xs text-midGrey text-center mt-1">
             Select 2 atoms
           </div>
         </motion.div>
       )}
 
       {/* Templates Section */}
-      <div className="pt-2 border-t border-chrome/20">
+      <div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setTemplatesExpanded(!templatesExpanded)}
-          className="w-full px-3 py-2 rounded-lg text-sm transition-all bg-frostedGlass text-chrome hover:text-ivory hover:border-neonCyan/30 border border-chrome/20 flex items-center justify-between"
+          className="w-full px-3 py-2 rounded-lg text-sm transition-all border border-lightGrey bg-white text-darkGrey hover:border-darkGrey/40 flex items-center justify-between"
         >
           <span>Templates</span>
           <span className="text-xs">{templatesExpanded ? '▼' : '▶'}</span>

@@ -1,7 +1,7 @@
 """
 SMARTS pattern parser and matcher
 """
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 import re
 
 class SMARTSParser:

@@ -61,7 +61,8 @@ def predict_properties(
     predictions.append({
         "property": "solubility",
         "value": round(solubility, 2),
-        "unit": "logS"
+        "unit": "logS",
+        "confidence": 0.80  # Heuristic confidence
     })
     
     # Toxicity risk (simplified)
@@ -79,7 +80,8 @@ def predict_properties(
     predictions.append({
         "property": "toxicity",
         "value": round(toxicity, 2),
-        "unit": "probability"
+        "unit": "probability",
+        "confidence": 0.85  # Heuristic confidence
     })
     
     # Bioavailability (fraction)
@@ -98,7 +100,8 @@ def predict_properties(
     predictions.append({
         "property": "bioavailability",
         "value": round(bioavailability, 2),
-        "unit": "fraction"
+        "unit": "fraction",
+        "confidence": 0.75  # Heuristic confidence
     })
     
     # Drug-likeness score

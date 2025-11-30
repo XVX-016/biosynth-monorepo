@@ -56,5 +56,6 @@ Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
 
 # Run from backend directory but with PYTHONPATH set to parent
-python -m uvicorn app:app --reload --host 0.0.0.0 --port 8000
+# Use --reload-dir to only watch current directory and avoid path issues
+python -m uvicorn app:app --reload --reload-dir . --host 0.0.0.0 --port 8000
 

@@ -26,12 +26,18 @@ RUN conda config --set always_yes yes --set changeps1 no && \
 RUN conda install -y -c conda-forge rdkit=2023.09 python=3.11 && \
     conda clean -afy
 
-# Copy requirements (if any)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy requirements first (needed for pip install)
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy app code
-COPY . .
+# Copy app code into backend/ subdirectory to match import structure
+# Since imports use "from backend.config", we need /app/backend/ structure
+COPY . /app/backend/
+
+# Set PYTHONPATH to /app so backend.* imports work
+ENV PYTHONPATH=/app
+ENV PORT=8000
 
 EXPOSE $PORT
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use PORT env var with default fallback
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8000}"]

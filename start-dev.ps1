@@ -13,8 +13,7 @@ if (-not (Test-Path "package.json")) {
 
 # Start Backend in a new PowerShell window
 Write-Host "🔧 Starting Backend Server..." -ForegroundColor Cyan
-$backendScript = Join-Path $PSScriptRoot "backend\start_backend.ps1"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\backend'; .\start_backend.ps1" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot'; .\start-backend.ps1" -WindowStyle Normal
 
 # Wait a moment for backend to start
 Start-Sleep -Seconds 3

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import MoleculeViewer from '../components/MoleculeViewer';
@@ -14,6 +14,12 @@ import { moleculeToJSON, getCanvasThumbnail, moleculeFromJSON } from '../lib/eng
 import { MoleculeSerializer, MoleculeGraph } from '@biosynth/engine';
 import { supabase } from '../supabase';
 import { convertSMILESToMolfile, generateThumbnailBase64 } from '../lib/api';
+import LabElementPalette from '../components/LabElementPalette';
+import { analyzeStructure } from '../utils/moleculeIssues';
+import { runGnassPipeline, moleculeFingerprint } from '../services/gnassService';
+import VisualizationPanel from '../components/VisualizationPanel';
+import ExportPanel from '../components/ExportPanel';
+import { decodeSharePayload } from '../utils/shareLink';
 
 export default function Lab() {
 	const [searchParams] = useSearchParams();
@@ -23,6 +29,20 @@ export default function Lab() {
 	const [saving, setSaving] = useState(false);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [loadingMolecule, setLoadingMolecule] = useState(false);
+	const [gnassStatus, setGnassStatus] = useState<'idle' | 'running' | 'ready' | 'error'>('idle');
+	const [gnassSummary, setGnassSummary] = useState<Record<string, number> | null>(null);
+	const [gnassError, setGnassError] = useState<string | null>(null);
+
+	const moleculeStats = useMemo(() => {
+		return {
+			atoms: molecule?.atoms.size ?? 0,
+			bonds: molecule?.bonds.size ?? 0,
+			formula: calculateFormula(molecule),
+		};
+	}, [molecule]);
+
+	const issueSummary = useMemo(() => analyzeStructure(molecule), [molecule]);
+	const moleculeKey = useMemo(() => moleculeFingerprint(molecule), [molecule]);
 
 	useEffect(() => {
 		if (!supabase) return;
@@ -109,6 +129,54 @@ export default function Lab() {
 		loadMolecule();
 	}, [searchParams, userId, setMolecule]);
 
+	useEffect(() => {
+		const shared = searchParams.get('share');
+		if (!shared) return;
+		try {
+			const decoded = decodeSharePayload(shared);
+			const sharedMolecule = moleculeFromJSON(decoded);
+			if (sharedMolecule) {
+				setMolecule(sharedMolecule);
+				setLoadingMolecule(false);
+			}
+		} catch (error) {
+			console.warn('Failed to import shared molecule', error);
+		}
+	}, [searchParams, setMolecule]);
+
+	// Run GNASS/ML pipeline when structure changes
+	useEffect(() => {
+		if (!molecule || molecule.atoms.size === 0) {
+			setGnassStatus('idle');
+			setGnassSummary(null);
+			setGnassError(null);
+			return;
+		}
+
+		let cancelled = false;
+		setGnassStatus('running');
+		setGnassError(null);
+
+		runGnassPipeline(molecule)
+			.then((result) => {
+				if (cancelled) return;
+				setGnassSummary(result.predictions || null);
+				setGnassStatus('ready');
+			})
+			.catch((error) => {
+				if (cancelled) return;
+				setGnassStatus('error');
+				setGnassError(
+					error instanceof Error ? error.message : 'GNASS pipeline failed. Retry after editing the molecule.',
+				);
+			});
+
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [moleculeKey]);
+
 	const handleSave = async () => {
 		if (!molecule) return;
 		
@@ -187,7 +255,7 @@ export default function Lab() {
 
 	return (
 		<motion.div 
-			className="lab-layout"
+			className="lab-page min-h-screen bg-gradient-to-b from-offwhite via-white to-offwhite"
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
 			transition={{ duration: 0.3 }}
@@ -209,60 +277,121 @@ export default function Lab() {
 					</motion.div>
 				</motion.div>
 			)}
-			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.4, delay: 0.1 }}
-			>
-				<TemplatePanel />
-			</motion.div>
-			<motion.div 
-				className="grid grid-cols-12 gap-4 flex-1"
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				transition={{ duration: 0.4, delay: 0.2 }}
-			>
-				<motion.div 
-					className="col-span-12 lg:col-span-3"
-					initial={{ opacity: 0, x: -20 }}
-					animate={{ opacity: 1, x: 0 }}
-					transition={{ duration: 0.4, delay: 0.3 }}
-				>
-					<div className="bg-white rounded-xl shadow-neon border border-lightGrey p-4">
+			<header className="lab-header">
+				<div>
+					<p className="text-sm uppercase tracking-[0.2em] text-midGrey">MolForge Lab</p>
+					<h1 className="text-3xl font-semibold text-black mt-1">Interactive Molecule Workspace</h1>
+				</div>
+				<div className="lab-header__stats">
+					<div>
+						<p className="text-sm text-midGrey">Atoms</p>
+						<p className="text-2xl font-semibold text-black">{moleculeStats.atoms}</p>
+					</div>
+					<div>
+						<p className="text-sm text-midGrey">Bonds</p>
+						<p className="text-2xl font-semibold text-black">{moleculeStats.bonds}</p>
+					</div>
+					<div>
+						<p className="text-sm text-midGrey">Formula</p>
+						<p className="text-xl font-semibold text-black">
+							{moleculeStats.formula || (molecule ? 'Calculating…' : '—')}
+						</p>
+					</div>
+				</div>
+			</header>
+
+			<div className="lab-grid">
+				<section className="lab-sidebar space-y-6">
+					<div className="card-base p-4 space-y-4">
+						<div className="flex items-center justify-between">
+							<h2 className="text-lg font-semibold text-black">Tools</h2>
+							<span className="text-xs text-midGrey">Aligned controls</span>
+						</div>
 						<ToolPanel />
 					</div>
-				</motion.div>
-				<motion.div 
-					className="col-span-12 lg:col-span-6"
-					initial={{ opacity: 0, scale: 0.98 }}
-					animate={{ opacity: 1, scale: 1 }}
-					transition={{ duration: 0.4, delay: 0.35 }}
-				>
-					<div className="relative rounded-xl shadow-neon border border-lightGrey h-[70vh] lg:h-[78vh] bg-offwhite overflow-hidden">
+					<div className="card-base p-4 space-y-3">
+						<div className="flex items-center justify-between">
+							<h3 className="text-base font-semibold text-black">Element Palette</h3>
+							<span className="text-xs text-midGrey">Tap to place</span>
+						</div>
+						<LabElementPalette />
+					</div>
+					<div className="card-base p-4 space-y-3">
+						<VisualizationPanel />
+					</div>
+					<div className="card-base p-4">
+						<TemplatePanel />
+					</div>
+				</section>
+
+				<section className="lab-workspace card-base">
+					<div className="lab-workspace__canvas">
 						<MoleculeViewer />
-						<div className="absolute bottom-3 right-3 z-10">
+						<div className="lab-workspace__cta">
 							<Button onClick={handleSave} disabled={!molecule || saving || !userId}>
 								{saving ? 'Saving...' : userId ? 'Save to Library' : 'Sign in to Save'}
 							</Button>
 						</div>
 					</div>
-				</motion.div>
-				<motion.div 
-					className="col-span-12 lg:col-span-3"
-					initial={{ opacity: 0, x: 20 }}
-					animate={{ opacity: 1, x: 0 }}
-					transition={{ duration: 0.4, delay: 0.4 }}
-				>
-					<div className="bg-white rounded-xl shadow-neon border border-lightGrey p-4 h-[70vh] lg:h-[78vh] flex flex-col">
-						<div className="mb-4">
-							<PropertiesPanel />
+					<div className="lab-workspace__foot">
+						<div>
+							<p className="text-xs uppercase tracking-[0.3em] text-midGrey">Validation</p>
+							<p className="text-sm text-black">{issueSummary.warnings[0]}</p>
 						</div>
-						<div className="flex-1 border-t border-lightGrey pt-4 overflow-hidden">
-							<KABPanel />
+						<div className="text-right">
+							<p className="text-xs uppercase tracking-[0.3em] text-midGrey">GNASS</p>
+							<p className="text-sm text-black">
+								{gnassStatus === 'running' && 'Training model…'}
+								{gnassStatus === 'error' && 'Model error'}
+								{gnassStatus === 'idle' && 'Awaiting molecule'}
+								{gnassStatus === 'ready' && 'Predictions synced'}
+							</p>
 						</div>
 					</div>
-				</motion.div>
-			</motion.div>
+				</section>
+
+				<section className="lab-inspector space-y-4">
+					<div className="card-base p-4 space-y-4">
+						<ExportPanel />
+					</div>
+					<div className="card-base p-4 space-y-4">
+						<PropertiesPanel />
+					</div>
+					<div className="card-base p-4 space-y-3">
+						<h3 className="text-base font-semibold text-black">GNASS Insights</h3>
+						{gnassStatus === 'running' && <p className="text-sm text-midGrey">Training on latest geometry…</p>}
+						{gnassStatus === 'error' && (
+							<p className="text-sm text-red-500">{gnassError || 'Unable to run GNASS pipeline.'}</p>
+						)}
+						{gnassStatus === 'ready' && gnassSummary && (
+							<ul className="space-y-2">
+								{Object.entries(gnassSummary).map(([key, value]) => (
+									<li key={key} className="flex items-center justify-between text-sm">
+										<span className="text-midGrey capitalize">{key}</span>
+										<span className="text-black font-semibold">{value.toFixed(2)}</span>
+									</li>
+								))}
+							</ul>
+						)}
+						{gnassStatus === 'idle' && <p className="text-sm text-midGrey">Add atoms to train the model.</p>}
+					</div>
+					<div className="card-base p-4 space-y-3">
+						<h3 className="text-base font-semibold text-black">Structure Issues</h3>
+						<ul className="space-y-2">
+							{issueSummary.warnings.map((warning) => (
+								<li key={warning} className="text-sm text-midGrey flex items-start gap-2">
+									<span className={`mt-1 h-2 w-2 rounded-full ${issueSummary.hasInstabilityRisk ? 'bg-red-500' : 'bg-emerald-400'}`} />
+									<span>{warning}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div className="card-base p-4 space-y-3">
+						<h3 className="text-base font-semibold text-black">Knowledge & Analysis</h3>
+						<KABPanel />
+					</div>
+				</section>
+			</div>
 		</motion.div>
 	);
 }

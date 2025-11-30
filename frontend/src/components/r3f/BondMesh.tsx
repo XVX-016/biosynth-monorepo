@@ -2,15 +2,18 @@ import React, { useState } from 'react'
 import * as THREE from 'three'
 import { useMoleculeStore } from '../../store/moleculeStore'
 import { Outlines } from '@react-three/drei'
+import type { RenderMode } from '../../store/moleculeStore'
 
 interface BondMeshProps {
   id: string
   from: [number, number, number]
   to: [number, number, number]
   order: number
+  renderMode: RenderMode
+  highlighted?: boolean
 }
 
-export default function BondMesh({ id, from, to, order }: BondMeshProps) {
+export default function BondMesh({ id, from, to, order, renderMode, highlighted = false }: BondMeshProps) {
   const [isHovered, setIsHovered] = useState(false)
   const selectedBondId = useMoleculeStore((state) => state.selectedBondId)
   const tool = useMoleculeStore((state) => state.tool)
@@ -27,7 +30,12 @@ export default function BondMesh({ id, from, to, order }: BondMeshProps) {
   )
   
   const isSelected = selectedBondId === id
-  const radius = order === 1 ? 0.14 : order === 2 ? 0.18 : 0.22
+  if (renderMode === 'spacefill') {
+    return null
+  }
+
+  const baseRadius = order === 1 ? 0.14 : order === 2 ? 0.18 : 0.22
+  const radius = renderMode === 'wireframe' ? baseRadius * 0.5 : baseRadius
   let outlineColor = 0x8BF3FF // neonCyan for select/hover
   
   if (tool === 'delete' && (isHovered || isSelected)) {
@@ -55,16 +63,28 @@ export default function BondMesh({ id, from, to, order }: BondMeshProps) {
       onClick={handleClick}
       cursor={tool === 'delete' ? 'not-allowed' : 'pointer'}
     >
-      <cylinderGeometry args={[radius, radius, length, 48]} />
-      <meshPhysicalMaterial
-        color={0xC0C5D2} // chrome color
-        roughness={0.1}
-        metalness={0.8}
-        clearcoat={1}
-        clearcoatRoughness={0.05}
-        envMapIntensity={1.5}
-      />
-      {(isHovered || isSelected) && (
+      <cylinderGeometry args={[radius, radius, length, 32]} />
+      {renderMode === 'wireframe' ? (
+        <meshBasicMaterial color={highlighted ? 0xffc857 : 0xb0b5c4} wireframe />
+      ) : (
+        <meshPhysicalMaterial
+          color={
+            highlighted
+              ? 0xffc857
+              : order === 1
+              ? 0xc0c5d2
+              : order === 2
+              ? 0xd4d8e3
+              : 0xe3c8c8
+          }
+          roughness={0.1}
+          metalness={0.8}
+          clearcoat={1}
+          clearcoatRoughness={0.05}
+          envMapIntensity={1.5}
+        />
+      )}
+      {renderMode !== 'wireframe' && (isHovered || isSelected || highlighted) && (
         <Outlines thickness={0.05} color={outlineColor} />
       )}
     </mesh>

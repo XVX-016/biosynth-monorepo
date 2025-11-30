@@ -2,9 +2,30 @@
 Property prediction model wrapper
 """
 import os
-import torch
-from backend.ai.property_predictor import create_model
 from backend.config import settings
+
+# Lazy import torch to avoid DLL issues on startup
+_torch = None
+def _get_torch():
+    """Lazy import torch"""
+    global _torch
+    if _torch is None:
+        try:
+            import torch
+            _torch = torch
+        except (ImportError, OSError) as e:
+            raise RuntimeError(f"PyTorch not available: {e}. Install with: pip install torch --index-url https://download.pytorch.org/whl/cpu")
+    return _torch
+
+# Lazy import create_model to avoid torch import at module level
+_create_model = None
+def _get_create_model():
+    """Lazy import create_model"""
+    global _create_model
+    if _create_model is None:
+        from backend.ai.property_predictor import create_model
+        _create_model = create_model
+    return _create_model
 
 
 class ModelLoader:
@@ -22,11 +43,14 @@ class ModelLoader:
             weights_path = settings.MODEL_WEIGHTS_PATH
         self.weights_path = weights_path
         self.model = None
+        torch = _get_torch()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self._load_model()
     
     def _load_model(self):
         """Load model from weights file"""
+        torch = _get_torch()
+        create_model = _get_create_model()
         if os.path.exists(self.weights_path):
             self.model = create_model()
             self.model.load_state_dict(torch.load(self.weights_path, map_location=self.device))
@@ -53,6 +77,7 @@ class ModelLoader:
         if self.model is None:
             raise RuntimeError("Model not loaded")
         
+        torch = _get_torch()
         # Convert features to tensor
         if isinstance(features, list):
             x = torch.tensor(features, dtype=torch.float32).unsqueeze(0)  # Add batch dimension

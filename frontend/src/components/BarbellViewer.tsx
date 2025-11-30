@@ -242,6 +242,8 @@ export default function BarbellViewer({
   interactive: interactiveProp,
   autorotate: autorotateProp,
   hovered = false,
+  highlightAtoms = [],
+  highlightColor = 0xffff00,
 }: BarbellViewerProps) {
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const autorotate = autorotateProp !== undefined ? autorotateProp : (mode === 'hero');

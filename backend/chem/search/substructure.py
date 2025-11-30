@@ -1,7 +1,7 @@
 """
 Substructure matching using VF2 algorithm
 """
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Set, Tuple, Optional, Any
 from .tokenizer import tokenize_molecule
 
 def vf2_match(

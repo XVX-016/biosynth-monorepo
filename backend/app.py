@@ -2,6 +2,15 @@
 MolForge Backend API
 FastAPI application entrypoint
 """
+import sys
+from pathlib import Path
+
+# Ensure backend root is in Python path so 'chem' and other modules are importable
+# This allows imports like 'from chem.search.substructure import find_substructure'
+ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
