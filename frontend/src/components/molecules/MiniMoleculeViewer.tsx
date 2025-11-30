@@ -103,8 +103,24 @@ export default function MiniMoleculeViewer({ molecule, className = '' }: MiniMol
     <div className={`bg-offwhite rounded-lg overflow-hidden ${className}`}>
       <Canvas
         camera={{ position: [0, 0, 6], fov: 50 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         style={{ background: 'transparent' }}
+        onCreated={({ gl }) => {
+          const handleContextLost = (e: Event) => {
+            e.preventDefault()
+            console.warn('⚠️ WebGL context lost in MiniMoleculeViewer')
+          }
+          const handleContextRestored = () => {
+            console.log('✅ WebGL context restored in MiniMoleculeViewer')
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+          }
+          gl.domElement.addEventListener('webglcontextlost', handleContextLost)
+          gl.domElement.addEventListener('webglcontextrestored', handleContextRestored)
+          return () => {
+            gl.domElement.removeEventListener('webglcontextlost', handleContextLost)
+            gl.domElement.removeEventListener('webglcontextrestored', handleContextRestored)
+          }
+        }}
       >
         <Suspense fallback={null}>
           <MoleculeScene molecule={molecule} />

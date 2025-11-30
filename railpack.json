@@ -1,6 +1,6 @@
 {
   "install": "npm ci",
   "build": "npm run build:engine || true",
-  "start": "npm run dev --workspace=@biosynth/backend"
+  "start": "echo 'Backend uses Dockerfile - Railway will use Docker build'"
 }
 

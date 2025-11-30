@@ -22,5 +22,17 @@ export default defineConfig({
       // Allow serving files from parent directories
       allow: ['..'],
     },
+    // Disable source maps in dev to prevent extension injection errors
+    sourcemapIgnoreList: (sourcePath) => {
+      // Ignore source maps from browser extensions
+      return sourcePath.includes('chrome-extension') || 
+             sourcePath.includes('moz-extension') ||
+             sourcePath.includes('safari-extension') ||
+             sourcePath.includes('installHook');
+    },
+  },
+  build: {
+    // Disable source maps in production builds
+    sourcemap: false,
   },
 })

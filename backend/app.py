@@ -34,6 +34,7 @@ from backend.routes import quantum as quantum_router
 from backend.routes import ml as ml_router
 from backend.routes import collaboration as collaboration_router
 from backend.routes import dashboard as dashboard_router
+from backend.routes import validate as validate_router
 from backend.db import init_db
 from backend.services.prediction_service import PredictionService
 from backend.models.schemas.prediction_schema import PredictOut, PredictIn
@@ -96,6 +97,7 @@ app.include_router(quantum_router.router, prefix="/api/quantum", tags=["quantum"
 app.include_router(ml_router.router, prefix="/api/ml", tags=["ml"])
 app.include_router(collaboration_router.router, prefix="/api/collaboration", tags=["collaboration"])
 app.include_router(dashboard_router.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(validate_router.router, tags=["validation"])
 
 
 class PredictFastIn(BaseModel):

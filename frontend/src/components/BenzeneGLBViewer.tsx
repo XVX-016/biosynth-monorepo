@@ -115,6 +115,26 @@ export default function BenzeneGLBViewer({
           fov: 50,
         }}
         style={{ width: '100%', height: '100%' }}
+        gl={{
+          antialias: true,
+          powerPreference: 'high-performance',
+        }}
+        onCreated={({ gl }) => {
+          const handleContextLost = (e: Event) => {
+            e.preventDefault()
+            console.warn('⚠️ WebGL context lost in BenzeneGLBViewer')
+          }
+          const handleContextRestored = () => {
+            console.log('✅ WebGL context restored in BenzeneGLBViewer')
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+          }
+          gl.domElement.addEventListener('webglcontextlost', handleContextLost)
+          gl.domElement.addEventListener('webglcontextrestored', handleContextRestored)
+          return () => {
+            gl.domElement.removeEventListener('webglcontextlost', handleContextLost)
+            gl.domElement.removeEventListener('webglcontextrestored', handleContextRestored)
+          }
+        }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 5, 5]} intensity={0.8} />

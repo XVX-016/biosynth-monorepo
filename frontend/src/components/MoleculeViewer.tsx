@@ -187,7 +187,39 @@ export default function MoleculeViewer() {
         style={{ cursor }}
         className="w-full h-full rounded-2xl overflow-hidden bg-spaceGrey"
       >
-        <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 12], fov: 45 }} style={{ width: '100%', height: '100%' }}>
+        <Canvas 
+          dpr={[1, 2]} 
+          camera={{ position: [0, 0, 12], fov: 45 }} 
+          style={{ width: '100%', height: '100%' }}
+          gl={{
+            antialias: true,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: false,
+          }}
+          onCreated={({ gl }) => {
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+            
+            // Handle WebGL context loss
+            const handleContextLost = (e: Event) => {
+              e.preventDefault()
+              console.warn('⚠️ WebGL context lost in MoleculeViewer')
+            }
+            
+            const handleContextRestored = () => {
+              console.log('✅ WebGL context restored in MoleculeViewer')
+              gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+              gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+            }
+            
+            gl.domElement.addEventListener('webglcontextlost', handleContextLost)
+            gl.domElement.addEventListener('webglcontextrestored', handleContextRestored)
+            
+            return () => {
+              gl.domElement.removeEventListener('webglcontextlost', handleContextLost)
+              gl.domElement.removeEventListener('webglcontextrestored', handleContextRestored)
+            }
+          }}
+        >
           {/* Cold white/ivory lighting - NO blue */}
           <ambientLight intensity={0.4} color="#F6F7F8" />
           <directionalLight position={[5, 10, 7]} intensity={1.2} color="#FFFFFF" castShadow />
