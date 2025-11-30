@@ -9,7 +9,7 @@ import React, { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { parseMolfile, type Atom, type Bond } from '../utils/molfileParser';
+import { parseMolfile } from '../utils/molfileParser';
 
 interface BarbellViewerProps {
   molfile?: string | null;
@@ -48,20 +48,6 @@ const ELEMENT_COLORS: Record<string, number> = {
 };
 
 const DEFAULT_COLOR = 0xcccccc;
-
-// Atom sphere component
-function AtomSphere({ atom, scale, quality = 'high' }: { atom: Atom; scale: number; quality?: 'high' | 'low' }) {
-  const color = ELEMENT_COLORS[atom.element] || DEFAULT_COLOR;
-  // Reduced segments for low quality (card mode) to improve performance
-  const segments = quality === 'low' ? 12 : 32;
-  
-  return (
-    <mesh position={[atom.x, atom.y, atom.z]}>
-      <sphereGeometry args={[scale, segments, segments]} />
-      <meshStandardMaterial color={color} metalness={0.2} roughness={0.4} />
-    </mesh>
-  );
-}
 
 // Bond cylinder component
 function BondCylinder({ 
@@ -231,6 +217,36 @@ function MoleculeScene({
   );
 }
 
+// Error boundary for Canvas rendering errors
+class CanvasErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, info: unknown) {
+    console.warn('[BarbellViewer] Canvas error:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 text-xs">
+          Preview unavailable
+        </div>
+      );
+    }
+    return <>{this.props.children}</>;
+  }
+}
+
 // Main component
 export default function BarbellViewer({
   molfile,
@@ -246,6 +262,7 @@ export default function BarbellViewer({
   highlightColor = 0xffff00,
 }: BarbellViewerProps) {
   const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [contextLost, setContextLost] = useState(false);
   const autorotate = autorotateProp !== undefined ? autorotateProp : (mode === 'hero');
   // For card mode, only enable interaction when hovered
   const interactive = interactiveProp !== undefined 
@@ -300,51 +317,101 @@ export default function BarbellViewer({
     );
   }
 
-  return (
-    <div
-      className={`relative ${className} rounded-md overflow-hidden bg-transparent`}
-      style={{ height }}
-    >
-      <Canvas
-        camera={{
-          position: [0, 0, Math.max(4, cameraRadius)],
-          fov: 45,
-        }}
-        style={{ width: '100%', height: '100%' }}
-        dpr={window.devicePixelRatio}
-        performance={{ min: 0.5 }}
-        flat={false}
-        shadows={mode !== 'card'}
+  // Fallback when WebGL context is lost
+  if (contextLost) {
+    return (
+      <div
+        className={`relative ${className} bg-gray-50 flex items-center justify-center overflow-hidden rounded-md`}
+        style={{ height }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={0.9} />
-        <directionalLight position={[-5, -3, -2]} intensity={0.5} />
-        <directionalLight position={[0, 5, -5]} intensity={0.3} />
-        <MoleculeScene
-          molfile={molfile}
-          autorotate={autorotate}
-          isUserInteracting={isUserInteracting}
-          atomScale={atomScale}
-          bondRadius={bondRadius}
-          quality={quality}
-          highlightAtoms={highlightAtoms}
-          highlightColor={highlightColor}
-        />
-        {interactive && (
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            enableRotate={true}
-            enableDamping={true}
-            dampingFactor={0.05}
-            autoRotate={false}
-            minDistance={mode === 'card' ? 2 : 1}
-            maxDistance={mode === 'card' ? 8 : 20}
-            onStart={() => setIsUserInteracting(true)}
-            onEnd={() => setIsUserInteracting(false)}
+        <div className="text-gray-400 text-xs text-center px-2">
+          Preview unavailable<br />
+          <span className="text-[10px] opacity-60">WebGL context lost</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CanvasErrorBoundary
+      fallback={
+        <div
+          className={`relative ${className} bg-gray-50 flex items-center justify-center overflow-hidden rounded-md`}
+          style={{ height }}
+        >
+          <div className="text-gray-400 text-xs">Preview unavailable</div>
+        </div>
+      }
+    >
+      <div
+        className={`relative ${className} rounded-md overflow-hidden bg-white`}
+        style={{ height }}
+      >
+        <Canvas
+          camera={{
+            position: [0, 0, Math.max(4, cameraRadius)],
+            fov: 45,
+          }}
+          style={{ width: '100%', height: '100%', background: '#ffffff' }}
+          dpr={Math.min(window.devicePixelRatio, 2)}
+          performance={{ min: 0.5 }}
+          flat={false}
+          shadows={mode !== 'card'}
+          gl={{
+            antialias: mode !== 'card',
+            alpha: false,
+            preserveDrawingBuffer: false,
+            powerPreference: 'high-performance',
+            stencil: false,
+            depth: true,
+          }}
+          onCreated={({ gl, scene }) => {
+            // Set white background
+            scene.background = new THREE.Color(0xffffff);
+            
+            // Handle WebGL context loss
+            gl.domElement.addEventListener('webglcontextlost', (e) => {
+              e.preventDefault();
+              console.warn('[BarbellViewer] WebGL context lost');
+              setContextLost(true);
+            });
+            gl.domElement.addEventListener('webglcontextrestored', () => {
+              console.log('[BarbellViewer] WebGL context restored');
+              setContextLost(false);
+            });
+          }}
+        >
+          <color attach="background" args={[0xffffff]} />
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 5, 5]} intensity={0.9} />
+          <directionalLight position={[-5, -3, -2]} intensity={0.5} />
+          <directionalLight position={[0, 5, -5]} intensity={0.3} />
+          <MoleculeScene
+            molfile={molfile}
+            autorotate={autorotate}
+            isUserInteracting={isUserInteracting}
+            atomScale={atomScale}
+            bondRadius={bondRadius}
+            quality={quality}
+            highlightAtoms={highlightAtoms}
+            highlightColor={highlightColor}
           />
-        )}
-      </Canvas>
-    </div>
+          {interactive && (
+            <OrbitControls
+              enablePan={false}
+              enableZoom={false}
+              enableRotate={true}
+              enableDamping={true}
+              dampingFactor={0.05}
+              autoRotate={false}
+              minDistance={mode === 'card' ? 2 : 1}
+              maxDistance={mode === 'card' ? 8 : 20}
+              onStart={() => setIsUserInteracting(true)}
+              onEnd={() => setIsUserInteracting(false)}
+            />
+          )}
+        </Canvas>
+      </div>
+    </CanvasErrorBoundary>
   );
 }

@@ -24,8 +24,10 @@ export default function MoleculeCard({
   const isGPUSafe = useGPUSafe()
   
   // Lazy load 3D viewer when card enters viewport
+  // Use triggerOnce: false to unmount Canvas when card leaves viewport
+  // This prevents too many WebGL contexts from being active simultaneously
   const { ref, inView } = useInView({
-    triggerOnce: true,
+    triggerOnce: false,
     threshold: 0.1,
     rootMargin: '50px',
   })
