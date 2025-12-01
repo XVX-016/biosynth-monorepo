@@ -213,7 +213,25 @@ export function CanvasLayer({
       const isHovered = atom.id === hoveredAtomId
       drawAtom(ctx, atom, isSelected, isHovered)
     })
-  }, [molecule, selectedAtomId, selectedBondId, hoveredAtomId, hoveredBondId, width, height, drawAtom, drawBond])
+
+    // Draw bond creation preview (if in bond mode with start atom)
+    if (bondStartAtomId && hoveredAtomId && hoveredAtomId !== bondStartAtomId) {
+      const startAtom = molecule.getAtom(bondStartAtomId)
+      const endAtom = molecule.getAtom(hoveredAtomId)
+      if (startAtom && endAtom) {
+        const [x1, y1] = projectTo2D(startAtom.position)
+        const [x2, y2] = projectTo2D(endAtom.position)
+        ctx.beginPath()
+        ctx.moveTo(x1, y1)
+        ctx.lineTo(x2, y2)
+        ctx.strokeStyle = '#60a5fa'
+        ctx.lineWidth = 2
+        ctx.setLineDash([5, 5])
+        ctx.stroke()
+        ctx.setLineDash([])
+      }
+    }
+  }, [molecule, selectedAtomId, selectedBondId, hoveredAtomId, hoveredBondId, bondStartAtomId, width, height, drawAtom, drawBond, projectTo2D])
 
   // Handle pixel ratio
   useEffect(() => {
