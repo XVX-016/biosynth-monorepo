@@ -34,3 +34,7 @@ export type { ValidationResult, ValidationError, ValidationErrorCode } from './t
 // Export functions (RDKit backend integration)
 export { toSMILES, toMolBlock, normalizeHydrogens, validateWithRDKit } from './export'
 
+// Prediction service (ML pipeline)
+export { predictionService, PredictionService } from './prediction'
+export type { PredictionResult, AttentionData, PredictionRequest } from './prediction'
+

@@ -7,5 +7,7 @@
 export { CanvasLayer } from './CanvasLayer'
 export { MoleculeEditor } from './MoleculeEditor'
 export type { MoleculeEditorRef } from './MoleculeEditor'
+
+export { PredictionPanel } from './PredictionPanel'
 export { ELEMENT_COLORS, HIT_RADIUS } from './constants'
 
