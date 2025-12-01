@@ -16,6 +16,15 @@ import { Molecule } from '@/lib/molecule'
 import type { EditorTool, Atom, Bond } from '@/lib/molecule'
 import { CanvasLayer } from './CanvasLayer'
 import { PointerManager, KeyboardManager } from '@/lib/molecule/input'
+import { HistoryManager } from '@/lib/molecule/history'
+import {
+  AddAtomCommand,
+  RemoveAtomCommand,
+  AddBondCommand,
+  RemoveBondCommand,
+  MoveAtomCommand,
+  ClearMoleculeCommand,
+} from '@/lib/molecule/history'
 import { nanoid } from 'nanoid'
 
 interface MoleculeEditorProps {
@@ -52,8 +61,15 @@ export function MoleculeEditor({
   const pointerManagerRef = useRef<PointerManager>(new PointerManager())
   const keyboardManagerRef = useRef<KeyboardManager>(new KeyboardManager())
   
+  // History manager
+  const historyManagerRef = useRef<HistoryManager>(new HistoryManager())
+  
   // Bond creation state (drag from atom to atom)
   const [bondStartAtomId, setBondStartAtomId] = useState<string | null>(null)
+  
+  // History state (for UI feedback)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
 
   // Update molecule and notify parent
   const updateMolecule = useCallback((newMolecule: Molecule) => {
@@ -63,58 +79,56 @@ export function MoleculeEditor({
 
   // Add atom at position
   const addAtom = useCallback((x: number, y: number, element: string = elementToAdd) => {
-    const newMolecule = molecule.clone()
-    
     // Convert screen coordinates to world coordinates
     const worldX = (x - width / 2 - offsetX) / scale
     const worldY = (y - height / 2 - offsetY) / scale
     const worldZ = 0
 
-    const atom: Atom = {
-      id: nanoid(),
-      element,
-      position: [worldX, worldY, worldZ],
-    }
-
-    newMolecule.addAtom(atom)
-    updateMolecule(newMolecule)
-    return atom.id
+    const atomId = nanoid()
+    const command = new AddAtomCommand(atomId, element, [worldX, worldY, worldZ])
+    
+    historyManagerRef.current.execute(molecule, command)
+    updateMolecule(molecule)
+    setCanUndo(historyManagerRef.current.canUndo())
+    setCanRedo(historyManagerRef.current.canRedo())
+    
+    return atomId
   }, [molecule, width, height, scale, offsetX, offsetY, elementToAdd, updateMolecule])
 
   // Add bond between two atoms
   const addBond = useCallback((atom1Id: string, atom2Id: string, order: number = bondOrder) => {
-    if (atom1Id === atom2Id) return
+    if (atom1Id === atom2Id) return null
 
-    const newMolecule = molecule.clone()
-    
     // Check if bond already exists
-    const existingBonds = newMolecule.getBonds()
+    const existingBonds = molecule.getBonds()
     for (const bond of existingBonds) {
       if (
         (bond.atom1 === atom1Id && bond.atom2 === atom2Id) ||
         (bond.atom1 === atom2Id && bond.atom2 === atom1Id)
       ) {
-        return // Bond already exists
+        return null // Bond already exists
       }
     }
 
-    const bond: Bond = {
-      id: nanoid(),
-      atom1: atom1Id,
-      atom2: atom2Id,
-      order,
-    }
-
-    newMolecule.addBond(bond)
-    updateMolecule(newMolecule)
-    return bond.id
+    const bondId = nanoid()
+    const command = new AddBondCommand(bondId, atom1Id, atom2Id, order)
+    
+    historyManagerRef.current.execute(molecule, command)
+    updateMolecule(molecule)
+    setCanUndo(historyManagerRef.current.canUndo())
+    setCanRedo(historyManagerRef.current.canRedo())
+    
+    return bondId
   }, [molecule, bondOrder, updateMolecule])
 
   // Delete atom (and all its bonds)
   const deleteAtom = useCallback((atomId: string) => {
-    const newMolecule = molecule.clone()
-    newMolecule.removeAtom(atomId)
-    updateMolecule(newMolecule)
+    const command = new RemoveAtomCommand(atomId)
+    
+    historyManagerRef.current.execute(molecule, command)
+    updateMolecule(molecule)
+    setCanUndo(historyManagerRef.current.canUndo())
+    setCanRedo(historyManagerRef.current.canRedo())
     
     if (selectedAtomId === atomId) {
       setSelectedAtomId(null)
@@ -124,9 +138,12 @@ export function MoleculeEditor({
 
   // Delete bond
   const deleteBond = useCallback((bondId: string) => {
-    const newMolecule = molecule.clone()
-    newMolecule.removeBond(bondId)
-    updateMolecule(newMolecule)
+    const command = new RemoveBondCommand(bondId)
+    
+    historyManagerRef.current.execute(molecule, command)
+    updateMolecule(molecule)
+    setCanUndo(historyManagerRef.current.canUndo())
+    setCanRedo(historyManagerRef.current.canRedo())
     
     if (selectedBondId === bondId) {
       setSelectedBondId(null)
@@ -134,16 +151,21 @@ export function MoleculeEditor({
     }
   }, [molecule, selectedBondId, updateMolecule, onBondSelect])
 
-  // Move atom
-  const moveAtom = useCallback((atomId: string, x: number, y: number) => {
-    const newMolecule = molecule.clone()
+  // Move atom (with history tracking)
+  const moveAtom = useCallback((atomId: string, x: number, y: number, isDrag: boolean = false) => {
     const worldX = (x - width / 2 - offsetX) / scale
     const worldY = (y - height / 2 - offsetY) / scale
-    const atom = newMolecule.getAtom(atomId)
-    if (atom) {
-      newMolecule.updateAtomPosition(atomId, [worldX, worldY, atom.position[2]])
-      updateMolecule(newMolecule)
-    }
+    const atom = molecule.getAtom(atomId)
+    if (!atom) return
+
+    // For drag operations, we batch moves into a single command
+    // For now, create a command for each move (can be optimized later)
+    const command = new MoveAtomCommand(atomId, [worldX, worldY, atom.position[2]])
+    
+    historyManagerRef.current.execute(molecule, command)
+    updateMolecule(molecule)
+    setCanUndo(historyManagerRef.current.canUndo())
+    setCanRedo(historyManagerRef.current.canRedo())
   }, [molecule, width, height, scale, offsetX, offsetY, updateMolecule])
 
   // Handle atom click
@@ -192,14 +214,37 @@ export function MoleculeEditor({
 
   // Clear molecule
   const clear = useCallback(() => {
-    const newMolecule = new Molecule()
-    updateMolecule(newMolecule)
+    const command = new ClearMoleculeCommand()
+    
+    historyManagerRef.current.execute(molecule, command)
+    updateMolecule(molecule)
+    setCanUndo(historyManagerRef.current.canUndo())
+    setCanRedo(historyManagerRef.current.canRedo())
+    
     setSelectedAtomId(null)
     setSelectedBondId(null)
     setBondStartAtomId(null)
     onAtomSelect?.(null)
     onBondSelect?.(null)
-  }, [updateMolecule, onAtomSelect, onBondSelect])
+  }, [molecule, updateMolecule, onAtomSelect, onBondSelect])
+
+  // Undo
+  const undo = useCallback(() => {
+    if (historyManagerRef.current.undo(molecule)) {
+      updateMolecule(molecule)
+      setCanUndo(historyManagerRef.current.canUndo())
+      setCanRedo(historyManagerRef.current.canRedo())
+    }
+  }, [molecule, updateMolecule])
+
+  // Redo
+  const redo = useCallback(() => {
+    if (historyManagerRef.current.redo(molecule)) {
+      updateMolecule(molecule)
+      setCanUndo(historyManagerRef.current.canUndo())
+      setCanRedo(historyManagerRef.current.canRedo())
+    }
+  }, [molecule, updateMolecule])
 
   // Setup keyboard shortcuts
   useEffect(() => {
@@ -228,6 +273,21 @@ export function MoleculeEditor({
       }
     })
 
+    // Undo/Redo shortcuts
+    keyboard.register({
+      key: 'z',
+      ctrl: true,
+      meta: true, // Support Cmd on Mac
+      handler: (event) => {
+        if (event.shiftKey) {
+          redo()
+        } else {
+          undo()
+        }
+      },
+      description: 'Undo (Ctrl+Z) / Redo (Ctrl+Shift+Z)',
+    })
+
     // Setup keyboard event listener
     const handleKeyDown = (e: KeyboardEvent) => {
       keyboard.processEvent(e as any)
@@ -239,7 +299,7 @@ export function MoleculeEditor({
       unsubCancel()
       unsubDelete()
     }
-  }, [selectedAtomId, selectedBondId, deleteAtom, deleteBond, onAtomSelect, onBondSelect])
+  }, [selectedAtomId, selectedBondId, deleteAtom, deleteBond, undo, redo, onAtomSelect, onBondSelect])
 
   return (
     <div className="molecule-editor" style={{ width, height, position: 'relative' }}>
