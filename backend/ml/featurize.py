@@ -164,10 +164,30 @@ def featurize_smiles(
         node_features.append(features)
     
     if not TORCH_AVAILABLE or torch is None:
-        raise ImportError("PyTorch is required for featurization. Please install: pip install torch")
+        # Try to import again in case it was a transient issue
+        try:
+            import torch as _torch
+            from torch_geometric.data import Data as _Data
+            # If successful, update globals
+            import sys
+            globals()['torch'] = _torch
+            globals()['Data'] = _Data
+            globals()['TORCH_AVAILABLE'] = True
+        except (ImportError, OSError) as e:
+            raise ImportError(f"PyTorch is required for featurization. Error: {e}. Please install: pip install torch torch-geometric")
     
     if not TORCH_AVAILABLE or torch is None:
-        raise ImportError("PyTorch is required for featurization. Please install: pip install torch")
+        # Try to import again in case it was a transient issue
+        try:
+            import torch as _torch
+            from torch_geometric.data import Data as _Data
+            # If successful, update globals
+            import sys
+            globals()['torch'] = _torch
+            globals()['Data'] = _Data
+            globals()['TORCH_AVAILABLE'] = True
+        except (ImportError, OSError) as e:
+            raise ImportError(f"PyTorch is required for featurization. Error: {e}. Please install: pip install torch torch-geometric")
     
     x = torch.tensor(node_features, dtype=torch.float)
     
@@ -256,7 +276,17 @@ def featurize_json(payload: Dict) -> Tuple[Data, Dict[int, str]]:
         node_features.append(features)
     
     if not TORCH_AVAILABLE or torch is None:
-        raise ImportError("PyTorch is required for featurization. Please install: pip install torch")
+        # Try to import again in case it was a transient issue
+        try:
+            import torch as _torch
+            from torch_geometric.data import Data as _Data
+            # If successful, update globals
+            import sys
+            globals()['torch'] = _torch
+            globals()['Data'] = _Data
+            globals()['TORCH_AVAILABLE'] = True
+        except (ImportError, OSError) as e:
+            raise ImportError(f"PyTorch is required for featurization. Error: {e}. Please install: pip install torch torch-geometric")
     
     x = torch.tensor(node_features, dtype=torch.float)
     

@@ -46,8 +46,10 @@ class PredictRequest(BaseModel):
 
 
 class BatchPredictRequest(BaseModel):
-    molecules: List[Dict[str, Any]]
+    molecules: List[Dict[str, Any]]  # List of molecule dicts with smiles or graph
+    inputs: Optional[List[Dict[str, Any]]] = None  # Alternative format
     model_id: Optional[str] = None
+    properties: Optional[List[str]] = None
     batch_size: int = 32
 
 
@@ -163,12 +165,24 @@ async def get_attention_map(request: PredictRequest):
 async def predict_batch(request: BatchPredictRequest):
     """
     Batch prediction for multiple molecules.
+    
+    Accepts either:
+    - molecules: List of molecule dicts with smiles or graph
+    - inputs: Alternative format (for compatibility)
     """
     try:
         engine = get_prediction_engine()
+        
+        # Support both formats
+        inputs = request.molecules if request.molecules else (request.inputs or [])
+        
+        if not inputs:
+            raise HTTPException(status_code=400, detail="No molecules provided")
+        
         results = engine.predict_batch(
-            inputs=request.molecules,
+            inputs=inputs,
             model_id=request.model_id,
+            properties=request.properties,
             batch_size=request.batch_size,
         )
         
