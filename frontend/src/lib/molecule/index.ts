@@ -38,3 +38,7 @@ export { toSMILES, toMolBlock, normalizeHydrogens, validateWithRDKit } from './e
 export { predictionService, PredictionService } from './prediction'
 export type { PredictionResult, AttentionData, PredictionRequest } from './prediction'
 
+// Layout service (2D coordinate generation)
+export { generate2DLayout, generate2DLayoutFromSMILES } from './layout'
+export type { LayoutOptions } from './layout'
+

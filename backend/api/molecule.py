@@ -2,12 +2,14 @@
 Molecule operations API endpoints
 
 Phase 6: RDKit Backend Integration
+Phase 8: 2D Layout Generation
 
 Provides endpoints for:
 - SMILES generation
 - MolBlock generation
 - Hydrogen normalization
 - RDKit validation
+- 2D coordinate generation
 """
 
 from fastapi import APIRouter, HTTPException
@@ -16,6 +18,7 @@ from typing import List, Dict, Any, Optional
 import logging
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdDepictor
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +35,14 @@ class ValidateRequest(BaseModel):
     """Request for molecule validation."""
     molecule: Dict[str, Any]
     smiles: Optional[str] = None  # Alternative: provide SMILES directly
+
+
+class LayoutRequest(BaseModel):
+    """Request for 2D layout generation."""
+    molecule: Dict[str, Any]
+    smiles: Optional[str] = None  # Alternative: provide SMILES directly
+    method: Optional[str] = "coordgen"  # "coordgen" or "rdkit"
+    spacing: Optional[float] = 1.5  # Bond length in Angstroms
 
 
 @router.post("/to-smiles")
@@ -101,6 +112,57 @@ async def normalize_hydrogens(request: MoleculeRequest):
         }
     except Exception as e:
         logger.error(f"Error normalizing hydrogens: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-2d-layout")
+async def generate_2d_layout(request: LayoutRequest):
+    """
+    Generate 2D coordinates for molecule.
+    
+    Uses RDKit's coordgen or standard 2D coordinate generation.
+    Returns molecule with updated atom positions.
+    """
+    try:
+        # Get molecule from dict or SMILES
+        mol = None
+        if request.smiles:
+            mol = Chem.MolFromSmiles(request.smiles)
+            if not mol:
+                raise HTTPException(status_code=400, detail="Invalid SMILES string")
+        else:
+            mol = molecule_dict_to_rdkit(request.molecule)
+            if not mol:
+                raise HTTPException(status_code=400, detail="Invalid molecule structure")
+        
+        # Generate 2D coordinates
+        if request.method == "coordgen":
+            # Use CoordGen (better for complex molecules)
+            try:
+                rdDepictor.Compute2DCoords(mol)
+            except:
+                # Fallback to standard method
+                AllChem.Compute2DCoords(mol)
+        else:
+            # Use standard RDKit 2D coordinate generation
+            AllChem.Compute2DCoords(mol)
+        
+        # Optimize layout
+        try:
+            # Try to improve layout with additional optimization
+            rdDepictor.Compute2DCoords(mol, clearConfs=True)
+        except:
+            pass
+        
+        # Convert back to molecule dict with 2D coordinates
+        molecule_dict = rdkit_to_molecule_dict(mol)
+        
+        return {
+            "molecule": molecule_dict,
+            "method": request.method,
+        }
+    except Exception as e:
+        logger.error(f"Error generating 2D layout: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -256,19 +318,32 @@ def molecule_dict_to_rdkit(molecule_dict: Dict[str, Any]) -> Optional[Chem.Mol]:
 def rdkit_to_molecule_dict(mol: Chem.Mol) -> Dict[str, Any]:
     """
     Convert RDKit Mol to molecule dict format.
+    Extracts 2D or 3D coordinates from conformer.
     """
     atoms = []
     bonds = []
     
+    # Get conformer (prefer 2D, fallback to 3D or default)
+    conf = None
+    if mol.GetNumConformers() > 0:
+        # Prefer conformer 0 (usually 2D if generated)
+        conf = mol.GetConformer(0)
+    
     # Add atoms
     for i, atom in enumerate(mol.GetAtoms()):
         element = atom.GetSymbol()
-        pos = mol.GetConformer(0).GetAtomPosition(i) if mol.GetNumConformers() > 0 else None
+        
+        # Get position from conformer or default to [0, 0, 0]
+        if conf:
+            pos = conf.GetAtomPosition(i)
+            position = [pos.x, pos.y, pos.z if pos.z else 0.0]
+        else:
+            position = [0.0, 0.0, 0.0]
         
         atoms.append({
             "id": f"atom_{i}",
             "element": element,
-            "position": [pos.x, pos.y, pos.z] if pos else [0, 0, 0],
+            "position": position,
             "charge": atom.GetFormalCharge(),
             "formalCharge": atom.GetFormalCharge(),
         })
@@ -287,4 +362,3 @@ def rdkit_to_molecule_dict(mol: Chem.Mol) -> Dict[str, Any]:
         "atoms": atoms,
         "bonds": bonds,
     }
-

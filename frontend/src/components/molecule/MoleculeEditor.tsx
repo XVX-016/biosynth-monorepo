@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { Molecule, validateMolecule, canCreateBond } from '@/lib/molecule'
+import { Molecule, validateMolecule, canCreateBond, generate2DLayout } from '@/lib/molecule'
 import type { EditorTool, Atom, Bond, ValidationResult } from '@/lib/molecule'
 import { CanvasLayer } from './CanvasLayer'
 import { PointerManager, KeyboardManager } from '@/lib/molecule/input'
