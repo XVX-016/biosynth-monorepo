@@ -1,19 +1,115 @@
 /**
  * ActionManager - Manages undo/redo stacks and action execution
+ * 
+ * Enhanced with transaction support for atomic multi-step operations.
  */
 
 import { IAction } from './Action.types';
+import { Transaction } from './Transaction';
 
 export class ActionManager {
   private undoStack: IAction[] = [];
   private redoStack: IAction[] = [];
   private listeners: ((state: any) => void)[] = [];
   private maxStackSize = 100;
+  private currentTransaction: Transaction | null = null;
+  private transactionDepth = 0;
+
+  /**
+   * Begin a transaction for atomic multi-step operations
+   */
+  beginTransaction(label?: string): void {
+    if (this.currentTransaction === null) {
+      this.currentTransaction = new Transaction([], { label });
+      this.transactionDepth = 1;
+    } else {
+      // Nested transaction - will be added to parent
+      this.transactionDepth++;
+    }
+  }
+
+  /**
+   * Commit the current transaction
+   */
+  commitTransaction(state: any): any {
+    if (this.currentTransaction === null) {
+      throw new Error('No active transaction to commit');
+    }
+
+    this.transactionDepth--;
+    
+    if (this.transactionDepth > 0) {
+      // Nested transaction - return state unchanged, parent will handle
+      return state;
+    }
+
+    // Commit the transaction
+    const transaction = this.currentTransaction;
+    this.currentTransaction = null;
+
+    if (transaction.isEmpty()) {
+      return state; // Empty transaction, no-op
+    }
+
+    // Apply transaction as a single action
+    return this.apply(transaction, state);
+  }
+
+  /**
+   * Rollback the current transaction
+   */
+  rollbackTransaction(state: any): any {
+    if (this.currentTransaction === null) {
+      throw new Error('No active transaction to rollback');
+    }
+
+    this.transactionDepth--;
+    
+    if (this.transactionDepth > 0) {
+      // Nested transaction - clear current, let parent handle
+      this.currentTransaction = null;
+      return state;
+    }
+
+    // Rollback all actions in transaction
+    const transaction = this.currentTransaction;
+    this.currentTransaction = null;
+
+    if (transaction.isEmpty()) {
+      return state; // Empty transaction, no-op
+    }
+
+    // Undo all actions in reverse order
+    let currentState = state;
+    const actions = transaction.getActions();
+    for (let i = actions.length - 1; i >= 0; i--) {
+      currentState = actions[i].undo(currentState);
+    }
+
+    return currentState;
+  }
+
+  /**
+   * Check if a transaction is active
+   */
+  isInTransaction(): boolean {
+    return this.currentTransaction !== null;
+  }
 
   /**
    * Apply an action and add it to undo stack
+   * If in a transaction, adds to transaction instead
    */
   apply(action: IAction, state: any): any {
+    // If in transaction, add to transaction instead of applying immediately
+    if (this.currentTransaction !== null) {
+      this.currentTransaction.addAction(action);
+      // Execute action immediately but don't add to undo stack yet
+      const newState = action.do(state);
+      return newState;
+    }
+
+    // Normal application
     const newState = action.do(state);
     this.undoStack.push(action);
     

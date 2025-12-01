@@ -10,6 +10,7 @@ import { Stage, Layer, Circle, Line, Text, Group } from 'react-konva';
 import { useLab } from '../hooks/useLab';
 import { useSelection } from '../hooks/useSelection';
 import { useToolMode } from '../hooks/useToolMode';
+import { useAttentionWeights } from './AttentionVisualizer';
 import type { Atom, Bond } from '../engines/MoleculeStateEngine';
 
 // Grid component
@@ -49,16 +50,35 @@ function AtomNode({
   atom,
   selected,
   invalid,
+  importance,
   onSelect,
 }: {
   atom: Atom;
   selected: boolean;
   invalid: boolean;
+  importance?: number; // Attention importance score (0-1)
   onSelect: () => void;
 }) {
-  const fillColor = invalid ? '#ef4444' : selected ? '#3b82f6' : '#ffffff';
+  // Color based on importance if available
+  let fillColor = invalid ? '#ef4444' : selected ? '#3b82f6' : '#ffffff';
+  if (importance !== undefined && !invalid && !selected) {
+    // Heat color: blue (low) -> white -> red (high)
+    const intensity = importance;
+    if (intensity < 0.5) {
+      const r = Math.floor(255 * intensity * 2);
+      const g = Math.floor(255 * intensity * 2);
+      const b = 255;
+      fillColor = `rgb(${r}, ${g}, ${b})`;
+    } else {
+      const r = 255;
+      const g = Math.floor(255 * (1 - (intensity - 0.5) * 2));
+      const b = Math.floor(255 * (1 - (intensity - 0.5) * 2));
+      fillColor = `rgb(${r}, ${g}, ${b})`;
+    }
+  }
+  
   const strokeColor = invalid ? '#dc2626' : selected ? '#2563eb' : '#000000';
-  const strokeWidth = selected || invalid ? 2 : 1;
+  const strokeWidth = selected || invalid ? 2 : importance !== undefined ? 1 + importance * 2 : 1;
 
   return (
     <Group>
@@ -108,6 +128,7 @@ function BondNode({
   atom2,
   selected,
   invalid,
+  attention,
   onSelect,
 }: {
   bond: Bond;
@@ -115,10 +136,32 @@ function BondNode({
   atom2: Atom;
   selected: boolean;
   invalid: boolean;
+  attention?: number; // Attention weight (0-1)
   onSelect: () => void;
 }) {
-  const strokeColor = invalid ? '#ef4444' : selected ? '#3b82f6' : '#666666';
-  const strokeWidth = bond.order === 2 ? 3 : bond.order === 3 ? 4 : 2;
+  // Color based on attention if available
+  let strokeColor = invalid ? '#ef4444' : selected ? '#3b82f6' : '#666666';
+  if (attention !== undefined && !invalid && !selected) {
+    // Heat color: blue (low) -> white -> red (high)
+    const intensity = attention;
+    if (intensity < 0.5) {
+      const r = Math.floor(255 * intensity * 2);
+      const g = Math.floor(255 * intensity * 2);
+      const b = 255;
+      strokeColor = `rgb(${r}, ${g}, ${b})`;
+    } else {
+      const r = 255;
+      const g = Math.floor(255 * (1 - (intensity - 0.5) * 2));
+      const b = Math.floor(255 * (1 - (intensity - 0.5) * 2));
+      strokeColor = `rgb(${r}, ${g}, ${b})`;
+    }
+  }
+  
+  // Stroke width based on attention
+  const baseWidth = bond.order === 2 ? 3 : bond.order === 3 ? 4 : 2;
+  const strokeWidth = attention !== undefined
+    ? baseWidth + attention * 4 // 2-6px based on attention
+    : baseWidth;
 
   return (
     <Line
@@ -136,7 +179,7 @@ function BondNode({
 
 export default function Editor2D() {
   const stageRef = useRef<any>(null);
-  const { currentMolecule, moleculeEngine, toolManager, currentElement, validationResult } = useLab();
+  const { currentMolecule, moleculeEngine, toolManager, currentElement, validationResult, attentionWeights } = useLab();
   const { selectedAtomId, selectedBondId, selectAtom, selectBond } = useSelection();
   const { activeTool } = useToolMode();
 

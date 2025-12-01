@@ -24,6 +24,10 @@ interface LabState {
   selectedAtomId: string | null;
   selectedBondId: string | null;
   currentElement: string;
+  attentionWeights: {
+    bondAttentions: Map<string, number>;
+    atomImportance: Map<string, number>;
+  } | null;
   
   // Actions
   dispatch: (type: string, payload: any) => void;
@@ -34,6 +38,7 @@ interface LabState {
   selectBond: (bondId: string | null) => void;
   setCurrentElement: (element: string) => void;
   validate: () => void;
+  setAttentionWeights: (weights: { bondAttentions: Map<string, number>; atomImportance: Map<string, number> } | null) => void;
   clear: () => void;
 }
 
@@ -57,6 +62,7 @@ export const useLabStore = create<LabState>((set, get) => {
     selectedAtomId: null,
     selectedBondId: null,
     currentElement: 'C',
+    attentionWeights: null,
     
     dispatch: (type: string, payload: any) => {
       const action = actionRegistry.create(type, payload);
@@ -122,6 +128,10 @@ export const useLabStore = create<LabState>((set, get) => {
       set({ validationResult: validation });
     },
     
+    setAttentionWeights: (weights) => {
+      set({ attentionWeights: weights });
+    },
+    
     clear: () => {
       moleculeEngine.clear();
       actionManager.clear();
@@ -130,6 +140,7 @@ export const useLabStore = create<LabState>((set, get) => {
         validationResult: null,
         selectedAtomId: null,
         selectedBondId: null,
+        attentionWeights: null,
       });
     },
   };

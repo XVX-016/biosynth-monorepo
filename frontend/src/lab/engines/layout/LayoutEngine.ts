@@ -18,7 +18,7 @@ function forceDirectedLayout(
   options: LayoutOptions
 ): Map<string, { x: number; y: number }> {
   const spacing = options.spacing ?? 50;
-  const positions = new Map<string, { x: number; number }>();
+  const positions = new Map<string, { x: number; y: number }>();
   const atoms = Array.from(state.atoms.values());
   const bonds = Array.from(state.bonds.values());
   
