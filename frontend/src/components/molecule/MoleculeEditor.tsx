@@ -12,8 +12,8 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { Molecule } from '@/lib/molecule'
-import type { EditorTool, Atom, Bond } from '@/lib/molecule'
+import { Molecule, validateMolecule, canCreateBond } from '@/lib/molecule'
+import type { EditorTool, Atom, Bond, ValidationResult } from '@/lib/molecule'
 import { CanvasLayer } from './CanvasLayer'
 import { PointerManager, KeyboardManager } from '@/lib/molecule/input'
 import { HistoryManager } from '@/lib/molecule/history'
@@ -70,12 +70,28 @@ export function MoleculeEditor({
   // History state (for UI feedback)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+  
+  // Validation state
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
 
   // Update molecule and notify parent
   const updateMolecule = useCallback((newMolecule: Molecule) => {
     setMolecule(newMolecule)
+    
+    // Validate molecule
+    const validation = validateMolecule(newMolecule)
+    setValidationResult(validation)
+    
     onMoleculeChange?.(newMolecule)
   }, [onMoleculeChange])
+  
+  // Validate molecule on mount and when it changes
+  useEffect(() => {
+    if (molecule) {
+      const validation = validateMolecule(molecule)
+      setValidationResult(validation)
+    }
+  }, [molecule])
 
   // Add atom at position
   const addAtom = useCallback((x: number, y: number, element: string = elementToAdd) => {
@@ -95,19 +111,16 @@ export function MoleculeEditor({
     return atomId
   }, [molecule, width, height, scale, offsetX, offsetY, elementToAdd, updateMolecule])
 
-  // Add bond between two atoms
+  // Add bond between two atoms (with validation)
   const addBond = useCallback((atom1Id: string, atom2Id: string, order: number = bondOrder) => {
     if (atom1Id === atom2Id) return null
 
-    // Check if bond already exists
-    const existingBonds = molecule.getBonds()
-    for (const bond of existingBonds) {
-      if (
-        (bond.atom1 === atom1Id && bond.atom2 === atom2Id) ||
-        (bond.atom1 === atom2Id && bond.atom2 === atom1Id)
-      ) {
-        return null // Bond already exists
-      }
+    // Validate bond creation
+    const validation = canCreateBond(molecule, atom1Id, atom2Id, order)
+    if (!validation.valid) {
+      // Could emit error event here
+      console.warn('Cannot create bond:', validation.error?.message)
+      return null
     }
 
     const bondId = nanoid()

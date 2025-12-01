@@ -27,6 +27,7 @@ export { Molecule } from './Molecule'
 // Constants
 export { ELEMENT_DATA, COMMON_ELEMENTS, DEFAULT_BOND_ORDER, VALID_BOND_ORDERS } from './constants'
 
-// Re-export validation (will be created in Phase 5)
-// export { validateMolecule } from './validation/Validator'
+// Validation
+export { validateMolecule, canAtomAcceptBond, canCreateBond } from './validation/Validator'
+export type { ValidationResult, ValidationError, ValidationErrorCode } from './types'
 
