@@ -31,3 +31,6 @@ export { ELEMENT_DATA, COMMON_ELEMENTS, DEFAULT_BOND_ORDER, VALID_BOND_ORDERS } 
 export { validateMolecule, canAtomAcceptBond, canCreateBond } from './validation/Validator'
 export type { ValidationResult, ValidationError, ValidationErrorCode } from './types'
 
+// Export functions (RDKit backend integration)
+export { toSMILES, toMolBlock, normalizeHydrogens, validateWithRDKit } from './export'
+
