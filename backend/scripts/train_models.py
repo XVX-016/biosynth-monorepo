@@ -48,7 +48,13 @@ class MoleculeDataset(Dataset):
         # Featurize molecule
         if TORCH_AVAILABLE:
             try:
-                data = featurize_smiles(smiles)
+                # Featurize and return Data object, not tuple
+                result = featurize_smiles(smiles)
+                # featurize_smiles returns (data, node_mapping) tuple
+                if isinstance(result, tuple):
+                    data, _ = result
+                else:
+                    data = result
                 if data is None:
                     # Return dummy data
                     data = Data(
@@ -140,12 +146,14 @@ def train_models(
             batch_size=config["batch_size"],
             shuffle=True,
             collate_fn=_collate_fn,
+            num_workers=0,  # Windows compatibility
         )
         val_loader = DataLoader(
             val_dataset,
             batch_size=config["batch_size"],
             shuffle=False,
             collate_fn=_collate_fn,
+            num_workers=0,  # Windows compatibility
         ) if val_dataset else None
         
         # Training loop

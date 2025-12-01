@@ -5,11 +5,36 @@ Ensures consistent atom ordering between frontend and backend.
 """
 
 from typing import Dict, List, Optional, Tuple
-import torch
-from torch_geometric.data import Data
+import numpy as np
+import logging
+
+# Optional PyTorch imports - delay import to avoid DLL issues at module load time
+TORCH_AVAILABLE = None
+torch = None
+Data = None
+
+def _ensure_torch():
+    """Lazy import of PyTorch to avoid DLL issues at module load."""
+    global TORCH_AVAILABLE, torch, Data
+    if TORCH_AVAILABLE is not None:
+        return TORCH_AVAILABLE
+    
+    try:
+        import torch as _torch
+        from torch_geometric.data import Data as _Data
+        torch = _torch
+        Data = _Data
+        TORCH_AVAILABLE = True
+        return True
+    except (ImportError, OSError) as e:
+        TORCH_AVAILABLE = False
+        torch = None
+        Data = None
+        logging.warning(f"PyTorch/PyG not available: {e}. Featurization will use numpy only.")
+        return False
+
 from rdkit import Chem
 from rdkit.Chem import Descriptors
-import numpy as np
 
 
 # Element to atomic number mapping (matches frontend)
@@ -152,6 +177,49 @@ def featurize_smiles(
         features = compute_node_features(atom, mol, bonds)
         node_features.append(features)
     
+    # Create node mapping if atom_order provided
+    node_mapping = {}
+    if atom_order and len(atom_order) == mol.GetNumAtoms():
+        for i, atom_id in enumerate(atom_order):
+            node_mapping[i] = atom_id
+    
+    # Lazy import PyTorch - with fallback
+    if not _ensure_torch():
+        # Fallback: return mock data structure using numpy
+        import numpy as np
+        logging.warning("PyTorch not available, using numpy fallback for featurization")
+        x = np.array(node_features, dtype=np.float32)
+        
+        # Create mock Data object structure
+        class MockData:
+            def __init__(self, x, edge_index, edge_attr):
+                self.x = x
+                self.edge_index = edge_index
+                self.edge_attr = edge_attr
+                self.num_nodes = len(node_features)
+        
+        # Create edge indices and features
+        edge_indices = []
+        edge_features = []
+        for bond in mol.GetBonds():
+            u = bond.GetBeginAtomIdx()
+            v = bond.GetEndAtomIdx()
+            edge_indices.append([u, v])
+            edge_indices.append([v, u])
+            edge_feat = compute_edge_features(bond)
+            edge_features.append(edge_feat)
+            edge_features.append(edge_feat)
+        
+        if len(edge_indices) > 0:
+            edge_index = np.array(edge_indices, dtype=np.int64).T
+            edge_attr = np.array(edge_features, dtype=np.float32)
+        else:
+            edge_index = np.empty((2, 0), dtype=np.int64)
+            edge_attr = np.empty((0, 7), dtype=np.float32)
+        
+        data = MockData(x, edge_index, edge_attr)
+        return data, node_mapping
+    
     x = torch.tensor(node_features, dtype=torch.float)
     
     # Edge indices and features
@@ -173,7 +241,10 @@ def featurize_smiles(
         edge_attr = torch.tensor(edge_features, dtype=torch.float)
     else:
         edge_index = torch.empty((2, 0), dtype=torch.long)
-        edge_attr = torch.empty((0, len(compute_edge_features(mol.GetBondWithIdx(0)))), dtype=torch.float)
+        if mol.GetNumBonds() > 0:
+            edge_attr = torch.empty((0, len(compute_edge_features(mol.GetBondWithIdx(0)))), dtype=torch.float)
+        else:
+            edge_attr = torch.empty((0, 7), dtype=torch.float)  # Default edge feature dim
     
     # Create node mapping if atom_order provided
     node_mapping = {}
@@ -234,6 +305,43 @@ def featurize_json(payload: Dict) -> Tuple[Data, Dict[int, str]]:
             0.0,  # radical electrons
         ]
         node_features.append(features)
+    
+    # Lazy import PyTorch
+    if not _ensure_torch():
+        # Fallback: return mock data structure using numpy
+        import numpy as np
+        logging.warning("PyTorch not available, using numpy fallback for featurization")
+        x = np.array(node_features, dtype=np.float32)
+        
+        # Create mock Data object structure
+        class MockData:
+            def __init__(self, x, edge_index, edge_attr):
+                self.x = x
+                self.edge_index = edge_index
+                self.edge_attr = edge_attr
+                self.num_nodes = len(node_features)
+        
+        # Create edge indices and features
+        edge_indices = []
+        edge_features = []
+        for bond in mol.GetBonds():
+            u = bond.GetBeginAtomIdx()
+            v = bond.GetEndAtomIdx()
+            edge_indices.append([u, v])
+            edge_indices.append([v, u])
+            edge_feat = compute_edge_features(bond)
+            edge_features.append(edge_feat)
+            edge_features.append(edge_feat)
+        
+        if len(edge_indices) > 0:
+            edge_index = np.array(edge_indices, dtype=np.int64).T
+            edge_attr = np.array(edge_features, dtype=np.float32)
+        else:
+            edge_index = np.empty((2, 0), dtype=np.int64)
+            edge_attr = np.empty((0, 7), dtype=np.float32)
+        
+        data = MockData(x, edge_index, edge_attr)
+        return data, node_mapping
     
     x = torch.tensor(node_features, dtype=torch.float)
     

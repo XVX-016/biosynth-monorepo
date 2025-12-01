@@ -45,12 +45,23 @@ def configure_models(train_data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         try:
             # Featurize a sample molecule to get dimensions
             sample_smiles = train_data["smiles"][0]
-            data = featurize_smiles(sample_smiles)
-            if data:
-                node_feat_dim = data.x.shape[1] if hasattr(data, 'x') else 64
-                edge_feat_dim = data.edge_attr.shape[1] if hasattr(data, 'edge_attr') else 8
+            result = featurize_smiles(sample_smiles)
+            # featurize_smiles returns (data, node_mapping) tuple
+            if isinstance(result, tuple):
+                data, _ = result
+            else:
+                data = result
+            if data and hasattr(data, 'x') and data.x is not None:
+                node_feat_dim = data.x.shape[1]
+                logger.info(f"Detected node_feat_dim: {node_feat_dim}")
+            if data and hasattr(data, 'edge_attr') and data.edge_attr is not None and len(data.edge_attr) > 0:
+                edge_feat_dim = data.edge_attr.shape[1]
+                logger.info(f"Detected edge_feat_dim: {edge_feat_dim}")
         except Exception as e:
             logger.warning(f"Could not determine dimensions from sample: {e}")
+            # Use actual dimensions from featurizer
+            node_feat_dim = 12  # From compute_node_features
+            edge_feat_dim = 8   # From compute_edge_features
     
     # Properties to train
     properties = ["logP", "solubility", "toxicity"]

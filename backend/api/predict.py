@@ -23,7 +23,7 @@ _prediction_engine = None
 def get_model_registry():
     global _model_registry
     if _model_registry is None:
-        _model_registry = ModelRegistry()
+        _model_registry = ModelRegistry(registry_path="data/models/registry.json")
     return _model_registry
 
 def get_prediction_engine():
@@ -35,6 +35,9 @@ def get_prediction_engine():
 
 # Request/Response models
 class PredictRequest(BaseModel):
+    class Config:
+        protected_namespaces = ()  # Fix Pydantic warning
+    
     smiles: Optional[str] = None
     graph: Optional[Dict[str, Any]] = None
     molecule: Optional[Dict[str, Any]] = None
@@ -46,9 +49,21 @@ class PredictRequest(BaseModel):
 
 
 class BatchPredictRequest(BaseModel):
-    molecules: List[Dict[str, Any]]
+    class Config:
+        protected_namespaces = ()  # Fix Pydantic warning
+    
+    molecules: Optional[List[Dict[str, Any]]] = None  # List of molecule dicts with smiles or graph
+    inputs: Optional[List[Dict[str, Any]]] = None  # Alternative format (for compatibility)
     model_id: Optional[str] = None
+    properties: Optional[List[str]] = None
     batch_size: int = 32
+    
+    def __init__(self, **data):
+        """Custom init to handle both molecules and inputs formats."""
+        # If inputs is provided but molecules is not, copy inputs to molecules
+        if 'inputs' in data and data.get('inputs') and 'molecules' not in data:
+            data['molecules'] = data['inputs']
+        super().__init__(**data)
 
 
 class SimilarMoleculeRequest(BaseModel):
@@ -163,14 +178,32 @@ async def get_attention_map(request: PredictRequest):
 async def predict_batch(request: BatchPredictRequest):
     """
     Batch prediction for multiple molecules.
+    
+    Accepts either:
+    - molecules: List of molecule dicts with smiles or graph
+    - inputs: Alternative format (for compatibility)
     """
     try:
         engine = get_prediction_engine()
+        
+        # Support both formats - __init__ already handles copying inputs to molecules
+        inputs = request.molecules if request.molecules else []
+        
+        if not inputs:
+            raise HTTPException(status_code=400, detail="No molecules provided. Use 'molecules' or 'inputs' field.")
+        
         results = engine.predict_batch(
-            inputs=request.molecules,
+            inputs,
             model_id=request.model_id,
             batch_size=request.batch_size,
         )
+        
+        # Filter to requested properties if specified
+        if request.properties:
+            for result in results:
+                # Only keep requested properties
+                filtered_predictions = {k: v for k, v in result.predictions.items() if k in request.properties}
+                result.predictions = filtered_predictions
         
         return {
             "predictions": [r.to_dict() for r in results],

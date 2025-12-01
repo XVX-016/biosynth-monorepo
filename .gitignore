@@ -67,11 +67,64 @@ data/frontend_cache/
 data/models/
 data/datasets/
 data/libraries/
+data/validation/
+data/metrics/
+data/docs/
 
 # Training logs
 *.log
 logs/
 backend/data/phase10/rl_logs/
+training_logs/
+
+# Model registry and checkpoints
+backend/models/registry.json
+backend/models/*.pt
+backend/models/*.pth
+backend/models/evaluation/
+
+# Python cache and compiled
+*.pyc
+*.pyo
+*.pyd
+.Python
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
 
 # Frontend specific
 frontend/dist/

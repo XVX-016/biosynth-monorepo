@@ -46,6 +46,8 @@ class AttentionGNN(nn.Module):
         for i in range(num_layers):
             in_dim = hidden_dim if i > 0 else hidden_dim
             # GATConv with edge features (requires PyG >= 2.0)
+            # Last layer: use concat=False so output is hidden_dim // heads
+            # But we'll add a projection to hidden_dim after
             self.convs.append(
                 GATConv(
                     in_dim,
@@ -56,6 +58,16 @@ class AttentionGNN(nn.Module):
                     concat=True if i < num_layers - 1 else False,
                 )
             )
+        
+        # Projection layer: if last layer uses concat=False, output is hidden_dim // heads
+        # We need to project it to hidden_dim for the MLP
+        if num_layers > 0:
+            # Last layer outputs hidden_dim // heads when concat=False
+            # Or hidden_dim when concat=True
+            # To be safe, we'll always project to hidden_dim
+            self.final_proj = nn.Linear(hidden_dim // heads, hidden_dim)
+        else:
+            self.final_proj = nn.Identity()
         
         # Readout (global pooling)
         self.pool = global_mean_pool
@@ -120,6 +132,11 @@ class AttentionGNN(nn.Module):
             out = self.pool(x, batch)
         else:
             out = x.mean(dim=0, keepdim=True)
+        
+        # Project to hidden_dim if needed (when last layer used concat=False)
+        # Check if output dimension matches expected hidden_dim
+        if out.shape[-1] != self.hidden_dim:
+            out = self.final_proj(out)
         
         # Final MLP
         out = self.mlp(out)
