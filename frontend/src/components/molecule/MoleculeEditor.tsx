@@ -333,6 +333,18 @@ export type MoleculeEditorRef = {
   deleteBond: (bondId: string) => void
   moveAtom: (atomId: string, x: number, y: number) => void
   clear: () => void
+  undo: () => void
+  redo: () => void
+  canUndo: () => boolean
+  canRedo: () => boolean
   getMolecule: () => Molecule
+}
+
+// Export undo/redo state for UI
+export interface MoleculeEditorState {
+  canUndo: boolean
+  canRedo: boolean
+  undoDescription: string | null
+  redoDescription: string | null
 }
 
