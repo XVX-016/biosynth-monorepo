@@ -53,19 +53,15 @@ export function InspectorPanel() {
     }
   }, [selectedBond])
 
-  // History manager for inspector edits
-  const historyManagerRef = React.useRef(new HistoryManager())
-
   // Update atom element
   const handleAtomElementChange = (newElement: string) => {
     if (!selectedAtom || !selectedAtomId) return
 
-    const command = new UpdateAtomCommand(selectedAtomId, {
+    const updated = molecule.updateAtom(selectedAtomId, {
       element: newElement,
     })
     
-    historyManagerRef.current.execute(molecule, command)
-    setMolecule(molecule)
+    setMolecule(updated)
     setAtomElement(newElement)
   }
 
@@ -73,13 +69,12 @@ export function InspectorPanel() {
   const handleAtomChargeChange = (newCharge: number) => {
     if (!selectedAtom || !selectedAtomId) return
 
-    const command = new UpdateAtomCommand(selectedAtomId, {
+    const updated = molecule.updateAtom(selectedAtomId, {
       charge: newCharge,
       formalCharge: newCharge,
     })
     
-    historyManagerRef.current.execute(molecule, command)
-    setMolecule(molecule)
+    setMolecule(updated)
     setAtomCharge(newCharge)
   }
 
@@ -87,12 +82,11 @@ export function InspectorPanel() {
   const handleBondOrderChange = (newOrder: number) => {
     if (!selectedBond || !selectedBondId) return
 
-    const command = new UpdateBondCommand(selectedBondId, {
+    const updated = molecule.updateBond(selectedBondId, {
       order: newOrder,
     })
     
-    historyManagerRef.current.execute(molecule, command)
-    setMolecule(molecule)
+    setMolecule(updated)
     setBondOrder(newOrder)
   }
 

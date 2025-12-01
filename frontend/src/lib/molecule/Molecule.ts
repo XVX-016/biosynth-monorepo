@@ -142,27 +142,51 @@ export class Molecule {
   }
 
   /**
-   * Update atom properties
+   * Update atom properties (immutable)
    */
-  updateAtom(atomId: string, updates: Partial<Atom>): void {
+  updateAtom(atomId: string, updates: Partial<Atom>): Molecule {
     const atom = this.atoms.get(atomId)
-    if (!atom) {
-      throw new Error(`Atom ${atomId} does not exist`)
-    }
-    const updated = atom.update(updates)
-    this.atoms.set(atomId, updated)
+    if (!atom) return this
+
+    const updatedAtom = new AtomImpl({
+      ...atom.toJSON(),
+      ...updates,
+    })
+
+    const newMolecule = new Molecule()
+    this.atoms.forEach((a, id) => {
+      newMolecule.atoms.set(id, id === atomId ? updatedAtom : a)
+    })
+    this.bonds.forEach((bond, id) => {
+      newMolecule.bonds.set(id, bond)
+    })
+    newMolecule.metadata = { ...this.metadata }
+
+    return newMolecule
   }
 
   /**
-   * Update bond properties
+   * Update bond properties (immutable)
    */
-  updateBond(bondId: string, updates: Partial<Bond>): void {
+  updateBond(bondId: string, updates: Partial<Bond>): Molecule {
     const bond = this.bonds.get(bondId)
-    if (!bond) {
-      throw new Error(`Bond ${bondId} does not exist`)
-    }
-    const updated = bond.update(updates)
-    this.bonds.set(bondId, updated)
+    if (!bond) return this
+
+    const updatedBond = new BondImpl({
+      ...bond.toJSON(),
+      ...updates,
+    })
+
+    const newMolecule = new Molecule()
+    this.atoms.forEach((atom, id) => {
+      newMolecule.atoms.set(id, atom)
+    })
+    this.bonds.forEach((b, id) => {
+      newMolecule.bonds.set(id, id === bondId ? updatedBond : b)
+    })
+    newMolecule.metadata = { ...this.metadata }
+
+    return newMolecule
   }
 
   /**

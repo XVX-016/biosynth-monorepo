@@ -102,14 +102,16 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
 
   // Undo/Redo
   const undo = useCallback(() => {
-    if (historyManagerRef.current.undo(molecule)) {
-      setMolecule(molecule)
+    const result = historyManagerRef.current.undo(molecule)
+    if (result) {
+      setMolecule(result)
     }
   }, [molecule, setMolecule])
 
   const redo = useCallback(() => {
-    if (historyManagerRef.current.redo(molecule)) {
-      setMolecule(molecule)
+    const result = historyManagerRef.current.redo(molecule)
+    if (result) {
+      setMolecule(result)
     }
   }, [molecule, setMolecule])
 

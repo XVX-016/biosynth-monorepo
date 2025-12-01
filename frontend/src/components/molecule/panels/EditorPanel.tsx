@@ -4,14 +4,14 @@
  * Phase 10: Lab Page UI Rebuild
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { MoleculeEditor } from '../MoleculeEditor'
 import { ThreeDViewer } from '../ThreeDViewer'
 import { useEditorContext } from '../EditorContext'
 import { generate3DCoordinates } from '@/lib/molecule/3d'
 
 export function EditorPanel() {
-  const { molecule, selectedAtomId, setSelectedAtomId } = useEditorContext()
+  const { molecule, setMolecule, selectedAtomId, setSelectedAtomId, tool } = useEditorContext()
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
   const [threeDMolecule, setThreeDMolecule] = useState<typeof molecule | null>(null)
   const [loading3D, setLoading3D] = useState(false)
@@ -66,10 +66,8 @@ export function EditorPanel() {
             width={800}
             height={600}
             initialMolecule={molecule}
-            onMoleculeChange={(mol) => {
-              // Update context molecule
-              // This will be handled by EditorContext
-            }}
+            tool={tool}
+            onMoleculeChange={setMolecule}
             onAtomSelect={setSelectedAtomId}
           />
         ) : (
