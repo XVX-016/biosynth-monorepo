@@ -27,6 +27,7 @@ import {
   ClearMoleculeCommand,
 } from '@/lib/molecule/history'
 import { nanoid } from 'nanoid'
+import type { AttentionMap } from '@/lib/molecule/attention'
 
 interface MoleculeEditorProps {
   width: number
@@ -36,6 +37,8 @@ interface MoleculeEditorProps {
   onMoleculeChange?: (molecule: Molecule) => void
   onAtomSelect?: (atomId: string | null) => void
   onBondSelect?: (bondId: string | null) => void
+  attentionMap?: AttentionMap | null
+  showAttentionOverlay?: boolean
 }
 
 export function MoleculeEditor({
@@ -46,6 +49,8 @@ export function MoleculeEditor({
   onMoleculeChange,
   onAtomSelect,
   onBondSelect,
+  attentionMap,
+  showAttentionOverlay = false,
 }: MoleculeEditorProps) {
   const [molecule, setMolecule] = useState<Molecule>(initialMolecule || new Molecule())
   const [selectedAtomId, setSelectedAtomId] = useState<string | null>(null)
@@ -339,6 +344,8 @@ export function MoleculeEditor({
         onBondHover={setHoveredBondId}
         pointerManager={pointerManagerRef.current}
         bondStartAtomId={bondStartAtomId}
+        attentionMap={attentionMap}
+        showAttentionOverlay={showAttentionOverlay}
       />
     </div>
   )

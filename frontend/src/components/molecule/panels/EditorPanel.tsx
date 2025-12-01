@@ -11,7 +11,15 @@ import { useEditorContext } from '../EditorContext'
 import { generate3DCoordinates } from '@/lib/molecule/3d'
 
 export function EditorPanel() {
-  const { molecule, setMolecule, selectedAtomId, setSelectedAtomId, tool } = useEditorContext()
+  const {
+    molecule,
+    setMolecule,
+    selectedAtomId,
+    setSelectedAtomId,
+    tool,
+    attentionMap,
+    attentionOverlayEnabled,
+  } = useEditorContext()
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
   const [threeDMolecule, setThreeDMolecule] = useState<typeof molecule | null>(null)
   const [loading3D, setLoading3D] = useState(false)
@@ -69,6 +77,8 @@ export function EditorPanel() {
             tool={tool}
             onMoleculeChange={setMolecule}
             onAtomSelect={setSelectedAtomId}
+            attentionMap={attentionMap}
+            showAttentionOverlay={attentionOverlayEnabled}
           />
         ) : (
           <div className="w-full h-full">
