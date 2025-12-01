@@ -11,6 +11,7 @@ import AdminItems from './pages/admin/Items';
 import SupabaseTest from './pages/SupabaseTest';
 import SeedLibrary from './pages/SeedLibrary';
 import PublicLibrary from './pages/PublicLibrary';
+import Phase10Dashboard from './pages/Phase10Dashboard';
 
 export default function App() {
 	return (
@@ -31,6 +32,7 @@ export default function App() {
 						<Route path="/admin/items" element={<AdminItems />} />
 						<Route path="/supabase-test" element={<SupabaseTest />} />
 						<Route path="/seed-library" element={<SeedLibrary />} />
+						<Route path="/phase10" element={<Phase10Dashboard />} />
 					</Routes>
 				</AppShell>
 			} />
