@@ -38,3 +38,23 @@ def validate_smiles(smiles: str) -> bool:
     mol = Chem.MolFromSmiles(smiles)
     return mol is not None
 
+
+def get_ecfp(smiles: str, radius: int = 2, n_bits: int = 2048) -> Optional[set]:
+    """
+    Get ECFP fingerprint as set of active bit indices.
+    
+    Args:
+        smiles: SMILES string
+        radius: ECFP radius (default: 2 for ECFP4)
+        n_bits: Number of bits in fingerprint
+    
+    Returns:
+        Set of active bit indices, or None if invalid SMILES
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    
+    fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=n_bits)
+    active_bits = set(fp.GetOnBits())
+    return active_bits
