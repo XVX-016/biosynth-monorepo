@@ -253,6 +253,70 @@ async def generate_3d_coordinates(request: ThreeDRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/from-smiles")
+async def from_smiles(request: Dict[str, Any]):
+    """
+    Load molecule from SMILES string.
+    
+    Returns molecule dict with 2D coordinates.
+    """
+    try:
+        smiles = request.get("smiles")
+        if not smiles:
+            raise HTTPException(status_code=400, detail="SMILES string required")
+        
+        mol = Chem.MolFromSmiles(smiles)
+        if not mol:
+            raise HTTPException(status_code=400, detail="Invalid SMILES string")
+        
+        # Generate 2D coordinates
+        try:
+            rdDepictor.Compute2DCoords(mol)
+        except:
+            AllChem.Compute2DCoords(mol)
+        
+        # Convert to molecule dict
+        molecule_dict = rdkit_to_molecule_dict(mol)
+        
+        return {
+            "molecule": molecule_dict,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading from SMILES: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/from-molblock")
+async def from_molblock(request: Dict[str, Any]):
+    """
+    Load molecule from MolBlock string.
+    
+    Returns molecule dict with coordinates from MolBlock.
+    """
+    try:
+        molblock = request.get("molblock")
+        if not molblock:
+            raise HTTPException(status_code=400, detail="MolBlock string required")
+        
+        mol = Chem.MolFromMolBlock(molblock)
+        if not mol:
+            raise HTTPException(status_code=400, detail="Invalid MolBlock string")
+        
+        # Convert to molecule dict (preserves coordinates from MolBlock)
+        molecule_dict = rdkit_to_molecule_dict(mol)
+        
+        return {
+            "molecule": molecule_dict,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading from MolBlock: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/validate")
 async def validate_molecule(request: ValidateRequest):
     """

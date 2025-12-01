@@ -8,8 +8,40 @@
 
 import type { Molecule } from '../Molecule'
 import { fromJSON } from '../export/json'
-import { toSMILES, toMolBlock } from '../export/smiles'
-import { moleculeFromBackendFormat } from '../export/smiles'
+
+// Import moleculeFromBackendFormat from smiles.ts
+function moleculeFromBackendFormat(data: any): Molecule {
+  const { Molecule } = require('../Molecule')
+  const molecule = new Molecule()
+
+  // Add atoms
+  data.atoms?.forEach((atom: any) => {
+    molecule.addAtom({
+      id: atom.id,
+      element: atom.element,
+      position: atom.position,
+      charge: atom.charge,
+      formalCharge: atom.formalCharge,
+    })
+  })
+
+  // Add bonds
+  data.bonds?.forEach((bond: any) => {
+    molecule.addBond({
+      id: bond.id,
+      atom1: bond.atom1,
+      atom2: bond.atom2,
+      order: bond.order,
+      type: bond.type,
+    })
+  })
+
+  if (data.metadata) {
+    molecule.setMetadata(data.metadata)
+  }
+
+  return molecule
+}
 
 /**
  * Load molecule from SMILES string

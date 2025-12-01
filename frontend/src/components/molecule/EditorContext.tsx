@@ -16,6 +16,7 @@ import { Molecule, predictionService } from '@/lib/molecule'
 import type { EditorTool, ValidationResult, PredictionResult } from '@/lib/molecule'
 import { HistoryManager } from '@/lib/molecule/history'
 import { validateMolecule } from '@/lib/molecule/validation/Validator'
+import { setupAutosave, loadFromLocalStorage } from '@/lib/molecule/storage/autosave'
 
 interface EditorContextValue {
   // Molecule state
@@ -70,7 +71,9 @@ interface EditorProviderProps {
 }
 
 export function EditorProvider({ initialMolecule, children }: EditorProviderProps) {
-  const [molecule, setMoleculeState] = useState<Molecule>(initialMolecule || new Molecule())
+  // Try to load from LocalStorage if no initial molecule provided
+  const savedMolecule = initialMolecule || loadFromLocalStorage() || new Molecule()
+  const [molecule, setMoleculeState] = useState<Molecule>(savedMolecule)
   const [selectedAtomId, setSelectedAtomId] = useState<string | null>(null)
   const [selectedBondId, setSelectedBondId] = useState<string | null>(null)
   const [tool, setTool] = useState<EditorTool>('select')
@@ -161,6 +164,14 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
   useEffect(() => {
     const validation = validateMolecule(molecule)
     setValidationResult(validation)
+  }, [molecule])
+
+  // Setup autosave
+  useEffect(() => {
+    if (!molecule.isEmpty()) {
+      const cleanup = setupAutosave(molecule)
+      return cleanup
+    }
   }, [molecule])
 
   const value: EditorContextValue = {
