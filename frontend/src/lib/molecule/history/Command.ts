@@ -1,275 +1,190 @@
 /**
- * Command - Base command interface for undo/redo
+ * Command Pattern Implementation
  * 
  * Phase 4: Undo/Redo System
+ * Phase 12: Added UpdateAtomCommand and UpdateBondCommand
  * 
- * All molecule operations are commands that can be executed and undone.
+ * Each command encapsulates an operation and its inverse.
  */
 
-import { Molecule } from '../Molecule'
+import type { Molecule } from '../Molecule'
+import type { Atom, Bond } from '../types'
+import { nanoid } from 'nanoid'
 
 export interface Command {
-  /**
-   * Execute the command
-   */
-  execute(molecule: Molecule): void
-
-  /**
-   * Undo the command
-   */
-  undo(molecule: Molecule): void
-
-  /**
-   * Get command description (for UI)
-   */
-  getDescription(): string
+  execute(molecule: Molecule): Molecule
+  undo(molecule: Molecule): Molecule
+  description: string
 }
 
-/**
- * Command to add an atom
- */
 export class AddAtomCommand implements Command {
-  constructor(
-    private atomId: string,
-    private element: string,
-    private position: [number, number, number],
-  ) {}
-
-  execute(molecule: Molecule): void {
-    molecule.addAtom({
-      id: this.atomId,
-      element: this.element,
-      position: this.position,
-    })
+  private atom: Atom
+  constructor(atom: Atom) {
+    this.atom = atom
   }
-
-  undo(molecule: Molecule): void {
-    molecule.removeAtom(this.atomId)
+  execute(molecule: Molecule): Molecule {
+    return molecule.addAtom(this.atom)
   }
-
-  getDescription(): string {
-    return `Add ${this.element} atom`
+  undo(molecule: Molecule): Molecule {
+    return molecule.removeAtom(this.atom.id)
   }
+  description = `Add Atom ${this.atom.element}`
 }
 
-/**
- * Command to remove an atom
- */
 export class RemoveAtomCommand implements Command {
-  private atomData: any
-  private bondsData: any[] = []
-
-  constructor(private atomId: string) {}
-
-  execute(molecule: Molecule): void {
-    // Store atom data for undo
+  private atomId: string
+  private atom: Atom | null = null
+  constructor(atomId: string) {
+    this.atomId = atomId
+  }
+  execute(molecule: Molecule): Molecule {
     const atom = molecule.getAtom(this.atomId)
     if (atom) {
-      this.atomData = atom.toJSON()
+      this.atom = atom.toJSON()
     }
-
-    // Store all bonds connected to this atom
-    const bonds = molecule.getBondsForAtom(this.atomId)
-    this.bondsData = bonds.map(bond => bond.toJSON())
-
-    // Remove atom (this also removes all connected bonds)
-    molecule.removeAtom(this.atomId)
+    return molecule.removeAtom(this.atomId)
   }
-
-  undo(molecule: Molecule): void {
-    // Restore atom
-    if (this.atomData) {
-      molecule.addAtom(this.atomData)
+  undo(molecule: Molecule): Molecule {
+    if (this.atom) {
+      return molecule.addAtom(this.atom)
     }
-
-    // Restore bonds
-    this.bondsData.forEach(bondData => {
-      molecule.addBond(bondData)
-    })
+    return molecule
   }
-
-  getDescription(): string {
-    return 'Remove atom'
-  }
+  description = `Remove Atom`
 }
 
-/**
- * Command to add a bond
- */
 export class AddBondCommand implements Command {
-  constructor(
-    private bondId: string,
-    private atom1Id: string,
-    private atom2Id: string,
-    private order: number,
-  ) {}
-
-  execute(molecule: Molecule): void {
-    molecule.addBond({
+  private bondId: string
+  private atom1Id: string
+  private atom2Id: string
+  private order: number
+  constructor(bondId: string, atom1Id: string, atom2Id: string, order: number) {
+    this.bondId = bondId
+    this.atom1Id = atom1Id
+    this.atom2Id = atom2Id
+    this.order = order
+  }
+  execute(molecule: Molecule): Molecule {
+    return molecule.addBond({
       id: this.bondId,
       atom1: this.atom1Id,
       atom2: this.atom2Id,
       order: this.order,
     })
   }
-
-  undo(molecule: Molecule): void {
-    molecule.removeBond(this.bondId)
+  undo(molecule: Molecule): Molecule {
+    return molecule.removeBond(this.bondId)
   }
-
-  getDescription(): string {
-    return `Add bond (order ${this.order})`
-  }
+  description = `Add Bond`
 }
 
-/**
- * Command to remove a bond
- */
 export class RemoveBondCommand implements Command {
-  private bondData: any
-
-  constructor(private bondId: string) {}
-
-  execute(molecule: Molecule): void {
-    // Store bond data for undo
+  private bondId: string
+  private bond: Bond | null = null
+  constructor(bondId: string) {
+    this.bondId = bondId
+  }
+  execute(molecule: Molecule): Molecule {
     const bond = molecule.getBond(this.bondId)
     if (bond) {
-      this.bondData = bond.toJSON()
+      this.bond = bond.toJSON()
     }
-
-    molecule.removeBond(this.bondId)
+    return molecule.removeBond(this.bondId)
   }
-
-  undo(molecule: Molecule): void {
-    if (this.bondData) {
-      molecule.addBond(this.bondData)
+  undo(molecule: Molecule): Molecule {
+    if (this.bond) {
+      return molecule.addBond(this.bond)
     }
+    return molecule
   }
-
-  getDescription(): string {
-    return 'Remove bond'
-  }
+  description = `Remove Bond`
 }
 
-/**
- * Command to move an atom
- */
 export class MoveAtomCommand implements Command {
+  private atomId: string
   private oldPosition: [number, number, number]
-
-  constructor(
-    private atomId: string,
-    private newPosition: [number, number, number],
-  ) {}
-
-  execute(molecule: Molecule): void {
-    const atom = molecule.getAtom(this.atomId)
-    if (atom) {
-      this.oldPosition = [...atom.position] as [number, number, number]
-      molecule.updateAtomPosition(this.atomId, this.newPosition)
-    }
+  private newPosition: [number, number, number]
+  constructor(atomId: string, oldPosition: [number, number, number], newPosition: [number, number, number]) {
+    this.atomId = atomId
+    this.oldPosition = oldPosition
+    this.newPosition = newPosition
   }
-
-  undo(molecule: Molecule): void {
-    if (this.oldPosition) {
-      molecule.updateAtomPosition(this.atomId, this.oldPosition)
-    }
+  execute(molecule: Molecule): Molecule {
+    return molecule.updateAtom(this.atomId, { position: this.newPosition })
   }
-
-  getDescription(): string {
-    return 'Move atom'
+  undo(molecule: Molecule): Molecule {
+    return molecule.updateAtom(this.atomId, { position: this.oldPosition })
   }
+  description = `Move Atom`
 }
 
-/**
- * Command to update atom properties
- */
 export class UpdateAtomCommand implements Command {
-  private oldData: any
-
-  constructor(
-    private atomId: string,
-    private updates: any,
-  ) {}
-
-  execute(molecule: Molecule): void {
+  private atomId: string
+  private updates: Partial<Atom>
+  private previousAtom: Atom | null = null
+  constructor(atomId: string, updates: Partial<Atom>) {
+    this.atomId = atomId
+    this.updates = updates
+  }
+  execute(molecule: Molecule): Molecule {
     const atom = molecule.getAtom(this.atomId)
     if (atom) {
-      this.oldData = atom.toJSON()
-      molecule.updateAtom(this.atomId, this.updates)
+      this.previousAtom = atom.toJSON()
     }
+    return molecule.updateAtom(this.atomId, this.updates)
   }
-
-  undo(molecule: Molecule): void {
-    if (this.oldData) {
-      molecule.updateAtom(this.atomId, this.oldData)
+  undo(molecule: Molecule): Molecule {
+    if (this.previousAtom) {
+      return molecule.updateAtom(this.atomId, this.previousAtom)
     }
+    return molecule
   }
-
-  getDescription(): string {
-    return 'Update atom'
-  }
+  description = `Update Atom`
 }
 
-/**
- * Command to update bond properties
- */
 export class UpdateBondCommand implements Command {
-  private oldData: any
-
-  constructor(
-    private bondId: string,
-    private updates: any,
-  ) {}
-
-  execute(molecule: Molecule): void {
+  private bondId: string
+  private updates: Partial<Bond>
+  private previousBond: Bond | null = null
+  constructor(bondId: string, updates: Partial<Bond>) {
+    this.bondId = bondId
+    this.updates = updates
+  }
+  execute(molecule: Molecule): Molecule {
     const bond = molecule.getBond(this.bondId)
     if (bond) {
-      this.oldData = bond.toJSON()
-      molecule.updateBond(this.bondId, this.updates)
+      this.previousBond = bond.toJSON()
     }
+    return molecule.updateBond(this.bondId, this.updates)
   }
-
-  undo(molecule: Molecule): void {
-    if (this.oldData) {
-      molecule.updateBond(this.bondId, this.oldData)
+  undo(molecule: Molecule): Molecule {
+    if (this.previousBond) {
+      return molecule.updateBond(this.bondId, this.previousBond)
     }
+    return molecule
   }
-
-  getDescription(): string {
-    return 'Update bond'
-  }
+  description = `Update Bond`
 }
 
-/**
- * Command to clear molecule
- */
 export class ClearMoleculeCommand implements Command {
-  private savedState: any
-
-  execute(molecule: Molecule): void {
+  private previousState: { atoms: Atom[]; bonds: Bond[] } | null = null
+  execute(molecule: Molecule): Molecule {
     // Save current state
-    this.savedState = molecule.toState()
-    molecule.clear()
-  }
-
-  undo(molecule: Molecule): void {
-    if (this.savedState) {
-      // Restore from saved state
-      const restored = new Molecule(this.savedState)
-      molecule.clear()
-      // Copy all atoms and bonds
-      restored.getAtoms().forEach(atom => {
-        molecule.addAtom(atom.toJSON())
-      })
-      restored.getBonds().forEach(bond => {
-        molecule.addBond(bond.toJSON())
-      })
+    this.previousState = {
+      atoms: molecule.getAtoms().map(a => a.toJSON()),
+      bonds: molecule.getBonds().map(b => b.toJSON()),
     }
+    // Clear molecule
+    const { Molecule } = require('../Molecule')
+    return new Molecule()
   }
-
-  getDescription(): string {
-    return 'Clear molecule'
+  undo(molecule: Molecule): Molecule {
+    if (!this.previousState) return molecule
+    const { Molecule } = require('../Molecule')
+    const restored = new Molecule()
+    this.previousState.atoms.forEach(atom => restored.addAtom(atom))
+    this.previousState.bonds.forEach(bond => restored.addBond(bond))
+    return restored
   }
+  description = `Clear Molecule`
 }
-
