@@ -47,6 +47,32 @@ Thumbs.db
 backend/weights/
 backend/.venv/
 
+# ML Models and Data
+data/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.pkl
+*.joblib
+models/
+checkpoints/
+*.npy
+*.npz
+
+# Phase 10 and RL data
+backend/data/
+data/phase10/
+data/frontend_cache/
+data/models/
+data/datasets/
+data/libraries/
+
+# Training logs
+*.log
+logs/
+backend/data/phase10/rl_logs/
+
 # Frontend specific
 frontend/dist/
 frontend/.vite/

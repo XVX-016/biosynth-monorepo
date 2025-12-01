@@ -1,0 +1,126 @@
+{
+  "workflows": {
+    "predict_properties": {
+      "name": "Predict Molecular Properties",
+      "description": "Predict properties for a molecule",
+      "tasks": [
+        {
+          "task_type": "predict",
+          "input_data": {
+            "smiles": "{{smiles}}",
+            "properties": ["logP", "toxicity", "solubility"]
+          },
+          "config": {},
+          "priority": 1
+        }
+      ]
+    },
+    "screen_and_predict": {
+      "name": "Screen Library and Predict",
+      "description": "Screen library for similar molecules, then predict properties",
+      "tasks": [
+        {
+          "task_type": "screen",
+          "input_data": {
+            "task_subtype": "similarity",
+            "query_smiles": "{{query_smiles}}",
+            "k": 10,
+            "threshold": 0.5
+          },
+          "config": {},
+          "priority": 2
+        },
+        {
+          "task_type": "predict",
+          "input_data": {
+            "smiles": "{{screen_results[0].smiles}}",
+            "properties": ["logP", "toxicity"]
+          },
+          "config": {},
+          "priority": 1
+        }
+      ]
+    },
+    "optimize_and_simulate": {
+      "name": "Optimize Geometry and Run MD",
+      "description": "Optimize molecule geometry with QM, then run MD simulation",
+      "tasks": [
+        {
+          "task_type": "qm_optimize",
+          "input_data": {
+            "smiles": "{{smiles}}",
+            "task_subtype": "optimize",
+            "method": "B3LYP",
+            "basis": "6-31G"
+          },
+          "config": {},
+          "priority": 3
+        },
+        {
+          "task_type": "md_simulate",
+          "input_data": {
+            "smiles": "{{smiles}}",
+            "coordinates": "{{qm_results.coordinates}}",
+            "steps": 1000,
+            "temperature": 300.0
+          },
+          "config": {},
+          "priority": 2
+        }
+      ]
+    },
+    "full_pipeline": {
+      "name": "Full Discovery Pipeline",
+      "description": "Complete pipeline: screen, predict, optimize, simulate",
+      "tasks": [
+        {
+          "task_type": "screen",
+          "input_data": {
+            "task_subtype": "similarity",
+            "query_smiles": "{{query_smiles}}",
+            "k": 5
+          },
+          "config": {},
+          "priority": 4
+        },
+        {
+          "task_type": "predict",
+          "input_data": {
+            "smiles": "{{query_smiles}}",
+            "properties": ["logP", "toxicity", "solubility"]
+          },
+          "config": {},
+          "priority": 3
+        },
+        {
+          "task_type": "qm_optimize",
+          "input_data": {
+            "smiles": "{{query_smiles}}",
+            "task_subtype": "optimize"
+          },
+          "config": {},
+          "priority": 2
+        },
+        {
+          "task_type": "md_simulate",
+          "input_data": {
+            "smiles": "{{query_smiles}}",
+            "steps": 500
+          },
+          "config": {},
+          "priority": 1
+        }
+      ]
+    }
+  },
+  "notes": {
+    "template_variables": "Workflows can use {{variable}} syntax for dynamic values",
+    "task_priorities": "Higher priority = more important (executed first)",
+    "future_workflows": [
+      "TODO: Add docking workflow when docking agent is implemented",
+      "TODO: Add generative model workflow when generation agent is implemented",
+      "TODO: Add retrosynthesis workflow when retrosynthesis agent is implemented"
+    ]
+  }
+}
+

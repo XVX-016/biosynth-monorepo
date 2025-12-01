@@ -36,6 +36,13 @@ from backend.routes import collaboration as collaboration_router
 from backend.routes import dashboard as dashboard_router
 from backend.api import predict as predict_api_router
 from backend.routes import screening as screening_router
+from backend.routes import search_phase7 as search_phase7_router
+from backend.routes import qm_md as qm_md_router
+from backend.api import search as search_api_router
+from backend.api import screening as screening_api_router
+from backend.api import conformers as conformers_api_router
+from backend.api import orchestrator as orchestrator_api_router
+from backend.api import phase10 as phase10_api_router
 from backend.db import init_db
 from backend.services.prediction_service import PredictionService
 from backend.models.schemas.prediction_schema import PredictOut, PredictIn
@@ -98,6 +105,13 @@ app.include_router(quantum_router.router, prefix="/api/quantum", tags=["quantum"
 app.include_router(ml_router.router, prefix="/api/ml", tags=["ml"])
 app.include_router(predict_api_router.router, tags=["prediction"])
 app.include_router(screening_router.router, prefix="/api/screening", tags=["screening"])
+app.include_router(search_phase7_router.router, prefix="/api/search", tags=["search-phase7"])
+app.include_router(search_api_router.router, prefix="/api/search", tags=["search"])
+app.include_router(screening_api_router.router, prefix="/api/screening", tags=["screening"])
+app.include_router(conformers_api_router.router, prefix="/api/conformers", tags=["conformers"])
+app.include_router(qm_md_router.router, prefix="/api", tags=["qm-md"])
+app.include_router(orchestrator_api_router.router, prefix="/api/orchestrator", tags=["orchestrator"])
+app.include_router(phase10_api_router.router, prefix="/api/phase10", tags=["phase10"])
 app.include_router(collaboration_router.router, prefix="/api/collaboration", tags=["collaboration"])
 app.include_router(dashboard_router.router, prefix="/api/dashboard", tags=["dashboard"])
 

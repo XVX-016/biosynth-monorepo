@@ -64,6 +64,16 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 							Models
 						</RLink>
 						<RLink
+							to="/phase10"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+								isActive('/phase10') 
+									? 'bg-black text-white' 
+									: 'text-darkGrey hover:text-black hover:bg-offwhite'
+							}`}
+						>
+							Phase 10
+						</RLink>
+						<RLink
 							to="/docs"
 							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
 								isActive('/docs') 
