@@ -106,7 +106,7 @@ export async function normalizeHydrogens(molecule: Molecule): Promise<Molecule> 
 
     const result = await response.json()
     // Convert back to Molecule
-    return await moleculeFromBackendFormat(result.molecule)
+    return moleculeFromBackendFormat(result.molecule)
   } catch (error) {
     console.error('Error normalizing hydrogens:', error)
     return molecule // Return original on error
