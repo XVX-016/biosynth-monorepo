@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls, ContactShadows, Environment } from '@react-three/drei'
+import { OrbitControls, ContactShadows } from '@react-three/drei'
 import AtomMesh from './r3f/AtomMesh'
 import BondMesh from './r3f/BondMesh'
 import { CanvasClickHandler } from './r3f/CanvasClickHandler'
@@ -9,7 +9,7 @@ import { moleculeToRenderable, removeAtom, removeBond, updateAtomPosition } from
 import { selectionManager } from './r3f/SelectionManager'
 import { useBondTool } from './r3f/BondTool'
 import { screenToWorld } from '../lib/raycasting'
-import { useAutoBondOnDrop } from '../hooks/useAutoBondOnDrop'
+// Auto-bond hook removed - functionality can be re-implemented if needed
 import type { ColorScheme, RenderMode } from '../store/moleculeStore'
 import { clamp, interpolateColor, VALENCE_MAP } from '../utils/chemistry'
 
@@ -124,9 +124,9 @@ export default function MoleculeViewer() {
 
   // Use bond tool
   useBondTool()
-  
-  // Auto-bond on atom drop (when autoBond is enabled)
-  useAutoBondOnDrop()
+
+  // Auto-bond on atom drop - functionality can be re-implemented if needed
+  // useAutoBondOnDrop()
 
   // Auto-update predictions when molecule changes
   useEffect(() => {
@@ -142,7 +142,7 @@ export default function MoleculeViewer() {
     const updateCursor = () => {
       const draggingId = selectionManager.getDraggingAtomId()
       const hoveredId = selectionManager.getHoveredAtomId()
-      
+
       if (draggingId) {
         setCursor('grabbing')
       } else if (tool === 'add-atom') {
@@ -192,7 +192,7 @@ export default function MoleculeViewer() {
           <ambientLight intensity={0.4} color="#F6F7F8" />
           <directionalLight position={[5, 10, 7]} intensity={1.2} color="#FFFFFF" castShadow />
           <hemisphereLight intensity={0.35} groundColor={0x2B2E33 as any} skyColor={0xF6F7F8 as any} />
-        <Suspense fallback={null}>
+          <Suspense fallback={null}>
             {atoms.map((atom) => (
               <AtomMesh
                 key={atom.id}
@@ -206,10 +206,10 @@ export default function MoleculeViewer() {
               />
             ))}
             {bonds.map((bond) => (
-              <BondMesh 
-                key={bond.id} 
+              <BondMesh
+                key={bond.id}
                 id={bond.id}
-                from={bond.from} 
+                from={bond.from}
                 to={bond.to}
                 order={bond.order}
                 renderMode={renderMode}
@@ -218,23 +218,23 @@ export default function MoleculeViewer() {
             <InteractionLayer />
             <CanvasClickHandler />
             <ContactShadows opacity={0.2} blur={2.5} far={12} resolution={256} color="#0F1115" />
-        </Suspense>
+          </Suspense>
           {/* Chrome-like environment with cold white reflections */}
-          <Environment preset="city" environmentIntensity={0.8} />
+          {/* Environment removed to prevent network-related WebGL crashes. Using standard lights defined above. */}
           <OrbitControls
-            enablePan={tool === 'select'} 
-            enableZoom={true} 
+            enablePan={tool === 'select'}
+            enableZoom={true}
             enableRotate={true}
             enableDamping
             dampingFactor={0.08}
           />
-      </Canvas>
+        </Canvas>
       </div>
-      
+
       {/* Property badges */}
       {(selectedAtomId || selectedBondId) && (
-        <PropertyBadge 
-          atomId={selectedAtomId} 
+        <PropertyBadge
+          atomId={selectedAtomId}
           bondId={selectedBondId}
           molecule={currentMolecule}
         />
@@ -244,11 +244,11 @@ export default function MoleculeViewer() {
 }
 
 // Property badge component
-function PropertyBadge({ 
-  atomId, 
-  bondId, 
-  molecule 
-}: { 
+function PropertyBadge({
+  atomId,
+  bondId,
+  molecule
+}: {
   atomId: string | null
   bondId: string | null
   molecule: any
