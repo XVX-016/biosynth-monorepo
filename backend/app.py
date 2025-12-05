@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import traceback
-from backend.config import settings
+from config import settings
 from backend.routes import predict as predict_router
 from backend.routes import generate as generate_router
 from backend.routes import library as library_router

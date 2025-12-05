@@ -1,8 +1,8 @@
 /**
- * Prediction Service
- * 
- * Phase 7: ML Prediction Pipeline Fix
- * 
+ * PredictionService.ts
+ *
+ * Phase 7+: ML Prediction Pipeline
+ *
  * Provides debounced, validated prediction requests with:
  * - Normalized SMILES input
  * - Validation integration
@@ -15,17 +15,17 @@ import type { Molecule } from '../Molecule'
 import { toSMILES } from '../export'
 import { validateMolecule } from '../validation/Validator'
 
+export interface AttentionData {
+  edgeAttentions: number[]
+  edgeIndex: number[][]
+  nodeImportance?: number[]
+}
+
 export interface PredictionResult {
   properties: Record<string, number>
   attention?: AttentionData
   modelId?: string
   timestamp: number
-}
-
-export interface AttentionData {
-  edgeAttentions: number[]
-  edgeIndex: number[][]
-  nodeImportance?: number[]
 }
 
 export interface PredictionRequest {
@@ -35,7 +35,7 @@ export interface PredictionRequest {
   returnAttention?: boolean
 }
 
-class PredictionService {
+export class PredictionService {
   private pendingRequest: NodeJS.Timeout | null = null
   private lastMoleculeHash: string | null = null
   private requestQueue: PredictionRequest[] = []
@@ -43,27 +43,21 @@ class PredictionService {
   private readonly DEBOUNCE_MS = 300
 
   /**
-   * Predict properties for a molecule
-   * 
-   * Automatically debounced and validated.
+   * Predict properties for a molecule (debounced)
    */
   async predict(request: PredictionRequest): Promise<PredictionResult> {
-    // Validate molecule first
     const validation = validateMolecule(request.molecule)
     if (!validation.valid && validation.errors.length > 0) {
       throw new Error(`Invalid molecule: ${validation.errors[0].message}`)
     }
 
-    // Clear pending request
     if (this.pendingRequest) {
       clearTimeout(this.pendingRequest)
       this.pendingRequest = null
     }
 
-    // Add to queue
     this.requestQueue.push(request)
 
-    // Debounce
     return new Promise((resolve, reject) => {
       this.pendingRequest = setTimeout(async () => {
         try {
@@ -87,38 +81,28 @@ class PredictionService {
     this.isProcessing = true
 
     try {
-      // Get the most recent request
       const request = this.requestQueue[this.requestQueue.length - 1]
       this.requestQueue = []
 
-      // Generate SMILES
-      const smiles = await toSMILES(request.molecule, true) // Canonicalize
-      if (!smiles) {
-        throw new Error('Failed to generate SMILES')
-      }
+      const smiles = await toSMILES(request.molecule, true)
+      if (!smiles) throw new Error('Failed to generate SMILES')
 
-      // Check if molecule has changed (hash check)
       const moleculeHash = this.hashMolecule(request.molecule)
       if (moleculeHash === this.lastMoleculeHash && this.lastMoleculeHash !== null) {
-        // Return cached result if available
-        // For now, we'll still make the request
+        // For now, still process request
       }
       this.lastMoleculeHash = moleculeHash
 
-      // Build request body
-      const requestBody: any = {
+      const requestBody = {
         smiles,
         properties: request.properties,
         model_id: request.modelId,
         return_attention: request.returnAttention || false,
       }
 
-      // Make API call
       const response = await fetch('/api/predict/property', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       })
 
@@ -129,14 +113,12 @@ class PredictionService {
 
       const data = await response.json()
 
-      // Parse response
       const result: PredictionResult = {
         properties: data.predictions || {},
         modelId: data.model_id,
         timestamp: Date.now(),
       }
 
-      // Add attention data if requested
       if (request.returnAttention && data.attention) {
         result.attention = {
           edgeAttentions: data.attention.edge_attentions || [],
@@ -175,7 +157,6 @@ class PredictionService {
     modelId?: string,
     properties?: string[]
   ): Promise<PredictionResult[]> {
-    // Validate all molecules
     for (const mol of molecules) {
       const validation = validateMolecule(mol)
       if (!validation.valid && validation.errors.length > 0) {
@@ -183,28 +164,18 @@ class PredictionService {
       }
     }
 
-    // Generate SMILES for all
     const inputs = await Promise.all(
       molecules.map(async (mol) => {
         const smiles = await toSMILES(mol, true)
-        if (!smiles) {
-          throw new Error('Failed to generate SMILES')
-        }
+        if (!smiles) throw new Error('Failed to generate SMILES')
         return { smiles }
       })
     )
 
-    // Make batch API call
     const response = await fetch('/api/predict/batch', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs,
-        model_id: modelId,
-        properties,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs, model_id: modelId, properties }),
     })
 
     if (!response.ok) {
@@ -214,7 +185,6 @@ class PredictionService {
 
     const data = await response.json()
 
-    // Parse results
     return data.results.map((r: any) => ({
       properties: r.predictions || {},
       modelId: r.model_id,
@@ -226,10 +196,8 @@ class PredictionService {
    * Cancel pending predictions
    */
   cancel(): void {
-    if (this.pendingRequest) {
-      clearTimeout(this.pendingRequest)
-      this.pendingRequest = null
-    }
+    if (this.pendingRequest) clearTimeout(this.pendingRequest)
+    this.pendingRequest = null
     this.requestQueue = []
   }
 
@@ -237,12 +205,14 @@ class PredictionService {
    * Hash molecule for caching
    */
   private hashMolecule(molecule: Molecule): string {
-    const atoms = molecule.getAtoms()
-      .map(a => `${a.element}:${a.position.join(',')}`)
+    const atoms = molecule
+      .getAtoms()
+      .map((a) => `${a.element}:${a.position.join(',')}`)
       .sort()
       .join('|')
-    const bonds = molecule.getBonds()
-      .map(b => `${b.atom1}-${b.atom2}:${b.order}`)
+    const bonds = molecule
+      .getBonds()
+      .map((b) => `${b.atom1}-${b.atom2}:${b.order}`)
       .sort()
       .join('|')
     return `${atoms}|${bonds}`
@@ -251,4 +221,3 @@ class PredictionService {
 
 // Singleton instance
 export const predictionService = new PredictionService()
-

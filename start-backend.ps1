@@ -54,4 +54,11 @@ $env:PYTHONPATH = (Get-Location).Path
 # Use --reload-dir to only watch backend directory and avoid node_modules issues
 python -m uvicorn backend.app:app --reload --reload-dir backend --host 0.0.0.0 --port 8000
 
-# cd C:\Computing\MolForge; powershell -ExecutionPolicy Bypass -File .\start-backend.ps1
+
+
+'''
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.venv\Scripts\Activate.ps1
+
+uvicorn backend.app:app --reload
+'''

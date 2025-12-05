@@ -13,17 +13,21 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Molecule, predictionService } from '@/lib/molecule'
-import type { PredictionResult, AttentionData } from '@/lib/molecule/prediction'
+import type { PredictionResult } from '@/lib/molecule/prediction'
+import { useEditorContext } from './EditorContext'
 
 interface PredictionPanelProps {
   molecule: Molecule
-  onAttentionUpdate?: (attention: AttentionData | null) => void
   className?: string
 }
 
+const AVAILABLE_MODELS = [
+  { id: 'propnet', label: 'PropNet (GAT)' },
+  { id: 'chem_gpt', label: 'ChemGPT (beta)' },
+]
+
 export function PredictionPanel({
   molecule,
-  onAttentionUpdate,
   className = '',
 }: PredictionPanelProps) {
   const [predictions, setPredictions] = useState<PredictionResult | null>(null)
@@ -31,13 +35,21 @@ export function PredictionPanel({
   const [error, setError] = useState<string | null>(null)
   const [selectedProperties, setSelectedProperties] = useState<string[]>(['logP', 'solubility', 'toxicity'])
   const abortControllerRef = useRef<AbortController | null>(null)
+  const {
+    setAttentionData,
+    attentionOverlayEnabled,
+    setAttentionOverlayEnabled,
+    attentionMap,
+    selectedModelId,
+    setSelectedModelId,
+  } = useEditorContext()
 
   // Predict when molecule changes
   useEffect(() => {
     if (molecule.isEmpty()) {
       setPredictions(null)
       setError(null)
-      onAttentionUpdate?.(null)
+      setAttentionData(null)
       return
     }
 
@@ -57,20 +69,20 @@ export function PredictionPanel({
       try {
         const result = await predictionService.predictWithAttention(
           molecule,
-          undefined, // Use default model
+          selectedModelId,
           selectedProperties
         )
 
         if (!abortControllerRef.current?.signal.aborted) {
           setPredictions(result)
-          onAttentionUpdate?.(result.attention || null)
+          setAttentionData(result.attention || null)
         }
       } catch (err) {
         if (!abortControllerRef.current?.signal.aborted) {
           const errorMessage = err instanceof Error ? err.message : 'Prediction failed'
           setError(errorMessage)
           setPredictions(null)
-          onAttentionUpdate?.(null)
+          setAttentionData(null)
         }
       } finally {
         if (!abortControllerRef.current?.signal.aborted) {
@@ -85,7 +97,7 @@ export function PredictionPanel({
         abortControllerRef.current.abort()
       }
     }
-  }, [molecule, selectedProperties, onAttentionUpdate])
+  }, [molecule, selectedProperties, selectedModelId, setAttentionData])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -94,8 +106,9 @@ export function PredictionPanel({
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
+      setAttentionData(null)
     }
-  }, [])
+  }, [setAttentionData])
 
   const formatValue = (value: number): string => {
     if (value === undefined || value === null) return 'N/A'
@@ -123,6 +136,45 @@ export function PredictionPanel({
         )}
       </div>
 
+      <div className="flex flex-col gap-2 mb-3">
+        <label className="text-xs text-gray-500 font-medium">Model</label>
+        <select
+          value={selectedModelId}
+          onChange={(e) => setSelectedModelId(e.target.value)}
+          className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          {AVAILABLE_MODELS.map((model) => (
+            <option key={model.id} value={model.id}>
+              {model.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs text-gray-600">Attention Overlay</span>
+        <label className="inline-flex items-center cursor-pointer">
+          <span className="mr-2 text-[11px] text-gray-500">{attentionOverlayEnabled ? 'On' : 'Off'}</span>
+          <input
+            type="checkbox"
+            className="sr-only"
+            checked={attentionOverlayEnabled}
+            onChange={(e) => setAttentionOverlayEnabled(e.target.checked)}
+          />
+          <div
+            className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
+              attentionOverlayEnabled ? 'bg-blue-500/70' : 'bg-gray-300'
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow transform duration-200 ${
+                attentionOverlayEnabled ? 'translate-x-5' : ''
+              }`}
+            />
+          </div>
+        </label>
+      </div>
+
       {error && (
         <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
           {error}
@@ -145,11 +197,21 @@ export function PredictionPanel({
             )
           })}
 
-          {predictions.attention && (
+          {attentionMap && attentionOverlayEnabled && (
             <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="text-xs text-gray-500">
-                Attention map available ({predictions.attention.edgeAttentions.length} edges)
+              <div className="text-xs text-gray-500 flex items-center justify-between mb-1">
+                <span>Attention intensity</span>
+                <span>
+                  {attentionMap.minValue.toFixed(2)} – {attentionMap.maxValue.toFixed(2)}
+                </span>
               </div>
+              <div
+                className="h-2 rounded-full"
+                style={{
+                  background:
+                    'linear-gradient(90deg, rgb(0,0,255) 0%, rgb(0,255,255) 33%, rgb(255,255,0) 66%, rgb(255,0,0) 100%)',
+                }}
+              />
             </div>
           )}
         </div>
@@ -158,7 +220,8 @@ export function PredictionPanel({
       {!predictions && !loading && !error && (
         <div className="text-xs text-gray-500">Waiting for molecule...</div>
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
 

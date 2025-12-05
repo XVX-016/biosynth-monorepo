@@ -15,7 +15,6 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react'
 import type { Molecule, EditorTool } from '@/lib/molecule'
 import type { AtomImpl, BondImpl } from '@/lib/molecule'
-import { ELEMENT_COLORS } from './constants'
 import type { AttentionMap } from '@/lib/molecule/attention'
 import { getAttentionColor, getAttentionOpacity } from '@/lib/molecule/attention'
 
@@ -78,6 +77,8 @@ export function CanvasLayer({
   offsetY = 0,
   pointerManager,
   bondStartAtomId,
+  attentionMap,
+  showAttentionOverlay = false,
 }: CanvasLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>()
@@ -165,6 +166,19 @@ export function CanvasLayer({
       ctx.setLineDash([])
     }
 
+    // Attention overlay
+    const atomAttention = showAttentionOverlay ? attentionMap?.atoms?.[atom.id] : undefined
+    if (atomAttention !== undefined) {
+      ctx.save()
+      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalAlpha = getAttentionOpacity(atomAttention)
+      ctx.fillStyle = getAttentionColor(atomAttention)
+      ctx.beginPath()
+      ctx.arc(x, y, radius + 4, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.restore()
+    }
+
     // Hover indicator (subtle pulse)
     if (isHovered && !isSelected) {
       ctx.beginPath()
@@ -175,7 +189,7 @@ export function CanvasLayer({
       ctx.stroke()
       ctx.globalAlpha = 1
     }
-  }, [projectTo2D])
+  }, [projectTo2D, attentionMap, showAttentionOverlay])
 
   // Draw bond with smooth animations
   const drawBond = useCallback((
@@ -266,7 +280,21 @@ export function CanvasLayer({
       ctx.stroke()
       ctx.globalAlpha = 1
     }
-  }, [projectTo2D])
+
+    // Attention overlay line
+    const bondAttention = showAttentionOverlay ? attentionMap?.bonds?.[bond.id] : undefined
+    if (bondAttention !== undefined) {
+      ctx.save()
+      ctx.globalAlpha = getAttentionOpacity(bondAttention, 0.4)
+      ctx.strokeStyle = getAttentionColor(bondAttention)
+      ctx.lineWidth = bondWidth + 2
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.stroke()
+      ctx.restore()
+    }
+  }, [projectTo2D, attentionMap, showAttentionOverlay])
 
   // Render function
   const render = useCallback(() => {

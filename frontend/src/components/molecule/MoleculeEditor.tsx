@@ -15,6 +15,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Molecule, validateMolecule, canCreateBond, generate2DLayout } from '@/lib/molecule'
 import type { EditorTool, Atom, Bond, ValidationResult } from '@/lib/molecule'
 import { CanvasLayer } from './CanvasLayer'
+import { ErrorBoundary } from './ErrorBoundary'
 import { PointerManager, KeyboardManager } from '@/lib/molecule/input'
 import { HistoryManager } from '@/lib/molecule/history'
 import {
@@ -26,6 +27,7 @@ import {
   ClearMoleculeCommand,
 } from '@/lib/molecule/history'
 import { nanoid } from 'nanoid'
+import type { AttentionMap } from '@/lib/molecule/attention'
 
 interface MoleculeEditorProps {
   width: number
@@ -35,6 +37,8 @@ interface MoleculeEditorProps {
   onMoleculeChange?: (molecule: Molecule) => void
   onAtomSelect?: (atomId: string | null) => void
   onBondSelect?: (bondId: string | null) => void
+  attentionMap?: AttentionMap | null
+  showAttentionOverlay?: boolean
 }
 
 export function MoleculeEditor({
@@ -45,6 +49,8 @@ export function MoleculeEditor({
   onMoleculeChange,
   onAtomSelect,
   onBondSelect,
+  attentionMap,
+  showAttentionOverlay = false,
 }: MoleculeEditorProps) {
   const [molecule, setMolecule] = useState<Molecule>(initialMolecule || new Molecule())
   const [selectedAtomId, setSelectedAtomId] = useState<string | null>(null)
@@ -338,6 +344,8 @@ export function MoleculeEditor({
         onBondHover={setHoveredBondId}
         pointerManager={pointerManagerRef.current}
         bondStartAtomId={bondStartAtomId}
+        attentionMap={attentionMap}
+        showAttentionOverlay={showAttentionOverlay}
       />
     </div>
   )

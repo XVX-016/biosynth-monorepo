@@ -19,6 +19,7 @@ import { ConsolePanel } from './panels/ConsolePanel'
 import { ExportPanel } from './panels/ExportPanel'
 import { LoadPanel } from './panels/LoadPanel'
 import { PredictionPanel } from './PredictionPanel'
+import { ErrorBoundary } from './ErrorBoundary'
 import { Molecule } from '@/lib/molecule'
 import { useEditorContext } from './EditorContext'
 import { loadFromLocalStorage } from '@/lib/molecule/storage/autosave'
@@ -123,9 +124,13 @@ function LabLayoutContent() {
 
 export function LabLayout({ initialMolecule }: LabLayoutProps) {
   return (
-    <EditorProvider initialMolecule={initialMolecule}>
-      <LabLayoutContent />
-    </EditorProvider>
+    <ErrorBoundary>
+      <EditorProvider initialMolecule={initialMolecule}>
+        <ErrorBoundary>
+          <LabLayoutContent />
+        </ErrorBoundary>
+      </EditorProvider>
+    </ErrorBoundary>
   )
 }
 

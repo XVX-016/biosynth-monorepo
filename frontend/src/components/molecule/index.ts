@@ -1,13 +1,26 @@
 /**
  * Molecule Editor Components
  * 
- * Phase 2: Drawing Layer Components
+ * Phase 10: Lab Page UI Rebuild
+ * Phase 16: Full Regression Test & Final Cleanup
  */
 
-export { CanvasLayer } from './CanvasLayer'
 export { MoleculeEditor } from './MoleculeEditor'
-export type { MoleculeEditorRef } from './MoleculeEditor'
-
+export { CanvasLayer } from './CanvasLayer'
+export { ThreeDViewer } from './ThreeDViewer'
 export { PredictionPanel } from './PredictionPanel'
-export { ELEMENT_COLORS, HIT_RADIUS } from './constants'
+export { LabLayout } from './LabLayout'
+export { EditorProvider, useEditorContext } from './EditorContext'
+export { ErrorBoundary } from './ErrorBoundary'
 
+// Panels
+export {
+  EditorPanel,
+  InspectorPanel,
+  ConsolePanel,
+  ToolbarPanel,
+  ExportPanel,
+  LoadPanel,
+} from './panels'
+
+export { ValidationIndicator } from './panels/ValidationIndicator'

@@ -288,8 +288,9 @@ export function ThreeDViewer({
   }
 
   return (
-    <div className={className} style={{ width, height }}>
-      <Canvas
+    <ErrorBoundary>
+      <div className={className} style={{ width, height }}>
+        <Canvas
         camera={{ position: [0, 0, 10], fov: 50 }}
         gl={{ antialias: true, alpha: false, preserveDrawingBuffer: false }}
         style={{ background: '#1a1a1a', width, height }}
@@ -318,8 +319,9 @@ export function ThreeDViewer({
 
           <WebGLRecovery />
         </Suspense>
-      </Canvas>
-    </div>
+        </Canvas>
+      </div>
+    </ErrorBoundary>
   )
 }
 

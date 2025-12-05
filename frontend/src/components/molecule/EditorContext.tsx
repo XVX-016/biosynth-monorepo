@@ -11,12 +11,15 @@
  * - history
  */
 
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Molecule, predictionService } from '@/lib/molecule'
 import type { EditorTool, ValidationResult, PredictionResult } from '@/lib/molecule'
 import { HistoryManager } from '@/lib/molecule/history'
 import { validateMolecule } from '@/lib/molecule/validation/Validator'
 import { setupAutosave, loadFromLocalStorage } from '@/lib/molecule/storage/autosave'
+import type { AttentionData } from '@/lib/molecule/prediction'
+import { mapAttentionToMolecule } from '@/lib/molecule/attention'
+import type { AttentionMap } from '@/lib/molecule/attention'
 
 interface EditorContextValue {
   // Molecule state
@@ -53,6 +56,17 @@ interface EditorContextValue {
   
   // Stable SMILES (for predictions)
   stableSmiles: string | null
+
+  // Attention overlay
+  attentionData: AttentionData | null
+  attentionMap: AttentionMap | null
+  setAttentionData: (data: AttentionData | null) => void
+  attentionOverlayEnabled: boolean
+  setAttentionOverlayEnabled: (enabled: boolean) => void
+
+  // Model selection
+  selectedModelId: string
+  setSelectedModelId: (modelId: string) => void
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null)
@@ -83,6 +97,9 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
   const [predictionsLoading, setPredictionsLoading] = useState(false)
   const [predictionsError, setPredictionsError] = useState<string | null>(null)
   const [stableSmiles, setStableSmiles] = useState<string | null>(null)
+  const [attentionDataState, setAttentionDataState] = useState<AttentionData | null>(null)
+  const [attentionOverlayEnabled, setAttentionOverlayEnabled] = useState<boolean>(true)
+  const [selectedModelId, setSelectedModelId] = useState<string>('propnet')
   
   const historyManagerRef = useRef(new HistoryManager())
   const predictionsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -118,11 +135,28 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
     }
   }, [molecule, setMolecule])
 
+  const attentionMap = useMemo(() => {
+    if (!attentionDataState || molecule.isEmpty()) {
+      return null
+    }
+    try {
+      return mapAttentionToMolecule(molecule, attentionDataState)
+    } catch (error) {
+      console.error('Failed to map attention data:', error)
+      return null
+    }
+  }, [attentionDataState, molecule])
+
+  const setAttentionData = useCallback((data: AttentionData | null) => {
+    setAttentionDataState(data)
+  }, [])
+
   // Debounced prediction updates
   useEffect(() => {
     if (molecule.isEmpty() || !validationResult?.valid) {
       setPredictions(null)
       setStableSmiles(null)
+       setAttentionData(null)
       return
     }
 
@@ -143,11 +177,13 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
         setStableSmiles(smiles)
 
         // Get predictions
-        const result = await predictionService.predictWithAttention(molecule)
+        const result = await predictionService.predictWithAttention(molecule, selectedModelId)
         setPredictions(result)
+        setAttentionData(result.attention || null)
       } catch (error) {
         setPredictionsError(error instanceof Error ? error.message : 'Prediction failed')
         setPredictions(null)
+        setAttentionData(null)
       } finally {
         setPredictionsLoading(false)
       }
@@ -158,7 +194,7 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
         clearTimeout(predictionsTimeoutRef.current)
       }
     }
-  }, [molecule, validationResult])
+  }, [molecule, validationResult, selectedModelId, setAttentionData])
 
   // Validate on molecule change
   useEffect(() => {
@@ -194,6 +230,13 @@ export function EditorProvider({ initialMolecule, children }: EditorProviderProp
     undo,
     redo,
     stableSmiles,
+    attentionData: attentionDataState,
+    attentionMap,
+    setAttentionData,
+    attentionOverlayEnabled,
+    setAttentionOverlayEnabled,
+    selectedModelId,
+    setSelectedModelId,
   }
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>
