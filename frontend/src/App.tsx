@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import AppShell from './layouts/AppShell';
 import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
-import NewLabLayout from './pages/lab/NewLabLayout';
+import Lab from './pages/lab/Lab';
 import Profile from './pages/Profile';
 import Models from './pages/Models';
 import Docs from './pages/Docs';
@@ -16,14 +16,12 @@ import Phase10Dashboard from './pages/Phase10Dashboard';
 export default function App() {
 	return (
 		<Routes>
-			{/* Lab route - fullscreen, no AppShell */}
-			<Route path="/lab" element={<NewLabLayout />} />
-			
-			{/* All other routes - wrapped in AppShell */}
+			{/* All routes wrapped in AppShell for consistent navigation and theme */}
 			<Route path="/*" element={
 				<AppShell>
 					<Routes>
 						<Route path="/" element={<Dashboard />} />
+						<Route path="/lab" element={<Lab />} />
 						<Route path="/library" element={<LibraryPage />} />
 						<Route path="/library/public" element={<PublicLibrary />} />
 						<Route path="/models" element={<Models />} />

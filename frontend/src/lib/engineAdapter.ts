@@ -112,25 +112,31 @@ export function addAtom(
     return
   }
 
-  // Add atom
-  const newId = molecule.addAtom({ element: element as any, position })
+  // Clone first to avoid mutation
   const cloned = molecule.clone()
-  // Auto-bond if enabled
-  if (store.autoBond && newId) {
+
+  // Add atom to cloned molecule
+  const newId = cloned.addAtom({ element: element as any, position })
+
+  // Auto-bond if enabled and we have more than 1 atom
+  if (store.autoBond && newId && cloned.atoms.size > 1) {
+    console.log('[Auto-Bond] Attempting to bond new atom:', newId)
     autoBondNewAtom(cloned, newId)
+    console.log('[Auto-Bond] Bonds after auto-bond:', cloned.bonds.size)
   }
+
+  // Update store with bonded molecule
   store.setMolecule(cloned)
   pushState()
 
-  // Optimize geometry
+  // Optimize geometry after a short delay
   setTimeout(() => {
     const optimized = cloned.clone()
-    ForceField.optimizeGeometry(optimized, 5, 0.005)
+    ForceField.optimizeGeometry(optimized, 10, 0.01)
     store.setMolecule(optimized)
-  }, 0)
-
-  // Re-run predictions
-  store.fetchPredictions()
+    // Re-run predictions after optimization
+    store.fetchPredictions()
+  }, 50)
 }
 
 /**
