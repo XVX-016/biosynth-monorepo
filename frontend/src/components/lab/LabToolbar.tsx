@@ -1,17 +1,16 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
     MousePointer,
     Circle,
     Minus,
-    Move,
     Trash2,
     ZoomIn,
     ZoomOut,
-    RotateCcw,
-    ChevronRight
+    RotateCcw
 } from "lucide-react";
 import { useMoleculeStore } from "../../store/moleculeStore";
 import type { Element } from "@biosynth/engine";
+import TemplatesPanel from "../../pages/lab/TemplatesPanel"; // Import TemplatesPanel
 
 const ELEMENT_DATA: Record<Element, { color: string; name: string }> = {
     H: { color: "#ffffff", name: "Hydrogen" },
@@ -82,7 +81,7 @@ export function LabToolbar() {
         },
     ];
 
-    // Zoom functions - will be connected to OrbitControls via ref
+    // Zoom functions
     const handleZoomIn = () => {
         const event = new CustomEvent('lab-zoom', { detail: { direction: 'in' } });
         window.dispatchEvent(event);
@@ -134,13 +133,13 @@ export function LabToolbar() {
                             key={toolItem.id}
                             onClick={toolItem.onClick}
                             className={`
-                relative flex flex-col items-center justify-center w-14 h-14 rounded-lg
-                transition-all duration-200
-                ${isActive
+                                relative flex flex-col items-center justify-center w-14 h-14 rounded-lg
+                                transition-all duration-200
+                                ${isActive
                                     ? "bg-black text-white shadow-lg"
                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                 }
-              `}
+                            `}
                             title={toolItem.label}
                         >
                             <Icon size={20} />
@@ -153,9 +152,16 @@ export function LabToolbar() {
                 })}
             </div>
 
+            <div className="h-px bg-gray-200 my-2 w-10" />
+
+            {/* Templates Panel */}
+            <TemplatesPanel />
+
+            <div className="h-px bg-gray-200 my-2 w-10" />
+
             {/* Enhanced Element Picker */}
             {showElementPicker && tool === "add-atom" && (
-                <div className="absolute left-20 top-4 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                <div className="absolute left-20 top-4 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden w-64">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-4 py-3 text-white">
                         <div className="text-sm font-bold">Element Selector</div>
@@ -191,13 +197,13 @@ export function LabToolbar() {
                                         key={element}
                                         onClick={() => handleElementSelect(element)}
                                         className={`
-                      group relative px-3 py-3 rounded-lg font-mono font-bold text-sm
-                      transition-all duration-200
-                      ${isSelected
+                                            group relative px-3 py-3 rounded-lg font-mono font-bold text-sm
+                                            transition-all duration-200
+                                            ${isSelected
                                                 ? "ring-2 ring-blue-500 ring-offset-2 scale-105"
                                                 : "hover:scale-105 hover:shadow-md"
                                             }
-                    `}
+                                        `}
                                         style={{
                                             backgroundColor: data.color === "#ffffff" ? "#f0f0f0" : data.color,
                                             color: ["H", "F", "Cl", "S"].includes(element) ? "#000" : "#fff"

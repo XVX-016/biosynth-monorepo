@@ -1,11 +1,12 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Grid, Line } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { useMoleculeStore } from "../../store/moleculeStore";
 import { addAtom, moleculeToRenderable } from "../../lib/engineAdapter";
 import { Vector3, Vector2, Raycaster } from "three";
 import AtomMesh from "../r3f/AtomMesh";
 import BondMesh from "../r3f/BondMesh";
+import { BondPreview } from "../tools/BondPreview";
 import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 
 // Camera controller for toolbar buttons
@@ -51,85 +52,35 @@ function CameraController() {
     return null;
 }
 
-// Reference Axes and Planes
-function ReferenceAxes() {
-    const gridSize = 50;
-    const axisColor = "#a0a0a0";
+// Logic to handle bond creation: First click selects A, Second click selects B -> Create Bond
+function BondToolHandler() {
+    const tool = useMoleculeStore(state => state.tool);
+    const selectedAtomId = useMoleculeStore(state => state.selectedAtomId);
+    const addBond = useMoleculeStore(state => state.addBond);
+    const selectAtom = useMoleculeStore(state => state.selectAtom);
+    const [startAtomId, setStartAtomId] = useState<string | null>(null);
 
-    return (
-        <group>
-            {/* Vertical reference lines at edges */}
-            {/* Left edge */}
-            <Line
-                points={[[-gridSize, -5, 0], [-gridSize, 5, 0]]}
-                color={axisColor}
-                lineWidth={1}
-                dashed={false}
-            />
-            {/* Right edge */}
-            <Line
-                points={[[gridSize, -5, 0], [gridSize, 5, 0]]}
-                color={axisColor}
-                lineWidth={1}
-                dashed={false}
-            />
-            {/* Front edge */}
-            <Line
-                points={[[0, -5, -gridSize], [0, 5, -gridSize]]}
-                color={axisColor}
-                lineWidth={1}
-                dashed={false}
-            />
-            {/* Back edge */}
-            <Line
-                points={[[0, -5, gridSize], [0, 5, gridSize]]}
-                color={axisColor}
-                lineWidth={1}
-                dashed={false}
-            />
-        </group>
-    );
-}
+    useEffect(() => {
+        if (tool !== 'bond') {
+            setStartAtomId(null);
+            return;
+        }
 
-// Double-sided infinite grid
-function DoubleSidedGrid() {
-    return (
-        <>
-            {/* Top-facing grid */}
-            <Grid
-                args={[300, 300]}
-                cellSize={1}
-                cellThickness={0.5}
-                cellColor="#e8e8e8"
-                sectionSize={5}
-                sectionThickness={0.8}
-                sectionColor="#d0d0d0"
-                fadeDistance={150}
-                fadeStrength={1.5}
-                followCamera={false}
-                infiniteGrid={true}
-                position={[0, 0, 0]}
-                rotation={[0, 0, 0]}
-            />
+        if (selectedAtomId) {
+            if (!startAtomId) {
+                // First selection
+                setStartAtomId(selectedAtomId);
+            } else if (startAtomId !== selectedAtomId) {
+                // Second selection -> Create Bond
+                addBond(startAtomId, selectedAtomId, 1);
+                // Reset
+                setStartAtomId(null);
+                selectAtom(null);
+            }
+        }
+    }, [selectedAtomId, tool, startAtomId, addBond, selectAtom]);
 
-            {/* Bottom-facing grid (visible from underneath) */}
-            <Grid
-                args={[300, 300]}
-                cellSize={1}
-                cellThickness={0.5}
-                cellColor="#e8e8e8"
-                sectionSize={5}
-                sectionThickness={0.8}
-                sectionColor="#d0d0d0"
-                fadeDistance={150}
-                fadeStrength={1.5}
-                followCamera={false}
-                infiniteGrid={true}
-                position={[0, 0, 0]}
-                rotation={[Math.PI, 0, 0]}
-            />
-        </>
-    );
+    return null;
 }
 
 // Click handler for adding atoms with auto-bond validation
@@ -156,7 +107,7 @@ function CanvasClickHandler() {
             const mousePos = new Vector2(x, y);
             raycaster.setFromCamera(mousePos, camera);
 
-            // Intersect with ground plane at y=0
+            // Intersect with ground plane at y=0 or just in front of camera
             const planeY = 0;
             const direction = raycaster.ray.direction;
             const origin = raycaster.ray.origin;
@@ -164,15 +115,12 @@ function CanvasClickHandler() {
             if (Math.abs(direction.y) < 0.0001) return; // Ray parallel to plane
 
             const t = (planeY - origin.y) / direction.y;
-            if (t < 0) return; // Behind camera
 
             const intersectPoint = new Vector3(
                 origin.x + direction.x * t,
                 planeY,
                 origin.z + direction.z * t
             );
-
-            console.log('[LabCanvas] Adding atom:', atomToAdd, 'at position:', intersectPoint, 'autoBond:', autoBond);
 
             // Add atom at intersection point
             addAtom(atomToAdd, [intersectPoint.x, intersectPoint.y, intersectPoint.z]);
@@ -238,6 +186,8 @@ function SceneContent() {
                     renderMode={renderMode}
                 />
             ))}
+            <BondPreview />
+            <BondToolHandler />
         </>
     );
 }
@@ -305,15 +255,11 @@ export function LabCanvas() {
                 camera={{ position: [15, 12, 15], fov: 50 }}
                 style={{ width: "100%", height: "100%", background: "#ffffff" }}
             >
-                {/* Minimal Lighting - Very subtle */}
+                {/* Minimal Lighting */}
                 <ambientLight intensity={0.95} />
                 <directionalLight intensity={0.15} position={[10, 20, 10]} />
 
-                {/* Double-sided Grid - Visible from both sides */}
-                <DoubleSidedGrid />
-
-                {/* Reference axes at edges */}
-                <ReferenceAxes />
+                {/* Grid Removed as requested */}
 
                 {/* Molecule rendering with validation */}
                 <SceneContent />
@@ -324,7 +270,7 @@ export function LabCanvas() {
                 {/* Camera controller */}
                 <CameraController />
 
-                {/* Interactive Controls - TRUE 3D (can go underneath) */}
+                {/* Interactive Controls */}
                 <OrbitControls
                     enableDamping
                     dampingFactor={0.05}
@@ -334,6 +280,7 @@ export function LabCanvas() {
                     minDistance={3}
                     maxDistance={100}
                     target={[0, 0, 0]}
+                    makeDefault
                 />
             </Canvas>
 

@@ -83,3 +83,34 @@ def save_molfile(mol_id: int, payload: MolfileUpdate, db: Session = Depends(get_
     
     return {"ok": True, "id": mol_id}
 
+@router.post("/{mol_id}/export", response_model=dict)
+def export_molecule(mol_id: int, db: Session = Depends(get_db)):
+    """Export molecule for Lab (returns JSON graph)"""
+    molecule = MoleculeService.get_molecule(db, mol_id)
+    if not molecule:
+        raise HTTPException(status_code=404, detail="Molecule not found")
+    
+    return {
+        "id": molecule.id,
+        "name": molecule.name,
+        "formula": getattr(molecule, 'formula', None),
+        "data": molecule.json_graph  # Lab expects this as 'data' or we just return graph
+    }
+
+@router.get("/{mol_id}/preview")
+def preview_molecule(mol_id: int, db: Session = Depends(get_db)):
+    """Generate or retrieve preview image"""
+    molecule = MoleculeService.get_molecule(db, mol_id)
+    if not molecule:
+        raise HTTPException(status_code=404, detail="Molecule not found")
+
+    # If we had a stored path, we'd use it. For now, on-the-fly render
+    if molecule.json_graph:
+        from backend.utils import preview as utils_preview
+        from fastapi.responses import StreamingResponse
+        from io import BytesIO
+        
+        png_bytes = utils_preview.render_preview_png(molecule.json_graph)
+        return StreamingResponse(BytesIO(png_bytes), media_type="image/png")
+    
+    raise HTTPException(status_code=404, detail="No structure data for preview")

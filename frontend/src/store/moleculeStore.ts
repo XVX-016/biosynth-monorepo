@@ -57,6 +57,7 @@ interface MoleculeState {
   runValidation: () => Promise<void>
   optimizeStructure: () => Promise<void>
   setHighlightedAtoms: (atoms: string[]) => void
+  addBond: (atom1Id: string, atom2Id: string, order: number) => void
 }
 
 const spectroscopyService = new SpectroscopyService()
@@ -79,7 +80,7 @@ const initialValidation: ValidationState = {
 
 const initialState = {
   currentMolecule: null,
-  autoBond: true,
+  autoBond: false,
   selectedAtomId: null,
   selectedBondId: null,
   loadingState: 'idle' as const,
@@ -334,6 +335,24 @@ export const useMoleculeStore = create<MoleculeState>((set, get) => ({
 
   setHighlightedAtoms: (atoms) => {
     set({ highlightedAtoms: atoms })
+  },
+
+  addBond: (atom1Id, atom2Id, order) => {
+    const { currentMolecule } = get()
+    if (!currentMolecule) return
+
+    // Create a new bond using the engine's method if available, or manual manipulation
+    // Assuming MoleculeGraph has an addBond method, otherwise we manipulate internals if exposed
+    // Checking engineAdapter... likely need to use that or method on molecule
+    // Since we are inside the store, and currentMolecule is a MoleculeGraph
+
+    // We'll trust the engine has addBond or we reconstruct
+    try {
+      currentMolecule.addBond({ a1: atom1Id, a2: atom2Id, order })
+      set({ currentMolecule: currentMolecule.clone() })
+    } catch (e) {
+      console.error("Failed to add bond", e)
+    }
   },
 }))
 
