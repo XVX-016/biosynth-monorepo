@@ -1,23 +1,27 @@
 import React from "react";
-import { CH4, BENZENE } from "../../utils/defaults";
-import { useEditorContext } from "../../context/EditorContext";
+import { CH4, BENZENE } from "../../utils/defaultMolecules";
+import { useEditor } from "../../context/EditorContext";
 
 export default function TemplatesPanel() {
-    const { dispatch } = useEditorContext();
+    const { dispatch } = useEditor();
 
     const insert = (mol: any) => {
-        // ensure unique ids by prefixing
         const prefix = Date.now().toString().slice(-4);
-        const atoms = mol.atoms.map((a: any) => ({ ...a, id: `${prefix}_${a.id}` }));
-        const bonds = mol.bonds.map((b: any) => ({ ...b, a: `${prefix}_${b.a}`, b: `${prefix}_${b.b}` }));
-        dispatch({ type: "SET_MOLECULE", payload: { atoms, bonds, name: mol.name } });
+        // map to state Atom format: position array
+        const atoms = mol.atoms.map((a: any) => ({
+            id: `${prefix}_${a.id}`,
+            element: a.element,
+            position: [a.x, a.y, a.z]
+        }));
+        const bonds = mol.bonds.map((b: any) => ({ ...b, id: `${prefix}_b_${b.a}_${b.b}`, a: `${prefix}_${b.a}`, b: `${prefix}_${b.b}` }));
+        dispatch({ type: "LOAD_MOLECULE", payload: { atoms, bonds } });
     };
 
     return (
-        <div className="p-2">
-            <div className="font-bold mb-2">Templates</div>
-            <button className="btn block mb-1" onClick={() => insert(CH4)}>Methane (CH4)</button>
-            <button className="btn block" onClick={() => insert(BENZENE)}>Benzene</button>
+        <div className="flex flex-col gap-2">
+            <h3 className="font-semibold text-sm">Templates</h3>
+            <button className="px-2 py-1 text-sm border rounded hover:bg-gray-50 text-left" onClick={() => insert(CH4)}>Methane (CH4)</button>
+            <button className="px-2 py-1 text-sm border rounded hover:bg-gray-50 text-left" onClick={() => insert(BENZENE)}>Benzene</button>
         </div>
     );
 }

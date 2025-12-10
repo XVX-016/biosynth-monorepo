@@ -1,11 +1,11 @@
 import React from "react";
-import { useEditorContext } from "../../../context/EditorContext";
+import { useEditor } from "../../../context/EditorContext";
 
 export default function AutoBondButton() {
-    const { state, dispatch } = useEditorContext();
+    const { state, dispatch } = useEditor();
     return (
         <button
-            className={`btn ${state.autoBond ? "btn-active" : ""}`}
+            className={`px-2 py-1 border rounded ${state.autoBond ? "bg-green-100 border-green-500 text-green-700" : "hover:bg-gray-50"}`}
             onClick={() => dispatch({ type: "TOGGLE_AUTOBOND" })}
         >
             AutoBond

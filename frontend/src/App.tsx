@@ -1,9 +1,8 @@
-
 import { Routes, Route } from 'react-router-dom';
 import AppShell from './layouts/AppShell';
 import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
-import LabPage from "./pages/lab/Lab";
+import LabV2Page from './components/LabV2/LabV2Page';
 import Profile from './pages/Profile';
 import Models from './pages/Models';
 import Docs from './pages/Docs';
@@ -17,7 +16,7 @@ export default function App() {
 	return (
 		<Routes>
 			{/* Lab route - fullscreen, no AppShell */}
-			<Route path="/lab" element={<LabPage />} />
+			<Route path="/lab" element={<LabV2Page />} />
 
 			{/* All other routes - wrapped in AppShell */}
 			<Route path="/*" element={

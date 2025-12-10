@@ -1,6 +1,4 @@
-# PowerShell script to start the backend server
-# Usage: .\start-backend.ps1
-# Run from the repo root
+
 
 Write-Host "[INFO] Starting MolForge Backend Server..." -ForegroundColor Green
 Write-Host ""

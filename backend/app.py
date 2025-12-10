@@ -34,6 +34,7 @@ from backend.routes import quantum as quantum_router
 from backend.routes import ml as ml_router
 from backend.routes import collaboration as collaboration_router
 from backend.routes import dashboard as dashboard_router
+from backend.lab import routes as lab_router
 from backend.api import predict as predict_api_router
 from backend.routes import screening as screening_router
 from backend.routes import search_phase7 as search_phase7_router
@@ -116,6 +117,7 @@ app.include_router(phase10_api_router.router, prefix="/api/phase10", tags=["phas
 app.include_router(molecule_api_router.router, tags=["molecule"])
 app.include_router(collaboration_router.router, prefix="/api/collaboration", tags=["collaboration"])
 app.include_router(dashboard_router.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(lab_router.router, prefix="/api/lab", tags=["lab"])
 
 
 class PredictFastIn(BaseModel):
