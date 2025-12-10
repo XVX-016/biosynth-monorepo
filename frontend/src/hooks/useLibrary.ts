@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LibraryAPI } from "../api/library";
-import { Molecule } from "../types/molecule";
+import type { Molecule } from "../types/molecule";
 
 export function useLibrary() {
     const [molecules, setMolecules] = useState<Molecule[]>([]);

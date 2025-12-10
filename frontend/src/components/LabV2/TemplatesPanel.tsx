@@ -1,35 +1,64 @@
 import { CH4, BENZENE } from "../../utils/defaultMolecules";
-import { useEditor } from "../../context/EditorContext";
+import { useLabStore } from "../../store/labStore";
+import { nanoid } from "nanoid";
 
-/** Small translucent card with template buttons */
 export default function TemplatesPanel() {
-    const { dispatch } = useEditor();
+    const { loadMolecule } = useLabStore();
 
-    const insert = (mol: any) => {
-        const prefix = Date.now().toString().slice(-4);
-        const atoms = mol.atoms.map((a: any) => ({
-            ...a,
-            id: `${prefix}_${a.id}`,
-            position: [a.x, a.y, a.z || 0]
+    const insert = (template: any) => {
+        // Map template (x,y,z fields) to Store (position array)
+        // And remap IDs to avoid collisions
+        const idMap: Record<string, string> = {};
+
+        const atoms = template.atoms.map((a: any) => {
+            const newId = nanoid();
+            idMap[a.id] = newId;
+            return {
+                id: newId,
+                element: a.element,
+                position: [a.x, a.y, a.z || 0],
+                charge: 0
+            };
+        });
+
+        const bonds = template.bonds.map((b: any) => ({
+            id: nanoid(),
+            atom1: idMap[b.a],
+            atom2: idMap[b.b],
+            order: b.order || 1
         }));
-        const bonds = mol.bonds.map((b: any) => ({
-            ...b,
-            a: `${prefix}_${b.a}`,
-            b: `${prefix}_${b.b}`,
-            id: `${prefix}_b_${b.a}_${b.b}`
-        }));
-        dispatch({ type: "LOAD_MOLECULE", payload: { atoms, bonds, name: mol.name } });
+
+        loadMolecule({
+            id: nanoid(),
+            name: template.name,
+            atoms,
+            bonds,
+            formula: "",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isValid: true,
+            qualityScore: 100,
+            previewImage: ""
+        });
     };
 
     return (
-        <div className="lab-panel">
-            <div className="font-semibold mb-2">Templates</div>
-            <button className="lab-btn block w-full mb-2" onClick={() => insert(CH4)}>
-                Methane
-            </button>
-            <button className="lab-btn block w-full" onClick={() => insert(BENZENE)}>
-                Benzene
-            </button>
+        <div className="bg-white border border-gray-200 shadow-md rounded-xl p-4 w-64 pointer-events-auto">
+            <h2 className="text-gray-700 font-semibold mb-3 text-sm">Templates</h2>
+            <div className="space-y-2 text-gray-600 text-sm">
+                <button
+                    onClick={() => insert(CH4)}
+                    className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded text-gray-700 transition"
+                >
+                    Methane
+                </button>
+                <button
+                    onClick={() => insert(BENZENE)}
+                    className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded text-gray-700 transition"
+                >
+                    Benzene
+                </button>
+            </div>
         </div>
     );
 }

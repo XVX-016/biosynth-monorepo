@@ -135,3 +135,14 @@ packages/engine/dist/
 
 # Frontend assets
 frontend/public/
+
+# Agent Artifacts and Conflicts
+conflicts.txt
+TEST_RESULTS.md
+IMPLEMENTATION_SUMMARY.md
+NEXT_STEPS.md
+ARCHITECTURE.md
+structure.txt
+test_results/
+backend/test_*.py
+mnm/

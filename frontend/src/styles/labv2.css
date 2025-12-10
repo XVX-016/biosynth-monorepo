@@ -1,58 +1,69 @@
 /* LabV2 Component Styles */
 
 .lab-btn {
-  background: #fff;
-  border: 1px solid #e6e6e6;
   padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-  color: #333;
+  font-size: 13px;
+  transition: all 0.15s ease;
 }
 
 .lab-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .lab-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
+.lab-btn-active {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
 .lab-btn-primary {
-  background: linear-gradient(180deg, #2563eb, #1d4ed8);
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
   color: white;
   border: none;
 }
 
 .lab-btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #1d4ed8, #1e40af);
+  background: linear-gradient(180deg, #2563eb, #1d4ed8);
 }
 
 .lab-btn-outline {
   background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.lab-btn-active {
-  background: #111827;
-  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .lab-panel {
-  background: rgba(255, 255, 255, 0.9);
-  color: #000;
+  background: rgba(255, 255, 255, 0.04);
+  color: #ddd;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
+}
+
+.block {
+  display: block;
+  width: 100%;
+}
+
+.mt-2 {
+  margin-top: 8px;
 }
 
 .lab-panel hr {
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   margin: 12px 0;
 }

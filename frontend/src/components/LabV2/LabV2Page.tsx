@@ -1,54 +1,43 @@
+import Navbar from "../Navbar";
 import FloatingToolbar from "./FloatingToolbar";
-import LabCanvas from "./LabCanvas";
 import TemplatesPanel from "./TemplatesPanel";
-import { EditorProvider } from "../../context/EditorContext";
+import PropertiesPanel from "./PropertiesPanel";
+import LabCanvas from "./LabCanvas";
 
-/**
- * LabV2Page
- * Wraps EditorProvider and renders floating toolbar + canvas + right inspector.
- */
 export default function LabV2Page() {
     return (
-        <EditorProvider>
-            <div className="w-full h-screen relative bg-gray-900">
-                {/* Floating toolbar (draggable) */}
-                <FloatingToolbar />
+        <div className="lab-grid-bg w-full h-screen flex flex-col overflow-hidden">
+            {/* Top Navbar */}
+            <div className="z-50 relative bg-white shadow-sm">
+                <Navbar />
+            </div>
 
-                {/* Left templates / quick actions (small translucent panel) */}
-                <div style={{
-                    position: "absolute",
-                    left: 16,
-                    top: 96,
-                    zIndex: 60,
-                }}>
-                    <TemplatesPanel />
-                </div>
+            {/* Main Content Area */}
+            <div className="flex-1 relative w-full h-full">
 
-                {/* Main 3D canvas */}
-                <div style={{ width: "100%", height: "100%" }}>
+                {/* 3D Canvas Layer */}
+                <div id="lab-canvas" className="absolute inset-0 w-full h-full z-0">
                     <LabCanvas />
                 </div>
 
-                {/* Right inspector */}
-                <div style={{
-                    position: "absolute",
-                    right: 16,
-                    top: 96,
-                    zIndex: 60,
-                }}>
-                    <div className="lab-panel w-64">
-                        <div className="font-semibold mb-2">Selection</div>
-                        <div className="text-sm text-gray-600">No atom or bond selected</div>
-                        <hr className="my-3" />
-                        <div className="font-semibold">Atom Properties</div>
-                        <div className="text-sm text-gray-600">Select an atom</div>
-                        <hr className="my-3" />
-                        <div className="font-semibold">Bond Properties</div>
-                        <div className="text-sm text-gray-600">Select a bond</div>
-                    </div>
+                {/* Floating Toolbar (top-center) */}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 pointer-events-auto">
+                    <FloatingToolbar />
                 </div>
 
+                {/* Left Templates Panel */}
+                <div className="absolute top-6 left-4 z-40 pointer-events-auto">
+                    <TemplatesPanel />
+                </div>
+
+                {/* Right Properties Panel */}
+                <div className="absolute top-6 right-4 z-40 pointer-events-auto">
+                    <PropertiesPanel />
+                </div>
+
+                {/* Event Blocker for background to let events pass to canvas */}
+                <div className="absolute inset-0 pointer-events-none z-10"></div>
             </div>
-        </EditorProvider>
+        </div>
     );
 }

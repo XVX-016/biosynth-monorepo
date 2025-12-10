@@ -3,11 +3,9 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class MoleculeBase(BaseModel):
-    name: str = "Untitled"
+    name: str
     smiles: Optional[str] = None
-    formula: Optional[str] = None
     json_graph: Optional[Dict[str, Any]] = None
-    molfile: Optional[str] = None
     properties: Optional[Dict[str, Any]] = None
     thumbnail_b64: Optional[str] = None
 
@@ -17,9 +15,7 @@ class MoleculeCreate(MoleculeBase):
 class MoleculeUpdate(BaseModel):
     name: Optional[str] = None
     smiles: Optional[str] = None
-    formula: Optional[str] = None
     json_graph: Optional[Dict[str, Any]] = None
-    molfile: Optional[str] = None
     properties: Optional[Dict[str, Any]] = None
     thumbnail_b64: Optional[str] = None
 
@@ -30,3 +26,7 @@ class MoleculeResponse(MoleculeBase):
     
     class Config:
         from_attributes = True
+
+# Aliases for legacy compatibility
+ItemCreate = MoleculeCreate
+ItemUpdate = MoleculeUpdate

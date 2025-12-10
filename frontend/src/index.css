@@ -3,3 +3,16 @@
 @import './styles/glass.css';
 @import './styles/lab.css';
 @import './styles/labv2.css';
+
+/* Lab V2 grid background */
+.lab-grid-bg {
+  background-color: white;
+  background-image:
+    linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+    linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.filter-btn {
+  @apply px-3 py-1 bg-white border rounded text-gray-700 hover:bg-gray-100;
+}

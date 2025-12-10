@@ -1,4 +1,4 @@
-import { Molecule } from "../../types/molecule";
+import type { Molecule } from "../../types/molecule";
 
 interface MoleculeCardProps {
     molecule: Molecule;

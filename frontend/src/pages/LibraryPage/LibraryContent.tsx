@@ -1,7 +1,7 @@
 import MoleculeCard from "./MoleculeCard";
 import MoleculeViewerModal from "./MoleculeViewerModal";
 import { useState } from "react";
-import { Molecule } from "../../types/molecule";
+import type { Molecule } from "../../types/molecule";
 
 interface LibraryContentProps {
     molecules: Molecule[];

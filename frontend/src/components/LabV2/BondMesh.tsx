@@ -1,26 +1,112 @@
+import { useMemo } from "react";
 import * as THREE from "three";
 
-/** Render a cylinder between two atom positions */
-export default function BondMesh({ aPos, bPos }: { aPos: number[]; bPos: number[] }) {
-    const [ax, ay, az] = aPos;
-    const [bx, by, bz] = bPos;
+interface BondMeshProps {
+    aPos: number[];
+    bPos: number[];
+    order?: number;
+}
 
-    // Compute midpoint and orientation
-    const start = new THREE.Vector3(ax, ay, az);
-    const end = new THREE.Vector3(bx, by, bz);
+export default function BondMesh({ aPos, bPos, order = 1 }: BondMeshProps) {
+    const start = useMemo(() => new THREE.Vector3(aPos[0], aPos[1], aPos[2]), [aPos]);
+    const end = useMemo(() => new THREE.Vector3(bPos[0], bPos[1], bPos[2]), [bPos]);
     const diff = new THREE.Vector3().subVectors(end, start);
     const length = diff.length();
-    const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
 
-    // Create quaternion for rotation
-    const direction = diff.clone().normalize();
-    const axis = new THREE.Vector3(0, 1, 0);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(axis, direction);
+    // Midpoint
+    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
 
+    // Orientation quaternion from Y-axis to bond direction
+    const orientation = useMemo(() => {
+        const yAxis = new THREE.Vector3(0, 1, 0);
+        const quaternion = new THREE.Quaternion();
+        quaternion.setFromUnitVectors(yAxis, diff.clone().normalize());
+        return quaternion;
+    }, [diff]);
+
+    // For double/triple bonds, calculate perpendicular offset
+    const perpendicular = useMemo(() => {
+        const dir = diff.clone().normalize();
+        // Find a perpendicular vector
+        const arbitrary = Math.abs(dir.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+        const perp = new THREE.Vector3().crossVectors(dir, arbitrary).normalize();
+        return perp;
+    }, [diff]);
+
+    const bondRadius = 0.06;
+    const bondOffset = 0.15; // Distance between parallel bonds
+
+    if (order === 1) {
+        // Single bond - one cylinder
+        return (
+            <mesh position={[mid.x, mid.y, mid.z]} quaternion={orientation}>
+                <cylinderGeometry args={[bondRadius, bondRadius, length, 12]} />
+                <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
+            </mesh>
+        );
+    }
+
+    if (order === 2) {
+        // Double bond - two parallel cylinders
+        const offset1 = perpendicular.clone().multiplyScalar(bondOffset);
+        const offset2 = perpendicular.clone().multiplyScalar(-bondOffset);
+
+        return (
+            <>
+                <mesh
+                    position={[mid.x + offset1.x, mid.y + offset1.y, mid.z + offset1.z]}
+                    quaternion={orientation}
+                >
+                    <cylinderGeometry args={[bondRadius * 0.8, bondRadius * 0.8, length, 12]} />
+                    <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
+                </mesh>
+                <mesh
+                    position={[mid.x + offset2.x, mid.y + offset2.y, mid.z + offset2.z]}
+                    quaternion={orientation}
+                >
+                    <cylinderGeometry args={[bondRadius * 0.8, bondRadius * 0.8, length, 12]} />
+                    <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
+                </mesh>
+            </>
+        );
+    }
+
+    if (order === 3) {
+        // Triple bond - three parallel cylinders
+        const offset1 = perpendicular.clone().multiplyScalar(bondOffset);
+        const offset2 = perpendicular.clone().multiplyScalar(-bondOffset);
+
+        return (
+            <>
+                {/* Center cylinder */}
+                <mesh position={[mid.x, mid.y, mid.z]} quaternion={orientation}>
+                    <cylinderGeometry args={[bondRadius * 0.7, bondRadius * 0.7, length, 12]} />
+                    <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
+                </mesh>
+                {/* Offset cylinders */}
+                <mesh
+                    position={[mid.x + offset1.x, mid.y + offset1.y, mid.z + offset1.z]}
+                    quaternion={orientation}
+                >
+                    <cylinderGeometry args={[bondRadius * 0.7, bondRadius * 0.7, length, 12]} />
+                    <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
+                </mesh>
+                <mesh
+                    position={[mid.x + offset2.x, mid.y + offset2.y, mid.z + offset2.z]}
+                    quaternion={orientation}
+                >
+                    <cylinderGeometry args={[bondRadius * 0.7, bondRadius * 0.7, length, 12]} />
+                    <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
+                </mesh>
+            </>
+        );
+    }
+
+    // Fallback for higher orders - just render as single thick bond
     return (
-        <mesh position={midpoint} quaternion={quaternion}>
-            <cylinderGeometry args={[0.06, 0.06, length, 10]} />
-            <meshStandardMaterial color="#888" />
+        <mesh position={[mid.x, mid.y, mid.z]} quaternion={orientation}>
+            <cylinderGeometry args={[bondRadius * 1.2, bondRadius * 1.2, length, 12]} />
+            <meshStandardMaterial color="#888" metalness={0.2} roughness={0.5} />
         </mesh>
     );
 }
