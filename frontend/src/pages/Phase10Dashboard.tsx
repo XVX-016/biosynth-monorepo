@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import RLWorkflowPanel from '../components/RLWorkflowPanel';
 import TopCandidatesPanel from '../components/TopCandidatesPanel';
 import RewardVisualization from '../components/RewardVisualization';
@@ -27,7 +28,12 @@ export default function Phase10Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-gray-50 p-6"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Phase 10: RL + Generative Design</h1>
@@ -131,7 +137,7 @@ export default function Phase10Dashboard() {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

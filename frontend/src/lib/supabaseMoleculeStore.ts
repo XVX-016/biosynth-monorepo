@@ -20,7 +20,7 @@ export async function saveMolecule(userId: string, molecule: Omit<SupabaseMolecu
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Supabase is not configured. Please check your .env file and Supabase setup.');
   }
-  
+
   const { data, error } = await supabase
     .from('molecules')
     .insert({
@@ -45,7 +45,7 @@ export async function listMolecules(userId: string): Promise<SupabaseMolecule[]>
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Supabase is not configured. Please check your .env file and Supabase setup.');
   }
-  
+
   const { data, error } = await supabase
     .from('molecules')
     .select('*')
@@ -60,13 +60,34 @@ export async function listMolecules(userId: string): Promise<SupabaseMolecule[]>
 }
 
 /**
+ * List ALL molecules without user filter
+ */
+export async function listAllMolecules(): Promise<SupabaseMolecule[]> {
+  if (!isSupabaseConfigured() || !supabase) {
+    console.warn('Supabase is not configured. Please check your .env file and Supabase setup.');
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('molecules')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to list all molecules: ${error.message}`);
+  }
+
+  return data || [];
+}
+
+/**
  * Delete a molecule for a specific user
  */
 export async function deleteMolecule(userId: string, moleculeId: string): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Supabase is not configured. Please check your .env file and Supabase setup.');
   }
-  
+
   const { error } = await supabase
     .from('molecules')
     .delete()
@@ -85,7 +106,7 @@ export async function getMolecule(userId: string, moleculeId: string): Promise<S
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Supabase is not configured. Please check your .env file and Supabase setup.');
   }
-  
+
   const { data, error } = await supabase
     .from('molecules')
     .select('*')
@@ -114,7 +135,7 @@ export async function searchMolecules(
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Supabase is not configured. Please check your .env file and Supabase setup.');
   }
-  
+
   const query = searchQuery.toLowerCase().trim();
   if (!query) {
     return listMolecules(userId);
@@ -145,7 +166,7 @@ export async function updateMolecule(
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Supabase is not configured. Please check your .env file and Supabase setup.');
   }
-  
+
   const { error } = await supabase
     .from('molecules')
     .update(updates)

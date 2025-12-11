@@ -12,6 +12,7 @@ import SeedLibrary from './pages/SeedLibrary';
 import PublicLibrary from './pages/PublicLibrary';
 import Phase10Dashboard from './pages/Phase10Dashboard';
 
+// Main Application Router
 export default function App() {
 	return (
 		<Routes>
