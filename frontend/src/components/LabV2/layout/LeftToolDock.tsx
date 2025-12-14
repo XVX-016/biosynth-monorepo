@@ -20,7 +20,7 @@ const BONDS = [
 ];
 
 export default function LeftToolDock() {
-    const { currentTool, setTool, setBondOrder } = useLabStore();
+    const { currentTool, setTool, setBondOrder, setCurrentElement } = useLabStore();
     const [selectedElement, setSelectedElement] = useState('C');
     // We will wire this to store later, for now visual state
     const [selectedBondData, setSelectedBondData] = useState(1);
@@ -36,6 +36,7 @@ export default function LeftToolDock() {
                         key={atom.symbol}
                         onClick={() => {
                             setTool('add-atom');
+                            setCurrentElement(atom.symbol);
                             setSelectedElement(atom.symbol);
                         }}
                         className={`

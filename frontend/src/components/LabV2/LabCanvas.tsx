@@ -5,7 +5,7 @@ import { useLabStore } from "../../store/labStore";
 import AtomMesh from "./AtomMesh";
 import BondMesh from "./BondMesh";
 
-function CustomHorizontalGrid() {
+function CustomGrid() {
     const lines = useMemo(() => {
         const items = [];
         const size = 100;     // Total width
@@ -27,6 +27,22 @@ function CustomHorizontalGrid() {
                 />
             );
         }
+
+        // Draw lines parallel to Z-axis (Vertical)
+        // These vary in X
+        for (let i = -steps / 2; i <= steps / 2; i++) {
+            const x = i * spacing;
+            items.push(
+                <Line
+                    key={`v-${i}`}
+                    points={[[x, 0, -size / 2], [x, 0, size / 2]]}
+                    color="#e5e7eb" // Tailwind gray-200
+                    lineWidth={1}
+                    transparent
+                    opacity={0.4}
+                />
+            );
+        }
         return items;
     }, []);
 
@@ -34,7 +50,7 @@ function CustomHorizontalGrid() {
 }
 
 function Scene() {
-    const { molecule, currentTool, addAtom } = useLabStore();
+    const { molecule, currentTool, currentElement, addAtom } = useLabStore();
 
     // Click on plane to add atom (only when tool = add-atom)
     const onPlanePointerDown = useCallback((e: any) => {
@@ -42,8 +58,8 @@ function Scene() {
         e.stopPropagation();
         const point = e.point;
         // Basic snapping could be added here
-        addAtom("C", [point.x, point.y, point.z]);
-    }, [currentTool, addAtom]);
+        addAtom(currentElement, [point.x, point.y, point.z]);
+    }, [currentTool, addAtom, currentElement]);
 
     return (
         <>
@@ -57,8 +73,8 @@ function Scene() {
                 <meshBasicMaterial transparent opacity={0} />
             </mesh>
 
-            {/* Custom Horizontal Grid (removes vertical lines as requested) */}
-            <CustomHorizontalGrid />
+            {/* Custom Grid with both Horizontal and Vertical lines */}
+            <CustomGrid />
 
             {/* Center Origin Dot */}
             <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>

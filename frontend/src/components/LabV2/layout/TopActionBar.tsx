@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLabStore } from "../../../store/labStore";
+import { LibraryAPI } from "../../../api/library";
 import {
     MousePointer2,
     Atom,
@@ -12,7 +13,32 @@ import {
 } from "lucide-react";
 
 export default function TopActionBar() {
-    const { currentTool, setTool } = useLabStore();
+    const { currentTool, setTool, molecule } = useLabStore();
+
+    const handleAction = async (id: string, label: string) => {
+        if (id === 'select' || id === 'add-atom' || id === 'add-bond') {
+            setTool(id as any);
+        } else if (id === 'save') {
+            const name = prompt("Enter molecule name", "New Molecule");
+            if (!name) return;
+            try {
+                // Import dynamically to avoid circle if any? No, static import better.
+                // Assuming LibraryAPI import from "../../api/library" (Need to add import)
+                await LibraryAPI.upload({
+                    name,
+                    json_graph: { atoms: molecule.atoms, bonds: molecule.bonds }
+                });
+                alert("Saved to Library!");
+            } catch (e) {
+                console.error(e);
+                alert("Failed to save.");
+            }
+        } else if (id === 'optimize') {
+            alert("Optimization triggered (Simulated)");
+        } else {
+            console.log(`${label} triggered`);
+        }
+    };
 
     const actions = [
         { id: 'select', label: 'Select', icon: MousePointer2 },
@@ -35,13 +61,7 @@ export default function TopActionBar() {
                     return (
                         <button
                             key={action.id}
-                            onClick={() => {
-                                if (action.id === 'select' || action.id === 'add-atom' || action.id === 'add-bond') {
-                                    setTool(action.id as any);
-                                } else {
-                                    console.log(`${action.label} triggered`);
-                                }
-                            }}
+                            onClick={() => handleAction(action.id, action.label)}
                             className={`
                                 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200
                                 ${isActive
