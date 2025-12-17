@@ -22,7 +22,7 @@ const sections: DocSection[] = [
 					<li>Create an account or sign in</li>
 					<li>Navigate to the Lab to start designing molecules</li>
 					<li>Use the Library to browse and manage your saved molecules</li>
-					<li>Explore AI Models to see available prediction tools</li>
+
 				</ol>
 			</div>
 		),
@@ -73,35 +73,35 @@ const sections: DocSection[] = [
 				<p className="text-darkGrey">
 					MolForge provides a RESTful API for programmatic access to all features.
 				</p>
-				
+
 				<div className="space-y-4">
 					<div>
 						<h4 className="text-lg font-semibold text-black mb-2">POST /api/molecule/generate</h4>
 						<p className="text-darkGrey mb-2">Generate a 3D molecule structure from SMILES or text description.</p>
 						<pre className="bg-offwhite p-3 rounded border border-lightGrey text-sm text-darkGrey overflow-x-auto">
-{`{
+							{`{
   "input": "CCO",
   "format": "smiles"
 }`}
 						</pre>
 					</div>
-					
+
 					<div>
 						<h4 className="text-lg font-semibold text-black mb-2">POST /api/analysis/qsar</h4>
 						<p className="text-darkGrey mb-2">Predict molecular properties using QSAR models.</p>
 						<pre className="bg-offwhite p-3 rounded border border-lightGrey text-sm text-darkGrey overflow-x-auto">
-{`{
+							{`{
   "smiles": "CCO",
   "properties": ["solubility", "toxicity"]
 }`}
 						</pre>
 					</div>
-					
+
 					<div>
 						<h4 className="text-lg font-semibold text-black mb-2">POST /api/reaction/simulate</h4>
 						<p className="text-darkGrey mb-2">Simulate a chemical reaction and predict products.</p>
 						<pre className="bg-offwhite p-3 rounded border border-lightGrey text-sm text-darkGrey overflow-x-auto">
-{`{
+							{`{
   "reactants": ["CCO", "O"],
   "conditions": {...}
 }`}
@@ -119,24 +119,24 @@ const sections: DocSection[] = [
 				<p className="text-darkGrey">
 					MolForge supports multiple molecular data formats for import and export.
 				</p>
-				
+
 				<div className="space-y-3">
 					<div>
 						<h4 className="font-semibold text-black">SMILES</h4>
 						<p className="text-darkGrey text-sm">Simplified Molecular Input Line Entry System - text-based representation.</p>
 						<code className="text-xs bg-offwhite px-2 py-1 rounded border border-lightGrey text-darkGrey">CCO</code>
 					</div>
-					
+
 					<div>
 						<h4 className="font-semibold text-black">MOL</h4>
 						<p className="text-darkGrey text-sm">MDL Molfile format - standard for molecular structure data.</p>
 					</div>
-					
+
 					<div>
 						<h4 className="font-semibold text-black">PDB</h4>
 						<p className="text-darkGrey text-sm">Protein Data Bank format - commonly used for protein structures.</p>
 					</div>
-					
+
 					<div>
 						<h4 className="font-semibold text-black">GLTF</h4>
 						<p className="text-darkGrey text-sm">3D model format for visualization and sharing.</p>
@@ -154,7 +154,7 @@ const sections: DocSection[] = [
 					Embed the MolForge 3D molecule viewer in your own applications.
 				</p>
 				<pre className="bg-offwhite p-3 rounded border border-lightGrey text-sm text-darkGrey overflow-x-auto">
-{`<iframe
+					{`<iframe
   src="https://molforge.app/viewer?smiles=CCO"
   width="600"
   height="400"
@@ -177,7 +177,7 @@ export default function Docs() {
 			className="max-w-4xl mx-auto space-y-8"
 		>
 			{/* Header */}
-			<motion.div 
+			<motion.div
 				className="space-y-2"
 				initial={{ opacity: 0, y: -20 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -190,7 +190,7 @@ export default function Docs() {
 			</motion.div>
 
 			{/* Section Navigation */}
-			<motion.div 
+			<motion.div
 				className="flex flex-wrap gap-2 border-b border-lightGrey pb-4"
 				initial={{ opacity: 0, y: 10 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -200,11 +200,10 @@ export default function Docs() {
 					<button
 						key={section.id}
 						onClick={() => setActiveSection(section.id)}
-						className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-							activeSection === section.id
+						className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${activeSection === section.id
 								? 'bg-black text-white'
 								: 'text-darkGrey hover:text-black hover:bg-offwhite'
-						}`}
+							}`}
 					>
 						{section.title}
 					</button>
@@ -219,8 +218,8 @@ export default function Docs() {
 				transition={{ duration: 0.4, delay: 0.1 }}
 			>
 				<Card className="p-8">
-				{sections.find((s) => s.id === activeSection)?.content}
-			</Card>
+					{sections.find((s) => s.id === activeSection)?.content}
+				</Card>
 			</motion.div>
 		</motion.div>
 	);

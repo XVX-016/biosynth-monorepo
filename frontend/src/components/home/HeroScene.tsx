@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { EffectComposer, ChromaticAberration, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { MoleculeGraph } from '@biosynth/engine';
+import type { MoleculeGraph } from '@biosynth/engine';
 import { moleculeToRenderable } from '../../lib/engineAdapter';
 import { listMolecules } from '../../lib/api';
 import { createMoleculeFromTemplate, getTemplateByName } from '../../data/molecule-templates';
@@ -25,6 +25,15 @@ const ELEMENT_RADII: Record<string, number> = {
   I: 1.4,
 };
 
+const ELEMENT_COLORS: Record<string, string> = {
+  H: '#FFFFFF',
+  C: '#2C2C2C', // Dark premium grey
+  O: '#FF4D4D', // Premium red
+  N: '#4D79FF', // Premium blue
+  Cl: '#4DFF88',
+  S: '#FFD700',
+};
+
 function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
   const groupRef = useRef<THREE.Group>(null);
   const renderable = moleculeToRenderable(molecule);
@@ -40,13 +49,16 @@ function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
     <group ref={groupRef}>
       {renderable.atoms.map((atom) => {
         const radius = ELEMENT_RADII[atom.element] || 1.0;
+        const color = ELEMENT_COLORS[atom.element] || '#C0C5D2';
         return (
           <mesh key={atom.id} position={atom.position}>
             <sphereGeometry args={[radius, 64, 64]} />
             <meshPhysicalMaterial
-              color="#C0C5D2"
-              metalness={0.9}
-              roughness={0.2}
+              color={color}
+              metalness={atom.element === 'C' ? 0.9 : 0.4}
+              roughness={atom.element === 'H' ? 0.1 : 0.3}
+              transmission={atom.element === 'H' ? 0.6 : 0}
+              thickness={atom.element === 'H' ? 1 : 0}
               envMapIntensity={1.5}
             />
           </mesh>
@@ -74,10 +86,12 @@ function FloatingMolecule({ molecule }: { molecule: MoleculeGraph }) {
           >
             <cylinderGeometry args={[radius, radius, length, 48]} />
             <meshPhysicalMaterial
-              color="#C0C5D2"
-              metalness={0.9}
-              roughness={0.2}
-              envMapIntensity={1.5}
+              color="#E5E5E5"
+              metalness={0.8}
+              roughness={0.1}
+              envMapIntensity={1.2}
+              transmission={0.2}
+              thickness={0.5}
             />
           </mesh>
         );
@@ -217,24 +231,23 @@ export default function HeroScene({ molecule: propMolecule }: HeroSceneProps) {
     let cancelled = false;
     (async () => {
       try {
-        const molecules = await listMolecules(1);
-        if (!cancelled && molecules.length > 0) {
-          const template = getTemplateByName('Benzene');
-          if (template) {
-            setFeaturedMolecule(createMoleculeFromTemplate(template));
-          }
-        } else {
-          const template = getTemplateByName('Benzene') || getTemplateByName('Water');
-          if (template) {
-            setFeaturedMolecule(createMoleculeFromTemplate(template));
+        // Try to get Caffeine first as it's the hero favorite
+        const template = getTemplateByName('Caffeine');
+        if (template && !cancelled) {
+          setFeaturedMolecule(createMoleculeFromTemplate(template));
+        } else if (!cancelled) {
+          // Fallback to library fetch if templates fail
+          const molecules = await listMolecules(1);
+          if (molecules.length > 0) {
+            const fallback = getTemplateByName('Caffeine');
+            if (fallback) setFeaturedMolecule(createMoleculeFromTemplate(fallback));
           }
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to load featured molecule:', error);
-        const template = getTemplateByName('Benzene') || getTemplateByName('Water');
-        if (template) {
-          setFeaturedMolecule(createMoleculeFromTemplate(template));
+        console.error('Failed to load hero molecule:', error);
+        const fallback = getTemplateByName('Caffeine') || getTemplateByName('Water');
+        if (fallback && !cancelled) {
+          setFeaturedMolecule(createMoleculeFromTemplate(fallback));
         }
       }
     })();
@@ -246,25 +259,14 @@ export default function HeroScene({ molecule: propMolecule }: HeroSceneProps) {
 
   if (!featuredMolecule) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-ionBlack">
-        <div className="text-chrome">Loading molecule...</div>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div
-      className="w-full h-full relative overflow-hidden frosted-glass border border-chrome/30 rounded-xl"
-      style={{
-        background: 'linear-gradient(135deg, rgba(227, 230, 235, 0.1), rgba(192, 197, 210, 0.05))',
-        borderImage: 'linear-gradient(135deg, #E3E6EB, #C0C5D2) 1',
-      }}
-    >
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-neonCyan/10 via-transparent to-neonCyan/5 pointer-events-none"
-        style={{ boxShadow: 'inset 0 0 60px rgba(139, 243, 255, 0.2)' }}
-      />
-
+    <div className="w-full h-full relative overflow-hidden">
       <CanvasErrorBoundary>
         <Canvas
           camera={{ position: [0, 0, 8], fov: 50 }}

@@ -5,13 +5,12 @@ import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
 import LabV2Page from './components/LabV2/LabV2Page';
 import Profile from './pages/Profile';
-import Models from './pages/Models';
 import Docs from './pages/Docs';
 import AdminItems from './pages/admin/Items';
 import SupabaseTest from './pages/SupabaseTest';
 import SeedLibrary from './pages/SeedLibrary';
 import PublicLibrary from './pages/PublicLibrary';
-import Phase10Dashboard from './pages/Phase10Dashboard';
+import StudioPage from './pages/StudioPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthModal from './components/AuthModal';
 import AuthNavigationHandler from './components/AuthNavigationHandler';
@@ -64,25 +63,24 @@ export default function App() {
 							<Route path="/" element={<Dashboard />} />
 							<Route path="/library" element={<LibraryPage />} />
 							<Route path="/library/public" element={<PublicLibrary />} />
-							<Route path="/models" element={<Models />} />
 							<Route path="/docs" element={<Docs />} />
-							<Route path="/phase10" element={<Phase10Dashboard />} />
+							<Route path="/studio" element={<StudioPage />} />
 							{/* Authenticated-only routes */}
-							<Route 
-								path="/profile" 
+							<Route
+								path="/profile"
 								element={
 									<ProtectedRoute>
 										<Profile />
 									</ProtectedRoute>
-								} 
+								}
 							/>
-							<Route 
-								path="/my-molecules" 
+							<Route
+								path="/my-molecules"
 								element={
 									<ProtectedRoute>
 										<LibraryPage />
 									</ProtectedRoute>
-								} 
+								}
 							/>
 							<Route path="/admin/items" element={<AdminItems />} />
 							<Route path="/supabase-test" element={<SupabaseTest />} />

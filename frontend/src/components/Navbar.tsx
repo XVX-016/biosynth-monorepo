@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import Button from './ui/Button';
 
@@ -9,7 +9,6 @@ type NavbarProps = {
 
 export default function Navbar({ onToggleMenu }: NavbarProps) {
 	const location = useLocation();
-	const navigate = useNavigate();
 	const { user, signOut, openAuthModal } = useAuthStore();
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const isActive = (to: string, exact = false) =>
@@ -31,78 +30,66 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 	return (
 		<header className="bg-white border-b border-lightGrey shadow-neon">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<div className="h-16 flex items-center justify-between">
-					{/* Logo */}
-					<div className="flex items-center gap-3">
-						<span className="text-xl font-bold text-black">MolForge</span>
+				<div className="h-16 flex items-center">
+					{/* Left side: Logo */}
+					<div className="flex-1 flex items-center">
+						<RLink to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+							<span className="text-xl font-bold text-black">MolForge</span>
+						</RLink>
 					</div>
-					
+
 					{/* Center Navigation */}
-					<nav className="hidden sm:flex items-center gap-1">
+					<nav className="hidden sm:flex items-center gap-1 flex-shrink-0">
 						<RLink
 							to="/"
-							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/', true) 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${isActive('/', true)
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Home
 						</RLink>
 						<RLink
 							to="/library"
-							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/library') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${isActive('/library')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Library
 						</RLink>
 						<RLink
 							to="/lab"
-							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/lab') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${isActive('/lab')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Lab
 						</RLink>
+
 						<RLink
-							to="/models"
-							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/models') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							to="/studio"
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${isActive('/studio')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
-							Models
-						</RLink>
-						<RLink
-							to="/phase10"
-							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/phase10') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
-						>
-							Phase 10
+							Studio
 						</RLink>
 						<RLink
 							to="/docs"
-							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-								isActive('/docs') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${isActive('/docs')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Docs
 						</RLink>
 					</nav>
-					
+
 					{/* Right side: Search + Auth */}
-					<div className="flex items-center gap-3">
+					<div className="flex-1 flex items-center justify-end gap-3">
 						{/* Search input - hidden on mobile */}
 						<div className="hidden md:block">
 							<input
@@ -179,7 +166,7 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 					</div>
 				</div>
 			</div>
-			
+
 			{/* Mobile menu */}
 			{onToggleMenu && (
 				<div className="sm:hidden border-t border-lightGrey bg-white">
@@ -187,55 +174,52 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 						<RLink
 							to="/"
 							onClick={onToggleMenu}
-							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
-								isActive('/', true) 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${isActive('/', true)
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Home
 						</RLink>
 						<RLink
 							to="/library"
 							onClick={onToggleMenu}
-							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
-								isActive('/library') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${isActive('/library')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Library
 						</RLink>
 						<RLink
 							to="/lab"
 							onClick={onToggleMenu}
-							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
-								isActive('/lab') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${isActive('/lab')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Lab
 						</RLink>
+
 						<RLink
-							to="/models"
+							to="/studio"
 							onClick={onToggleMenu}
-							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
-								isActive('/models') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${isActive('/studio')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
-							Models
+							Studio
 						</RLink>
+
 						<RLink
 							to="/docs"
 							onClick={onToggleMenu}
-							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${
-								isActive('/docs') 
-									? 'bg-black text-white' 
-									: 'text-darkGrey hover:text-black hover:bg-offwhite'
-							}`}
+							className={`block px-3 py-2 rounded-lg transition-all duration-200 ${isActive('/docs')
+								? 'bg-black text-white'
+								: 'text-darkGrey hover:text-black hover:bg-offwhite'
+								}`}
 						>
 							Docs
 						</RLink>

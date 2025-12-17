@@ -1,6 +1,43 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import BenzeneGLBViewer from '../../../components/BenzeneGLBViewer';
+import BarbellViewer from '../../../components/BarbellViewer';
+
+// Caffeine MOLFILE
+const CAFFEINE_MOLFILE = `
+  MJ211200                      
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  1  2  0  0  0  0
+  1  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+  5  9  1  0  0  0  0
+  2 11  2  0  0  0  0
+  4 12  2  0  0  0  0
+  7 13  1  0  0  0  0
+  8 14  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  6  1  0  0  0  0
+M  END
+`;
 
 export default function WelcomePage() {
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -45,7 +82,7 @@ export default function WelcomePage() {
           >
             Welcome to SynthCore
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -83,7 +120,7 @@ export default function WelcomePage() {
             >
               Get Started
             </motion.button>
-            
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -142,13 +179,14 @@ export default function WelcomePage() {
                 boxShadow: 'inset 0 0 40px rgba(59, 199, 201, 0.2)',
               }}
             />
-            
-            {/* Hero Benzene 3D Model */}
-            <div className="relative w-full h-full z-10">
-              <BenzeneGLBViewer
+
+            {/* Hero Molecule 3D Viewer */}
+            <div className="relative w-full h-full z-10 flex items-center justify-center">
+              <BarbellViewer
+                molfile={CAFFEINE_MOLFILE}
                 mode="hero"
                 height={500}
-                className="w-full h-full"
+                className="w-full h-full bg-transparent"
               />
             </div>
           </div>

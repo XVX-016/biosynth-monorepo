@@ -366,7 +366,7 @@ export default function BarbellViewer({
       }
     >
       <div
-        className={`relative ${className} rounded-md overflow-hidden bg-white`}
+        className={`relative ${className} rounded-md overflow-hidden`}
         style={{ height }}
       >
         <Canvas
@@ -381,18 +381,15 @@ export default function BarbellViewer({
           shadows={mode !== 'card'}
           gl={{
             antialias: mode !== 'card',
-            alpha: false,
+            alpha: true,
             preserveDrawingBuffer: false,
             powerPreference: 'high-performance',
             stencil: false,
             depth: true,
           }}
-          onCreated={({ gl, scene }) => {
+          onCreated={({ gl }) => {
             // Store renderer reference for cleanup
             rendererRef.current = gl;
-
-            // Set white background
-            scene.background = new THREE.Color(0xffffff);
 
             // Handle WebGL context loss
             gl.domElement.addEventListener('webglcontextlost', (e) => {
@@ -406,7 +403,7 @@ export default function BarbellViewer({
             });
           }}
         >
-          <color attach="background" args={[0xffffff]} />
+
           <ambientLight intensity={0.6} />
           <directionalLight position={[5, 5, 5]} intensity={0.9} />
           <directionalLight position={[-5, -3, -2]} intensity={0.5} />
