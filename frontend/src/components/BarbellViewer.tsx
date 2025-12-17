@@ -10,6 +10,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { parseMolfile } from '../utils/molfileParser';
+import { getAtomColorNumeric, DEFAULT_ATOM_COLOR_NUMERIC } from '../utils/atomColors';
 
 interface BarbellViewerProps {
   molfile?: string | null;
@@ -25,17 +26,19 @@ interface BarbellViewerProps {
   highlightColor?: number; // Color for highlighted atoms (default: yellow)
 }
 
-// CPK element colors
+// Use shared color system
 const ELEMENT_COLORS: Record<string, number> = {
-  H: 0xffffff,   // White
-  C: 0x909090,   // Dark gray
-  N: 0x3050f8,   // Blue
-  O: 0xff0d0d,   // Red
-  F: 0x90e050,   // Green
+  // Core supported elements use shared colors
+  H: getAtomColorNumeric('H'),
+  C: getAtomColorNumeric('C'),
+  N: getAtomColorNumeric('N'),
+  O: getAtomColorNumeric('O'),
+  F: getAtomColorNumeric('F'),
+  S: getAtomColorNumeric('S'),
+  Cl: getAtomColorNumeric('Cl'),
+  Br: getAtomColorNumeric('Br'),
+  // Extended elements (for compatibility with existing molecules)
   P: 0xff8000,   // Orange
-  S: 0xffff30,   // Yellow
-  Cl: 0x1ff01f,  // Green
-  Br: 0xa62929,  // Dark red
   I: 0x940094,   // Purple
   Li: 0xcc80ff,  // Violet
   Na: 0xab5cf2,  // Violet
@@ -47,7 +50,7 @@ const ELEMENT_COLORS: Record<string, number> = {
   Zn: 0x7d80b0,  // Blue-gray
 };
 
-const DEFAULT_COLOR = 0xcccccc;
+const DEFAULT_COLOR = DEFAULT_ATOM_COLOR_NUMERIC;
 
 // Bond cylinder component
 function BondCylinder({

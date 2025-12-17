@@ -86,18 +86,22 @@ function Scene() {
             {molecule.bonds.map((b) => {
                 const a = molecule.atoms.find((x) => x.id === b.from);
                 const c = molecule.atoms.find((x) => x.id === b.to);
-                if (!a || !c) return null;
-                // Atoms have position: {x,y,z}. Map to array for BondMesh if needed?
-                // BondMesh expects [x,y,z] arrays?
-                // Let's check BondMesh props.
-                // Assuming BondMesh updated or we map.
-                // Core Atom has .position as object. App Molecule extends Core.
-                // BondMesh likely expects [n,n,n].
-                // We need to pass [a.position.x, a.position.y, a.position.z].
+                if (!a || !c || !a.position || !c.position) {
+                    // eslint-disable-next-line no-console
+                    console.warn('[LabCanvas] Invalid bond or missing position:', { bond: b, atomA: a, atomC: c });
+                    return null;
+                }
+                // Validate position format
+                if (typeof a.position.x !== 'number' || typeof a.position.y !== 'number' || typeof a.position.z !== 'number' ||
+                    typeof c.position.x !== 'number' || typeof c.position.y !== 'number' || typeof c.position.z !== 'number') {
+                    // eslint-disable-next-line no-console
+                    console.warn('[LabCanvas] Invalid position format:', { atomA: a.position, atomC: c.position });
+                    return null;
+                }
 
                 return <BondMesh key={b.id}
-                    aPos={[a.position!.x, a.position!.y, a.position!.z]}
-                    bPos={[c.position!.x, c.position!.y, c.position!.z]}
+                    aPos={[a.position.x, a.position.y, a.position.z]}
+                    bPos={[c.position.x, c.position.y, c.position.z]}
                     order={b.order}
                 />;
             })}
@@ -108,7 +112,7 @@ function Scene() {
     );
 }
 
-function LabSceneWithControls() {
+function LabSceneWithControls({ onContextLost: onContextLostCallback }: { onContextLost?: () => void }) {
     const [contextLost, setContextLost] = useState(false);
     const { gl } = useThree();
 
@@ -121,6 +125,7 @@ function LabSceneWithControls() {
             // eslint-disable-next-line no-console
             console.warn("[LabCanvas] WebGL context lost");
             setContextLost(true);
+            onContextLostCallback?.();
         };
 
         const onContextRestored = () => {
@@ -136,7 +141,7 @@ function LabSceneWithControls() {
             canvas.removeEventListener("webglcontextlost", onContextLost);
             canvas.removeEventListener("webglcontextrestored", onContextRestored);
         };
-    }, [gl]);
+    }, [gl, onContextLostCallback]);
 
     return (
         <>
@@ -171,15 +176,26 @@ function LabSceneWithControls() {
 }
 
 export default function LabCanvas() {
+    const [canvasKey, setCanvasKey] = useState(0);
+    const molecule = useLabStore(s => s.molecule);
+
+    // Force remount on context loss
+    const handleContextLost = useCallback(() => {
+        // eslint-disable-next-line no-console
+        console.warn("[LabCanvas] Forcing canvas remount due to context loss");
+        setCanvasKey(prev => prev + 1);
+    }, []);
+
     return (
         <Canvas
+            key={`canvas-${canvasKey}-${molecule.id}`}
             camera={{ position: [0, 6, 12], fov: 45 }}
             style={{ width: "100%", height: "100%" }}
             gl={{ alpha: true, antialias: true }}
             dpr={[1, 2]} // Handle high DPI
-            frameloop="demand"
+            frameloop="always"
         >
-            <LabSceneWithControls />
+            <LabSceneWithControls onContextLost={handleContextLost} />
         </Canvas>
     );
 }

@@ -14,6 +14,7 @@ import PublicLibrary from './pages/PublicLibrary';
 import Phase10Dashboard from './pages/Phase10Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthModal from './components/AuthModal';
+import AuthNavigationHandler from './components/AuthNavigationHandler';
 import { useAuthStore } from './store/authStore';
 
 // Component to handle /login and /signup routes
@@ -24,13 +25,19 @@ function AuthRouteHandler() {
 
 	useEffect(() => {
 		if (location.pathname === '/login') {
-			openAuthModal('signin');
+			// Extract intended destination from state, fallback to null
+			const intendedDestination = (location.state as { from?: { pathname: string } })?.from?.pathname || null;
+			openAuthModal('signin', intendedDestination);
+			// Navigate to home but preserve the intended destination in store
 			navigate('/', { replace: true });
 		} else if (location.pathname === '/signup') {
-			openAuthModal('signup');
+			// Extract intended destination from state, fallback to null
+			const intendedDestination = (location.state as { from?: { pathname: string } })?.from?.pathname || null;
+			openAuthModal('signup', intendedDestination);
+			// Navigate to home but preserve the intended destination in store
 			navigate('/', { replace: true });
 		}
-	}, [location.pathname, navigate, openAuthModal]);
+	}, [location.pathname, location.state, navigate, openAuthModal]);
 
 	return null;
 }
@@ -43,6 +50,8 @@ export default function App() {
 			<AuthModal />
 			{/* Handle /login and /signup routes */}
 			<AuthRouteHandler />
+			{/* Handle post-login navigation to intended destination */}
+			<AuthNavigationHandler />
 
 			<Routes>
 				{/* Lab route - fullscreen, no AppShell, PUBLIC */}

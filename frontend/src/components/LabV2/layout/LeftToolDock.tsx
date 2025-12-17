@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useLabStore } from "../../../store/labStore";
 import { FolderOpen } from "lucide-react";
+import { getAtomColor, getAtomTextColor } from "../../../utils/atomColors";
+import { getSupportedElements } from "../../../utils/elements";
 
-const ATOMS = [
-    { symbol: 'C', color: '#2B2B2B' },
-    { symbol: 'H', color: '#EDEDED', textColor: 'black' },
-    { symbol: 'O', color: '#E53935' },
-    { symbol: 'N', color: '#1E88E5' },
-    { symbol: 'S', color: '#FBC02D', textColor: 'black' },
-    { symbol: 'F', color: '#43A047' },
-    { symbol: 'Cl', color: '#2E7D32' },
-    { symbol: 'Br', color: '#8D6E63' },
-];
+// Generate atoms from supported elements using shared color system
+const ATOMS = getSupportedElements().map(symbol => ({
+    symbol,
+    color: getAtomColor(symbol),
+    textColor: getAtomTextColor(symbol),
+}));
 
 const BONDS = [
     { type: 1, label: 'Single', icon: <div className="h-0.5 w-4 bg-current" /> },

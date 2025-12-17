@@ -16,6 +16,7 @@ interface AuthState {
   authModalTab: AuthModalTab;
   pendingAction: (() => Promise<void>) | null;
   pendingEmail: string | null;
+  intendedDestination: string | null; // Store intended destination after login
   
   // Actions
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -24,7 +25,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   
   // Modal control
-  openAuthModal: (tab?: AuthModalTab) => void;
+  openAuthModal: (tab?: AuthModalTab, intendedDestination?: string | null) => void;
   closeAuthModal: () => void;
   setAuthModalTab: (tab: AuthModalTab) => void;
   
@@ -50,13 +51,15 @@ export const useAuthStore = create<AuthState>()(
       authModalTab: 'signin',
       pendingAction: null,
       pendingEmail: null,
+      intendedDestination: null,
 
-      openAuthModal: (tab: AuthModalTab = 'signin') => {
-        set({ authModalOpen: true, authModalTab: tab });
+      openAuthModal: (tab: AuthModalTab = 'signin', intendedDestination: string | null = null) => {
+        set({ authModalOpen: true, authModalTab: tab, intendedDestination });
       },
 
       closeAuthModal: () => {
         set({ authModalOpen: false, pendingEmail: null });
+        // Don't clear intendedDestination here - let AuthNavigationHandler handle it
       },
 
       setAuthModalTab: (tab: AuthModalTab) => {
@@ -117,6 +120,7 @@ export const useAuthStore = create<AuthState>()(
               // Handle successful sign in/sign up
               if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && newUser) {
                 // Close modal and run pending action
+                // Navigation to intended destination is handled by AuthNavigationHandler component
                 const { runPendingAction, closeAuthModal } = get();
                 closeAuthModal();
                 runPendingAction();
