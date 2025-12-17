@@ -12,6 +12,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../supabase';
+import { useNavigate } from 'react-router-dom';
 import {
   listUserMolecules,
   deleteUserMolecule,
@@ -33,6 +34,7 @@ type SortOption = 'a-z' | 'z-a' | 'newest' | 'oldest';
 type ViewMode = 'all' | 'mine' | 'favorites';
 
 export default function LibraryPage() {
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState<ViewMode>('all');
   const [items, setItems] = useState<(PublicMolecule | UserMolecule)[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -161,7 +163,16 @@ export default function LibraryPage() {
   const openInLab = async (molecule: PublicMolecule | UserMolecule) => {
     try {
       const source = activeView === 'mine' ? 'user' : 'public';
-      window.location.href = `/lab?id=${molecule.id}&source=${source}`;
+      navigate(`/lab?id=${molecule.id}&source=${source}`, {
+        state: {
+          source,
+          moleculeId: molecule.id,
+          name: molecule.name,
+          smiles: molecule.smiles,
+          formula: (molecule as any).formula,
+          molfile: (molecule as any).molfile,
+        },
+      });
     } catch (error) {
       console.error('Failed to open molecule:', error);
       alert('Failed to open molecule');

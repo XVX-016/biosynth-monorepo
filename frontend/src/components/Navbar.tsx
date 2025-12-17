@@ -1,5 +1,7 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
+import Button from './ui/Button';
 
 type NavbarProps = {
 	onToggleMenu?: () => void;
@@ -7,11 +9,25 @@ type NavbarProps = {
 
 export default function Navbar({ onToggleMenu }: NavbarProps) {
 	const location = useLocation();
+	const navigate = useNavigate();
+	const { user, signOut, openAuthModal } = useAuthStore();
+	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const isActive = (to: string, exact = false) =>
 		exact ? location.pathname === to : location.pathname.startsWith(to);
 	// Workaround for type resolution issues in monorepo
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const RLink = (props: any) => React.createElement(Link as any, props);
+
+	const handleSignOut = async () => {
+		await signOut();
+		setDropdownOpen(false);
+		// Don't redirect - user can stay on current page
+	};
+
+	const handleSignIn = () => {
+		openAuthModal('signin');
+	};
+
 	return (
 		<header className="bg-white border-b border-lightGrey shadow-neon">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -85,7 +101,7 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 						</RLink>
 					</nav>
 					
-					{/* Right side: Search + Profile */}
+					{/* Right side: Search + Auth */}
 					<div className="flex items-center gap-3">
 						{/* Search input - hidden on mobile */}
 						<div className="hidden md:block">
@@ -106,16 +122,60 @@ export default function Navbar({ onToggleMenu }: NavbarProps) {
 								<path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 							</svg>
 						</button>
-						{/* Profile icon */}
-						<Link
-							to="/profile"
-							className="w-8 h-8 rounded-full bg-lightGrey border border-lightGrey hover:border-darkGrey transition-colors flex items-center justify-center"
-							aria-label="Profile"
-						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-darkGrey">
-								<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor" />
-							</svg>
-						</Link>
+						{/* Auth buttons */}
+						{user ? (
+							<div className="relative">
+								<button
+									onClick={() => setDropdownOpen(!dropdownOpen)}
+									className="w-8 h-8 rounded-full bg-lightGrey border border-lightGrey hover:border-darkGrey transition-colors flex items-center justify-center"
+									aria-label="Profile menu"
+									title={user.email || 'Profile'}
+								>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-darkGrey">
+										<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor" />
+									</svg>
+								</button>
+								{dropdownOpen && (
+									<>
+										<div
+											className="fixed inset-0 z-40"
+											onClick={() => setDropdownOpen(false)}
+										/>
+										<div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-lightGrey z-50 py-1">
+											<Link
+												to="/profile"
+												onClick={() => setDropdownOpen(false)}
+												className="block px-4 py-2 text-sm text-darkGrey hover:bg-offwhite"
+											>
+												Profile
+											</Link>
+											<Link
+												to="/my-molecules"
+												onClick={() => setDropdownOpen(false)}
+												className="block px-4 py-2 text-sm text-darkGrey hover:bg-offwhite"
+											>
+												My Molecules
+											</Link>
+											<button
+												onClick={handleSignOut}
+												className="block w-full text-left px-4 py-2 text-sm text-darkGrey hover:bg-offwhite"
+											>
+												Sign out
+											</button>
+										</div>
+									</>
+								)}
+							</div>
+						) : (
+							<Button
+								variant="primary"
+								size="sm"
+								onClick={handleSignIn}
+								className="hidden sm:inline-flex"
+							>
+								Sign in
+							</Button>
+						)}
 					</div>
 				</div>
 			</div>

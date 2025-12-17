@@ -11,8 +11,10 @@ import MoleculeCard from '../components/MoleculeCard';
 import MoleculeFilters, { type MoleculeFilters as Filters } from '../components/MoleculeFilters';
 import { forkPublicMolecule } from '../lib/userMoleculeStore';
 import { supabase } from '../supabase';
+import { useNavigate } from 'react-router-dom';
 
 export default function PublicLibrary() {
+  const navigate = useNavigate();
   const [molecules, setMolecules] = useState<PublicMolecule[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<Filters>({ query: '', element: '' });
@@ -92,8 +94,17 @@ export default function PublicLibrary() {
 
   const openInLab = async (molecule: PublicMolecule) => {
     try {
-      // Navigate to lab with molecule ID and source
-      window.location.href = `/lab?id=${molecule.id}&source=public`;
+      const source = 'public';
+      navigate(`/lab?id=${molecule.id}&source=${source}`, {
+        state: {
+          source,
+          moleculeId: molecule.id,
+          name: molecule.name,
+          smiles: molecule.smiles,
+          formula: molecule.formula,
+          molfile: molecule.molfile,
+        },
+      });
     } catch (error) {
       console.error('Failed to open molecule:', error);
       alert('Failed to open molecule');

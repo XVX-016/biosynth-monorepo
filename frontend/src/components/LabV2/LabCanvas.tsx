@@ -1,5 +1,5 @@
-import { useCallback, Suspense, useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Html, Line } from "@react-three/drei";
 import { useLabStore } from "../../store/labStore";
 import AtomMesh from "./AtomMesh";
@@ -108,6 +108,68 @@ function Scene() {
     );
 }
 
+function LabSceneWithControls() {
+    const [contextLost, setContextLost] = useState(false);
+    const { gl } = useThree();
+
+    useEffect(() => {
+        const canvas = gl.domElement as HTMLCanvasElement | undefined;
+        if (!canvas) return;
+
+        const onContextLost = (event: Event) => {
+            event.preventDefault();
+            // eslint-disable-next-line no-console
+            console.warn("[LabCanvas] WebGL context lost");
+            setContextLost(true);
+        };
+
+        const onContextRestored = () => {
+            // eslint-disable-next-line no-console
+            console.info("[LabCanvas] WebGL context restored");
+            setContextLost(false);
+        };
+
+        canvas.addEventListener("webglcontextlost", onContextLost);
+        canvas.addEventListener("webglcontextrestored", onContextRestored);
+
+        return () => {
+            canvas.removeEventListener("webglcontextlost", onContextLost);
+            canvas.removeEventListener("webglcontextrestored", onContextRestored);
+        };
+    }, [gl]);
+
+    return (
+        <>
+            {contextLost && (
+                <Html fullscreen>
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-100 text-zinc-700">
+                        <div className="text-center space-y-2">
+                            <div className="font-semibold">Graphics context was lost</div>
+                            <div className="text-sm opacity-80">
+                                Try switching tabs more slowly or reloading the page. We&apos;ll attempt to recover automatically when possible.
+                            </div>
+                        </div>
+                    </div>
+                </Html>
+            )}
+
+            {!contextLost && (
+                <>
+                    <OrbitControls
+                        makeDefault
+                        enableDamping
+                        dampingFactor={0.1}
+                        maxPolarAngle={Math.PI / 2 - 0.1} // Don't go below ground
+                        minDistance={2}
+                        maxDistance={50}
+                    />
+                    <Scene />
+                </>
+            )}
+        </>
+    );
+}
+
 export default function LabCanvas() {
     return (
         <Canvas
@@ -115,16 +177,9 @@ export default function LabCanvas() {
             style={{ width: "100%", height: "100%" }}
             gl={{ alpha: true, antialias: true }}
             dpr={[1, 2]} // Handle high DPI
+            frameloop="demand"
         >
-            <OrbitControls
-                makeDefault
-                enableDamping
-                dampingFactor={0.1}
-                maxPolarAngle={Math.PI / 2 - 0.1} // Don't go below ground
-                minDistance={2}
-                maxDistance={50}
-            />
-            <Scene />
+            <LabSceneWithControls />
         </Canvas>
     );
 }
